@@ -1,0 +1,68 @@
+services:
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: stack-php
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./www:/var/www/html
+      - ./php.ini:/usr/local/etc/php/php.ini
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - app-network
+    environment:
+      PHP_ENABLE_XDEBUG: ${PHP_ENABLE_XDEBUG:-0}
+
+  mysql:
+    image: mysql:8.0
+    container_name: stack-mysql
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: stack-phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: ${MYSQL_USER}
+      PMA_PASSWORD: ${MYSQL_PASSWORD}
+      UPLOAD_LIMIT: 100M
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - app-network
+
+volumes:
+  mysql_data:
+    name: stack_mysql_data
+
+networks:
+  app-network:
+    name: stack_app_network
+    driver: bridge
