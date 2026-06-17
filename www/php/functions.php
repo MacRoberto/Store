@@ -127,4 +127,6 @@ function getAllSales() {
         return ['error' => $e->getMessage()];
     }
 }
+
+
 ?>
