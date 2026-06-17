@@ -1,20 +1,32 @@
-const btnLogin = document.querySelector("#btnLogin")
-btnLogin.addEventListener("click", e => {
-  e.preventDefault()
-  const email = document.querySelector("#email").value
-  const password = document.querySelector("#password").value
+const button = document.querySelector("#btnLogin");
+const email = document.querySelector("#email");
+const password = document.querySelector("#password");
 
-  alert(`Email: ${email}\nPassword: ${password}`)
-})
+button.addEventListener("click", (e) => {
+  e.preventDefault();
 
-const button = document.querySelector("#loginButton");
-const email = document.querySelector("#email_field");
-const password = document.querySelector("#password_field");
-
-button.addEventListener("clik", e =>{
-  e.preventDefault()
-  fetch("php/user.php",{
+  fetch("php/users.php", {
     method: "POST",
-    ""
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email: email.value,
+      password: password.value,
+    }),
   })
-})
+    .then((response) => response.json())
+    .then((data) => {
+      console.log(data);
+
+      if (data.status === "success") {
+        window.location.href = "users/index.html";
+      } else {
+        alert(data.message);
+      }
+    })
+    .catch((error) => {
+      console.error("Error:", error);
+      alert("Ocurrió un error al iniciar sesión");
+    });
+});
