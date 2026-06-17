@@ -128,22 +128,5 @@ function getAllSales() {
     }
 }
 
-function getAllInventories() {
-    global $db;
-    try {
-        // Consultamos la tabla de inventarios vinculando los datos de la cuenta de usuario encargada
-        $query = "SELECT i.id_inventory, i.user_id, i.arrival_date,
-                         u.email AS username
-                  FROM inventories i
-                  LEFT JOIN users u ON i.user_id = u.id_user
-                  ORDER BY i.arrival_date DESC";
-                  
-        $stmt = $db->prepare($query);
-        $stmt->execute();
-        
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-        return ['error' => $e->getMessage()];
-    }
-}
+
 ?>
