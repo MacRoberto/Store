@@ -9,7 +9,7 @@ header("Content-Type: application/json");
 
 if ($accion == "list") {
     // Manda a llamar la función que realiza la consulta a la bd
-    $list = getAllUsers();
+    $list = getAllSalesDetails();
     
     // Regresa la información solicitada
     echo json_encode($list);
