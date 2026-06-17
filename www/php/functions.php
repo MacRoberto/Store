@@ -237,4 +237,27 @@ function getAllActions() {
         return ['error' => $e->getMessage()];
     }
 }
+
+function getAllRolesPermissions() {
+    global $db;
+    try {
+        // Ejecutamos una consulta con joins compuestos hacia roles, acciones y el respectivo módulo de la acción
+        $query = "SELECT rp.id_permission, rp.id_role, rp.id_action, rp.status,
+                         r.name AS role_name,
+                         a.name AS action_name,
+                         m.name AS module_name
+                  FROM roles_permissions rp
+                  LEFT JOIN roles r ON rp.id_role = r.id_rol
+                  LEFT JOIN actions a ON rp.id_action = a.id_action
+                  LEFT JOIN modules m ON a.id_module = m.id_module
+                  ORDER BY r.name ASC, m.name ASC, a.name ASC";
+                  
+        $stmt = $db->prepare($query);
+        $stmt->execute();
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
 ?>
