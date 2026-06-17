@@ -21,4 +21,23 @@ function getAllCategories() {
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
+
+function getAllProducts() {
+    global $db;
+    try {
+        // Hacemos un JOIN para obtener el nombre de la categoría asignada al producto
+        $query = "SELECT p.id_product, p.barcode, p.name AS product_name, p.description, 
+                         p.reorder_level, p.status, p.unit, c.name AS category_name 
+                  FROM products p
+                  LEFT JOIN categories c ON p.category_id = c.id_cat
+                  ORDER BY p.id_product DESC";
+                  
+        $stmt = $db->prepare($query);
+        $stmt->execute();
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
 ?>
