@@ -6,3 +6,15 @@ btnLogin.addEventListener("click", e => {
 
   alert(`Email: ${email}\nPassword: ${password}`)
 })
+
+const button = document.querySelector("#loginButton");
+const email = document.querySelector("#email_field");
+const password = document.querySelector("#password_field");
+
+button.addEventListener("clik", e =>{
+  e.preventDefault()
+  fetch("php/user.php",{
+    method: "POST",
+    ""
+  })
+})
