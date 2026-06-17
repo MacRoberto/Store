@@ -82,4 +82,28 @@ function getAllInventoryMovements() {
         return ['error' => $e->getMessage()];
     }
 }
+
+function getAllInventoryItems() {
+    global $db;
+    try {
+        // Ejecutamos JOINs hacia productos e inventarios (almacenes) principales
+        // Nota: Ajusta 'inv.name' según el nombre exacto de la columna en tu tabla 'inventories'
+        $query = "SELECT ii.id_inventory_item, ii.product_id, ii.id_inventory, 
+                         ii.cost_price, ii.quantity_received, ii.quantity_available, 
+                         ii.status, ii.sale_price,
+                         p.name AS product_name,
+                         inv.name AS inventory_name
+                  FROM inventory_items ii
+                  LEFT JOIN products p ON ii.product_id = p.id_product
+                  LEFT JOIN inventories inv ON ii.id_inventory = inv.id_inventory
+                  ORDER BY ii.id_inventory_item DESC";
+                  
+        $stmt = $db->prepare($query);
+        $stmt->execute();
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
 ?>
