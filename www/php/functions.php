@@ -106,4 +106,25 @@ function getAllInventoryItems() {
         return ['error' => $e->getMessage()];
     }
 }
+
+function getAllSales() {
+    global $db;
+    try {
+        // Consultamos el registro de ventas asociando el email del usuario correspondiente
+        // Nota: Si tu columna identificadora de correo se llama distinto (ej: 'user_email'), cámbiala abajo
+        $query = "SELECT s.id_sale, s.user_id, s.transaction_date, 
+                         s.total_amount, s.payment_method, s.status,
+                         u.email AS username
+                  FROM sales s
+                  LEFT JOIN users u ON s.user_id = u.id_user
+                  ORDER BY s.transaction_date DESC";
+                  
+        $stmt = $db->prepare($query);
+        $stmt->execute();
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
 ?>
