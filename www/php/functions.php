@@ -146,4 +146,24 @@ function getAllInventories() {
         return ['error' => $e->getMessage()];
     }
 }
+
+function getAllUsers() {
+    global $db;
+    try {
+        // Obtenemos los usuarios y su rol descriptivo. 
+        // IMPORTANTE: Excluimos password_hash por completo por razones de seguridad.
+        $query = "SELECT u.id_user, u.username, u.id_rol, u.status,
+                         r.name AS role_name 
+                  FROM users u
+                  LEFT JOIN roles r ON u.id_rol = r.id_rol
+                  ORDER BY u.id_user ASC";
+                  
+        $stmt = $db->prepare($query);
+        $stmt->execute();
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
 ?>
