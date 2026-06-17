@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es" class="h-full bg-gray-50">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kardex - Movimientos de Inventario</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="h-full flex flex-col items-center py-10">
+    <div class="w-full max-w-6xl bg-white shadow-md rounded-lg overflow-hidden">
+      <div class="px-6 py-4 bg-indigo-600 border-b border-gray-200">
+        <h2 class="text-xl font-bold text-white">Historial de Movimientos de Inventario (Kardex)</h2>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha y Hora</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Artículo</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo de Movimiento</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notas</th>
+            </tr>
+          </thead>
+          <tbody id="movementsTableBody" class="bg-white divide-y divide-gray-200"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <script src="js/inventory_movements.js"></script>
+  </body>
+</html>

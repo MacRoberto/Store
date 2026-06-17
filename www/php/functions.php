@@ -64,19 +64,19 @@ function getAllPromotions() {
 function getAllInventoryMovements() {
     global $db;
     try {
-        // Obtenemos los movimientos ordenados de los más recientes a los más antiguos
-        // Nota: Asegúrate de que tu tabla de usuarios use la columna exacta (ej. u.name o u.username)
         $query = "SELECT m.id_movement, m.id_inventory_item, m.movement_type, 
                          m.quantity, m.movement_date, m.notes,
-                         u.email AS username, i.name AS item_name 
+                         u.username AS username,
+                         p.name AS item_name
                   FROM inventory_movements m
                   LEFT JOIN users u ON m.user_id = u.id_user
-                  LEFT JOIN inventory_items i ON m.id_inventory_item = i.id_inventory_item
+                  LEFT JOIN inventory_items ii ON m.id_inventory_item = ii.id_inventory_item
+                  LEFT JOIN products p ON ii.product_id = p.id_product
                   ORDER BY m.movement_date DESC";
-                  
+
         $stmt = $db->prepare($query);
         $stmt->execute();
-        
+
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
         return ['error' => $e->getMessage()];
@@ -91,8 +91,7 @@ function getAllInventoryItems() {
         $query = "SELECT ii.id_inventory_item, ii.product_id, ii.id_inventory, 
                          ii.cost_price, ii.quantity_received, ii.quantity_available, 
                          ii.status, ii.sale_price,
-                         p.name AS product_name,
-                         inv.name AS inventory_name
+                         p.name AS product_name
                   FROM inventory_items ii
                   LEFT JOIN products p ON ii.product_id = p.id_product
                   LEFT JOIN inventories inv ON ii.id_inventory = inv.id_inventory
