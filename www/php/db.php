@@ -1,7 +1,7 @@
 <?php
 $user_db ="avnadmin";
-$password_db = "AVNS_GIgns9KLWvKVq7-9llC";
-$host_db = "mysql-5761ae9-developer-065c.a.aivencloud.com";//("localhost") para mysql;
+$password_db = "";
+$host_db = "";//("localhost") para mysql;
 $name_db = "store";
 
 try {
