@@ -201,4 +201,21 @@ function getAllRoles() {
         return ['error' => $e->getMessage()];
     }
 }
+
+function getAllModules() {
+    global $db;
+    try {
+        // Consultamos el registro de módulos ordenados alfabéticamente por su nombre descriptivo
+        $query = "SELECT m.id_module, m.name, m.description, m.img 
+                  FROM modules m
+                  ORDER BY m.name ASC";
+                  
+        $stmt = $db->prepare($query);
+        $stmt->execute();
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
 ?>
