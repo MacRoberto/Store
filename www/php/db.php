@@ -1,12 +1,13 @@
 <?php
-$user_db ="app_user"
-$password_db = "app_pass";
-$host_db = "mysql";//("localhost") para mysql;
-$name_db = "app_db";
+$user_db ="";
+$password_db = "";
+$host_db = "";//("localhost") para mysql;
+$name_db = "";
 
 try {
-    $db = new POO("mysql:host=$host")
-} catch (\Throwable $th) {
-    //throw $th;
+    $db = new PDO("mysql:host=$host_db; port=25710; dbname=$name_db", $user_db, $password_db);
+    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    echo "Error de conexión: " . $e->getMessage();
 }
 ?>
