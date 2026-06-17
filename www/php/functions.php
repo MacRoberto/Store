@@ -40,4 +40,24 @@ function getAllProducts() {
         return ['error' => $e->getMessage()];
     }
 }
+
+function getAllPromotions() {
+    global $db;
+    try {
+        // Hacemos un LEFT JOIN para jalar el nombre del producto vinculado a la promoción
+        $query = "SELECT pr.id_promotion, pr.name AS promotion_name, pr.description, 
+                         pr.date_start, pr.date_end, pr.percent_off, pr.status,
+                         p.name AS product_name 
+                  FROM promotions pr
+                  LEFT JOIN products p ON pr.id_product = p.id_product
+                  ORDER BY pr.date_start DESC";
+                  
+        $stmt = $db->prepare($query);
+        $stmt->execute();
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
 ?>
