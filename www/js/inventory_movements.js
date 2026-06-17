@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function fetchMovements() {
-  fetch("php/inventory_movements.php", {
+  fetch("../php/inventory_movements.php", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

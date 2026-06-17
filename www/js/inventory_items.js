@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function fetchInventoryItems() {
-  fetch("php/inventory_items.php", {
+  fetch("../php/inventory_items.php", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -45,7 +45,7 @@ function fetchInventoryItems() {
         tr.innerHTML = `
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.id_inventory_item}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">${item.product_name || 'ID Producto: ' + item.product_id}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.inventory_name || 'Almacén #' + item.id_inventory}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${'Almacén #' + item.id_inventory}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${formatter.format(item.cost_price)}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-indigo-600 font-medium">${formatter.format(item.sale_price)}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.quantity_received}</td>
