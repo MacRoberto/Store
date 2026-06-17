@@ -166,4 +166,22 @@ function getAllUsers() {
         return ['error' => $e->getMessage()];
     }
 }
+
+function getAllSalesDetails() {
+    global $db;
+    try {
+        // Obtenemos el desglose de ítems vendidos general histórico
+        $query = "SELECT sd.id_sale_item, sd.sale_id, sd.quantity, 
+                         sd.unit_price, sd.discount_applied, sd.subtotal
+                  FROM sales_details sd
+                  ORDER BY sd.sale_id DESC, sd.id_sale_item ASC";
+                  
+        $stmt = $db->prepare($query);
+        $stmt->execute();
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
 ?>
