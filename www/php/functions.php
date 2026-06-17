@@ -218,4 +218,23 @@ function getAllModules() {
         return ['error' => $e->getMessage()];
     }
 }
+
+function getAllActions() {
+    global $db;
+    try {
+        // Ejecutamos un LEFT JOIN para obtener el nombre legible del módulo al que pertenece cada acción
+        $query = "SELECT a.id_action, a.name AS action_name, a.description, a.id_module,
+                         m.name AS module_name
+                  FROM actions a
+                  LEFT JOIN modules m ON a.id_module = m.id_module
+                  ORDER BY m.name ASC, a.id_action ASC";
+                  
+        $stmt = $db->prepare($query);
+        $stmt->execute();
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
 ?>
