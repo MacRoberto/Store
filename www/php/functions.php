@@ -184,4 +184,21 @@ function getAllSalesDetails() {
         return ['error' => $e->getMessage()];
     }
 }
+
+function getAllRoles() {
+    global $db;
+    try {
+        // Obtenemos los roles registrados ordenados por su ID correlativo
+        $query = "SELECT r.id_rol, r.name, r.description 
+                  FROM roles r
+                  ORDER BY r.id_rol ASC";
+                  
+        $stmt = $db->prepare($query);
+        $stmt->execute();
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
 ?>
