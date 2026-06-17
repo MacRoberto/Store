@@ -1,6 +1,6 @@
 <?php
-$user_db ="";
-$password_db = "";
+$user_db ="Mark";
+$password_db = "Id80M4Kkq^|}";
 $host_db = "mysql-5761ae9-developer-065c.a.aivencloud.com";
 $name_db = "store";
 $port_db = "25710";
