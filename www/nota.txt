@@ -3,3 +3,4 @@
 //cada archivo de js por ejemplo categories.js contendrá la llamada a los diferentes archivos php de cada tabla, en este caso categories.js llama a categories.php
 
 //cartegories.php recibe la peticion que se hizo desde categories.js y le regresa el resultado de la consulta
+// ajuste personal

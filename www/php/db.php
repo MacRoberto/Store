@@ -1,8 +1,8 @@
 <?php
-$user_db ="avnadmin";
+$user_db ="";
 $password_db = "";
 $host_db = "";//("localhost") para mysql;
-$name_db = "store";
+$name_db = "";
 
 try {
     $db = new PDO("mysql:host=$host_db; port=25710; dbname=$name_db", $user_db, $password_db);

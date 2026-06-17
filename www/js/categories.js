@@ -36,4 +36,5 @@ function fetchCategories() {
       });
     })
     .catch((error) => console.error("Error al obtener las categorías:", error));
+  //configurar archivo
 }
