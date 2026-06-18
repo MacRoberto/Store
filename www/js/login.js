@@ -11,6 +11,7 @@ button.addEventListener("click", (e) => {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
+      action: "login",
       email: email.value,
       password: password.value,
     }),
@@ -22,7 +23,8 @@ button.addEventListener("click", (e) => {
       if (data.status === "success") {
         window.location.href = "users/index.html";
       } else {
-        alert(data.message);
+        const msg = data.message ?? data.msg ?? "Respuesta inválida del servidor";
+        alert(msg);
       }
     })
     .catch((error) => {
