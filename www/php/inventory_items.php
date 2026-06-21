@@ -1,5 +1,5 @@
 <?php
-require_once "functions.php";
+require_once "../src/functions.php";
 
 $_get = json_decode(file_get_contents("php://input"), true);
 $accion = $_get['action'] ?? "";

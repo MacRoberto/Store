@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function fetchProducts() {
-  fetch("../php/products.php", {
+  fetch("php/products.php", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -25,15 +25,16 @@ function fetchProducts() {
       data.forEach((product) => {
         const tr = document.createElement("tr");
 
-        const statusBadgeColor = product.status === 'Active' 
-          ? 'bg-green-100 text-green-800' 
-          : 'bg-red-100 text-red-800';
+        const statusBadgeColor =
+          product.status === "Active"
+            ? "bg-green-100 text-green-800"
+            : "bg-red-100 text-red-800";
 
         tr.innerHTML = `
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${product.id_product}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.barcode || '-'}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.barcode || "-"}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">${product.product_name}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.category_name || 'Sin Categoría'}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.category_name || "Sin Categoría"}</td>
           <td class="px-6 py-4 text-sm text-gray-500">${product.description}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.reorder_level}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.unit}</td>

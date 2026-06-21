@@ -1,5 +1,5 @@
 <?php
-require_once "functions.php";
+require_once "../src/functions.php";
 
 // Se reciben los parámetros raw del JSON payload
 $_get = json_decode(file_get_contents("php://input"), true);

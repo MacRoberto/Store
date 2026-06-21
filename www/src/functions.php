@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . "/db.php";
+require_once __DIR__ . "/lib/db.php";
 
 //Quiero realizar un login, buscando en la tabla de usuario por email y contraseña
 function login($email, $password) {
