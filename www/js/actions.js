@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function fetchActions() {
   // Hace petición al archivo de php usando método POST
-  fetch("php/actions.php", {
+  fetch("../php/actions.php", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -32,7 +32,7 @@ function fetchActions() {
           <td class="px-6 py-4 whitespace-nowrap text-sm text-indigo-600 font-semibold">${item.action_name}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm">
             <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
-              ${item.module_name || 'Módulo ID: ' + item.id_module}
+              ${item.module_name || "Módulo ID: " + item.id_module}
             </span>
           </td>
           <td class="px-6 py-4 text-sm text-gray-500">
@@ -43,5 +43,7 @@ function fetchActions() {
         tableBody.appendChild(tr);
       });
     })
-    .catch((error) => console.error("Error al obtener las acciones del sistema:", error));
+    .catch((error) =>
+      console.error("Error al obtener las acciones del sistema:", error),
+    );
 }
