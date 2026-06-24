@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function fetchSales() {
   // Hace petición al archivo de php usando método POST
-  fetch("../php/sales.php", {
+  fetch("php/sales.php", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -28,29 +28,29 @@ function fetchSales() {
         const tr = document.createElement("tr");
 
         // Condición visual para badges de estado
-        let statusBadgeColor = "bg-gray-100 text-gray-800";
-        switch (sale.status) {
-          case "Completed":
-            statusBadgeColor = "bg-green-100 text-green-800";
+        let statusBadgeColor = 'bg-gray-100 text-gray-800';
+        switch(sale.status) {
+          case 'Completed':
+            statusBadgeColor = 'bg-green-100 text-green-800';
             break;
-          case "Refunded":
-            statusBadgeColor = "bg-amber-100 text-amber-800";
+          case 'Refunded':
+            statusBadgeColor = 'bg-amber-100 text-amber-800';
             break;
-          case "Voided":
-            statusBadgeColor = "bg-red-100 text-red-800";
+          case 'Voided':
+            statusBadgeColor = 'bg-red-100 text-red-800';
             break;
         }
 
         // Formateador de moneda regional nativo de JS
-        const currencyFormatter = new Intl.NumberFormat("es-MX", {
-          style: "currency",
-          currency: "MXN",
+        const currencyFormatter = new Intl.NumberFormat('es-MX', {
+          style: 'currency',
+          currency: 'MXN'
         });
 
         tr.innerHTML = `
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">#${sale.id_sale}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sale.transaction_date}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${sale.username || "Usuario #" + sale.user_id}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${sale.username || 'Usuario #' + sale.user_id}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
             <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-800">
               ${sale.payment_method}

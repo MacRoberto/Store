@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function fetchSalesDetails() {
   // Hace petición al archivo de php usando método POST
-  fetch("../php/sales_details.php", {
+  fetch("php/sales_details.php", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -24,9 +24,9 @@ function fetchSalesDetails() {
       }
 
       // Formateador de moneda regional nativo de JS
-      const currencyFormatter = new Intl.NumberFormat("es-MX", {
-        style: "currency",
-        currency: "MXN",
+      const currencyFormatter = new Intl.NumberFormat('es-MX', {
+        style: 'currency',
+        currency: 'MXN'
       });
 
       // Recorre los resultados para dibujar el desglose
@@ -34,10 +34,9 @@ function fetchSalesDetails() {
         const tr = document.createElement("tr");
 
         const discountValue = parseFloat(item.discount_applied);
-        const discountClass =
-          discountValue > 0
-            ? "text-red-600 font-semibold bg-red-50 px-1.5 py-0.5 rounded"
-            : "text-gray-500";
+        const discountClass = discountValue > 0 
+          ? 'text-red-600 font-semibold bg-red-50 px-1.5 py-0.5 rounded' 
+          : 'text-gray-500';
 
         tr.innerHTML = `
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">#${item.id_sale_item}</td>
@@ -55,7 +54,5 @@ function fetchSalesDetails() {
         tableBody.appendChild(tr);
       });
     })
-    .catch((error) =>
-      console.error("Error al obtener el desglose de venta:", error),
-    );
+    .catch((error) => console.error("Error al obtener el desglose de venta:", error));
 }

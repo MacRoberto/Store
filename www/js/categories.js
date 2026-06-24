@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function fetchCategories() {
   //hace petiicon al archivo de php usando metodo post
-  fetch("../php/categories.php", {
+  fetch("php/categories.php", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function fetchProducts() {
-  fetch("../php/products.php", {
+  fetch("php/products.php", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
