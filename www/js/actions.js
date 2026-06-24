@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function fetchActions() {
   // Hace petición al archivo de php usando método POST
-  fetch("php/actions.php", {
+  fetch("../php/actions.php", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

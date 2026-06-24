@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function fetchRoles() {
   // Hace petición al archivo de php usando método POST
-  fetch("php/roles.php", {
+  fetch("../php/roles.php", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

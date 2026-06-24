@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function fetchInventories() {
   // Hace petición al archivo de php usando método POST
-  fetch("php/inventories.php", {
+  fetch("../php/inventories.php", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -30,11 +30,13 @@ function fetchInventories() {
         tr.innerHTML = `
           <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Almacén / Lote #${inventory.id_inventory}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 font-medium">${inventory.arrival_date}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${inventory.username || 'Usuario #' + inventory.user_id}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${inventory.username || "Usuario #" + inventory.user_id}</td>
         `;
 
         tableBody.appendChild(tr);
       });
     })
-    .catch((error) => console.error("Error al obtener los registros de inventario:", error));
+    .catch((error) =>
+      console.error("Error al obtener los registros de inventario:", error),
+    );
 }
