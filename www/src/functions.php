@@ -21,6 +21,19 @@ function getAllCategories() {
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
+// Función para insertar registros en la tabla categories
+function insertCategories($name, $description) {
+    global $db;
+
+
+    $stmt = $db->prepare("INSERT INTO categories (name, description) VALUES (:name, :description)");
+    return $stmt->execute([
+        ':name' => trim($name),
+        ':description' => trim($description)
+    ]);
+}
+
+
 
 function getAllProducts() {
     global $db;
