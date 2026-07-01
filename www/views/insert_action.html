@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es" class="h-full bg-gray-50">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Insertar Acción</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="h-full flex flex-col items-center py-10">
+    <div class="w-full max-w-lg bg-white shadow-md rounded-lg p-6">
+      <h2 class="text-xl font-bold text-gray-800 mb-4">Registrar Nueva Acción</h2>
+      <form id="formInsertAction">
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700">Nombre de la Acción</label>
+          <input type="text" id="action_name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" required>
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700">Descripción</label>
+          <input type="text" id="action_description" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700">Módulo Destino</label>
+          <select id="action_module" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" required>
+            <option value="">Cargando módulos...</option>
+          </select>
+        </div>
+        <div class="flex gap-2 mt-6">
+          <button type="button" id="btnGuardar" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">Guardar</button>
+          <a href="actions.html" class="text-gray-600 px-4 py-2 rounded border hover:bg-gray-100">Cancelar</a>
+        </div>
+      </form>
+    </div>
+    <script src="../js/actions.js"></script>
+  </body>
+</html>

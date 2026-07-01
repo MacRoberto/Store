@@ -261,4 +261,38 @@ function getAllRolesPermissions() {
         return ['error' => $e->getMessage()];
     }
 }
+
+function insertAction($name, $description, $id_module) {
+    global $db;
+    try {
+        $stmt = $db->prepare("INSERT INTO actions (name, description, id_module) VALUES (:name, :description, :id_module)");
+        return $stmt->execute([
+            ':name' => $name,
+            ':description' => $description,
+            ':id_module' => $id_module
+        ]);
+    } catch (PDOException $e) { return false; }
+}
+
+function updateAction($id_action, $name, $description, $id_module) {
+    global $db;
+    try {
+        $stmt = $db->prepare("UPDATE actions SET name = :name, description = :description, id_module = :id_module WHERE id_action = :id_action");
+        return $stmt->execute([
+            ':name' => $name,
+            ':description' => $description,
+            ':id_module' => $id_module,
+            ':id_action' => $id_action
+        ]);
+    } catch (PDOException $e) { return false; }
+}
+
+function deleteAction($id_action) {
+    global $db;
+    try {
+        $stmt = $db->prepare("DELETE FROM actions WHERE id_action = :id_action");
+        return $stmt->execute([':id_action' => $id_action]);
+    } catch (PDOException $e) { return false; }
+}
+
 ?>
