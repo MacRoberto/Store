@@ -261,4 +261,21 @@ function getAllRolesPermissions() {
         return ['error' => $e->getMessage()];
     }
 }
+
+function insertInventoryMovement($datos) {
+    global $db;
+    $stmt = $db->prepare(
+        "INSERT INTO inventory_movements (id_inventory_item, user_id, movement_type, quantity, notes, movement_date)
+         VALUES (:item, :user, :type, :qty, :notes, NOW())"
+    );
+    $stmt->execute([
+        ":item"  => $datos["id_inventory_item"],
+        ":user"  => $datos["user_id"],
+        ":type"  => $datos["movement_type"],
+        ":qty"   => $datos["quantity"],
+        ":notes" => $datos["notes"],
+    ]);
+
+    return ["status" => "success", "id" => $db->lastInsertId()];
+}
 ?>

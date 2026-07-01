@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="es" class="h-full bg-gray-50">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kardex - Insertar Movimiento</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="h-full flex flex-col items-center py-10">
+    <div class="w-full ma   x-w-md bg-white shadow-md rounded-lg overflow-hidden p-6">
+      <h2 class="text-xl font-bold text-gray-800 mb-4">Registrar Movimiento</h2>
+
+      <form id="formNuevoMovimiento">
+        <div class="mb-4">      
+          <label for="idItem" class="block text-sm font-medium text-gray-700">Artículo</label>      
+           <select id="idItem" class="mt-1 block w-full bg-gray-50 border border-gray-300 rounded-md shadow-sm px-3 py-2" required>
+     <option value="">-- Selecciona un artículo --</option>
+        </select>
+          </div>
+
+        <div class="mb-4">
+          <label for="tipoMovimiento" class="block text-sm font-medium text-gray-700">Tipo de Movimiento</label>
+          <select id="tipoMovimiento" class="mt-1 block w-full bg-gray-50 border border-gray-300 rounded-md shadow-sm px-3 py-2" required>
+            <option value="Entry">Entry</option>
+            <option value="Sale">Sale</option>
+            <option value="Return">Return</option>
+            <option value="Adjustment">Adjustment</option>
+            <option value="Void">Void</option>
+          </select>
+        </div>
+
+        <div class="mb-4">
+          <label for="cantidad" class="block text-sm font-medium text-gray-700">Cantidad</label>
+          <input type="number" id="cantidad" class="mt-1 block w-full bg-gray-50 border border-gray-300 rounded-md shadow-sm px-3 py-2" required>
+        </div>
+
+        <div class="mb-4">
+          <label for="notas" class="block text-sm font-medium text-gray-700">Notas</label>
+          <textarea id="notas" class="mt-1 block w-full bg-gray-50 border border-gray-300 rounded-md shadow-sm px-3 py-2"></textarea>
+        </div>
+
+        <button id="btnGuardar" type="button" class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700">
+          guardar
+        </button>
+        <a href="inventory_movements.html" class="ml-2 text-sm text-gray-500">cancelar</a>
+      </form>
+    </div>
+
+    <script src="../js/inventory_movements.js"></script>
+  </body>
+</html>
