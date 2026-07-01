@@ -20,10 +20,11 @@ button.addEventListener("click", (e) => {
     .then((data) => {
       console.log(data);
 
-      if (data.status === "success") {
+       if (data.status === "success") {
+        localStorage.setItem("user", JSON.stringify(data.user));
         window.location.href = "users/index.html";
       } else {
-        const msg = data.message ?? data.msg ?? "Respuesta inválida del servidor";
+        const msg = data.message ?? data.msg ?? "Respuesta inválida del servido...";
         alert(msg);
       }
     })

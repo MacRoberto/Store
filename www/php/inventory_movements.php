@@ -9,6 +9,12 @@ header("Content-Type: application/json");
 if ($accion == "list") {
     $list = getAllInventoryMovements();
     echo json_encode($list);
+    } else if ($accion == "items") {
+    $items = getAllInventoryItems();
+    echo json_encode($items);
+    } else if ($accion == "insert") {
+    $result = insertInventoryMovement($_get);
+    echo json_encode($result);
 } else {
     echo json_encode([
         'status' => 'error',
