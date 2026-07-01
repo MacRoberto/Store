@@ -6,7 +6,38 @@
     <title>Módulo de Usuarios</title>
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
-  <body class="h-full flex flex-col items-center py-10">
+  <body class="h-full flex flex-col items-center py-10 space-y-6">
+    
+    <div class="w-full max-w-5xl bg-white shadow-md rounded-lg overflow-hidden p-6 border border-gray-200">
+      <h3 id="form-title" class="text-lg font-bold text-indigo-600 mb-4">👤 Registrar Nuevo Usuario</h3>
+      <form id="form-user" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+        <input type="hidden" id="id_user" value="">
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Nombre de Usuario</label>
+          <input type="text" id="username" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" required placeholder="Ej: cgomez">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">ID Rol</label>
+          <input type="number" id="id_rol" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" required placeholder="Ej: 1 (Admin), 2 (User)">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Estado</label>
+          <select id="status" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" required>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </div>
+
+        <div class="flex gap-2">
+          <button type="button" id="btn-cancel" class="hidden px-4 py-2 bg-gray-200 text-gray-700 font-medium text-sm rounded-md hover:bg-gray-300 transition">Cancelar</button>
+          <button type="submit" id="btn-submit" class="w-full px-4 py-2 bg-indigo-600 text-white font-medium text-sm rounded-md hover:bg-indigo-700 transition">Guardar</button>
+        </div>
+      </form>
+    </div>
+
     <div class="w-full max-w-5xl bg-white shadow-md rounded-lg overflow-hidden">
       <div class="px-6 py-4 bg-indigo-600 border-b border-gray-200">
         <h2 class="text-xl font-bold text-white">Directorio de Usuarios del Sistema</h2>
@@ -20,10 +51,10 @@
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre de Usuario</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rol / Permisos</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+              <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
             </tr>
           </thead>
-          <tbody id="usersTableBody" class="bg-white divide-y divide-gray-200">
-            </tbody>
+          <tbody id="usersTableBody" class="bg-white divide-y divide-gray-200"></tbody>
         </table>
       </div>
     </div>
