@@ -1,7 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
   const tableBody = document.getElementById("actionsTableBody");
   const formInsert = document.getElementById("formInsertAction");
-  const formEdit = document.getElementById("formEditAction");
 
   if (tableBody) {
     fetchActions();
@@ -21,31 +20,6 @@ document.addEventListener("DOMContentLoaded", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "insert", name: name, description: desc, id_module: mod })
-      }).then(res => res.json()).then(data => {
-        if (data.status === "success") window.location.href = "actions.html";
-        else alert(data.msg);
-      });
-    });
-  }
-
-  if (formEdit) {
-    cargarModulosSelect(document.getElementById("action_module_edit"));
-    
-    const params = new URLSearchParams(window.location.search);
-    document.getElementById("action_id_edit").value = params.get('id');
-
-    document.getElementById("btnActualizar").addEventListener("click", () => {
-      const id = document.getElementById("action_id_edit").value;
-      const name = document.getElementById("action_name_edit").value;
-      const desc = document.getElementById("action_desc_edit").value;
-      const mod = document.getElementById("action_module_edit").value;
-
-      if (!name || !mod) return alert("Llena los campos obligatorios");
-
-      fetch("../php/actions.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "update", id_action: id, name: name, description: desc, id_module: mod })
       }).then(res => res.json()).then(data => {
         if (data.status === "success") window.location.href = "actions.html";
         else alert(data.msg);
@@ -81,8 +55,8 @@ function fetchActions() {
             ${item.description || '<span class="text-gray-300 italic">Sin descripción</span>'}
           </td>
           <td class="px-6 py-4 text-sm font-medium">
-            <a href="edit_action.html?id=${item.id_action}" class="text-indigo-600 hover:text-indigo-900 mr-3">Editar</a>
-            <button onclick="borrarAction(${item.id_action})" class="text-red-600 hover:text-red-900">Eliminar</button>
+            <a href="edit_action.html" class="text-indigo-600 hover:text-indigo-900 mr-3">Editar</a>
+            <a href="delete_action.html" class="text-red-600 hover:text-red-900">Eliminar</a>
           </td>
         `;
         tableBody.appendChild(tr);
@@ -103,17 +77,4 @@ function cargarModulosSelect(selectElement) {
       });
     }
   });
-}
-
-function borrarAction(id) {
-  if (confirm("¿Estás seguro de eliminar esta acción?")) {
-    fetch("../php/actions.php", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "delete", id_action: id })
-    }).then(res => res.json()).then(data => {
-      if (data.status === "success") fetchActions();
-      else alert(data.msg);
-    });
-  }
 }

@@ -17,7 +17,7 @@ $data = null;
 
 switch ($accion) {
     case 'getModules':
-        $data = getAllModules();
+        $data = getAllModules(); 
         if ($data !== false) { $status = "success"; }
         break;
 
@@ -25,18 +25,6 @@ switch ($accion) {
         if (insertAction($_post['name'], $_post['description'], $_post['id_module'])) {
             $status = "success"; $msg = "Insertado correctamente";
         } else { $msg = "Error al insertar"; }
-        break;
-
-    case 'update':
-        if (updateAction($_post['id_action'], $_post['name'], $_post['description'], $_post['id_module'])) {
-            $status = "success"; $msg = "Actualizado correctamente";
-        } else { $msg = "Error al actualizar"; }
-        break;
-
-    case 'delete':
-        if (deleteAction($_post['id_action'])) {
-            $status = "success"; $msg = "Eliminado correctamente";
-        } else { $msg = "No se puede eliminar. Puede estar asignado a un rol."; }
         break;
 }
 
