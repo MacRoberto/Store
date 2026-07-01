@@ -14,38 +14,25 @@
         </h2>
       </div>
 
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              <th
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                ID Acción
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Acción / Permiso
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Módulo Destino
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Descripción
-              </th>
-            </tr>
-          </thead>
-          <tbody
-            id="actionsTableBody"
-            class="bg-white divide-y divide-gray-200"
-          ></tbody>
-        </table>
-      </div>
+<div class="px-6 py-4 bg-white border-b border-gray-200">
+  <a href="insert_action.html" class="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700 text-sm font-medium">Registrar Nueva Acción</a>
+</div>
+
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID Acción</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acción / Permiso</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Módulo Destino</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="actionsTableBody" class="bg-white divide-y divide-gray-200"></tbody>
+      </table>
+    </div>
+    
     </div>
 
     <script src="../js/actions.js"></script>

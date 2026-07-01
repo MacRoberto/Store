@@ -261,4 +261,17 @@ function getAllRolesPermissions() {
         return ['error' => $e->getMessage()];
     }
 }
+
+function insertAction($name, $description, $id_module) {
+    global $db;
+    try {
+        $stmt = $db->prepare("INSERT INTO actions (name, description, id_module) VALUES (:name, :description, :id_module)");
+        return $stmt->execute([
+            ':name' => $name,
+            ':description' => $description,
+            ':id_module' => $id_module
+        ]);
+    } catch (PDOException $e) { return false; }
+}
+
 ?>

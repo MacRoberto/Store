@@ -1,23 +1,32 @@
 <?php
 require_once "../src/functions.php";
 
-// Se reciben los parámetros raw del JSON payload
-$_get = json_decode(file_get_contents("php://input"), true);
-$accion = $_get['action'] ?? "";
+$_post = json_decode(file_get_contents("php://input"), true);
+$accion = $_post['action'] ?? "";
 
 header("Content-Type: application/json");
 
 if ($accion == "list") {
-    // Manda a llamar la función que realiza la consulta a la bd
-    $list = getAllActions();
-    
-    // Regresa la información solicitada
-    echo json_encode($list);
-} else {
-    // En caso de parámetro inválido
-    echo json_encode([
-        'status' => 'error',
-        'msg' => 'Action invalid'
-    ]);
+    echo json_encode(getAllActions());
+    exit;
 }
+
+$status = "error";
+$msg = "Action invalid";
+$data = null;
+
+switch ($accion) {
+    case 'getModules':
+        $data = getAllModules(); 
+        if ($data !== false) { $status = "success"; }
+        break;
+
+    case 'insert':
+        if (insertAction($_post['name'], $_post['description'], $_post['id_module'])) {
+            $status = "success"; $msg = "Insertado correctamente";
+        } else { $msg = "Error al insertar"; }
+        break;
+}
+
+echo json_encode(['status' => $status, 'msg' => $msg, 'data' => $data]);
 ?>
