@@ -1,9 +1,9 @@
 <?php
 require_once "../src/functions.php";
 //Se reciben los parametros
-$_get = json_decode(file_get_contents("php://input"), true);
+$data = json_decode(file_get_contents("php://input"), true);
 
-$accion = $_get['action'] ?? "";
+$accion = $data['action'] ?? "";
 
 header("Content-Type: application/json");
 if($accion == "list"){
@@ -11,7 +11,11 @@ if($accion == "list"){
     $list = getAllCategories();
     //regresa la informacion solicitada
     echo json_encode($list);
-}else{
+} elseif ($accion == "insert") {
+
+    echo json_encode(insertCategories( $data['name'], $data['description']));
+    
+} else{
     //en caso de parametro invalido
     echo json_encode([
         'status' => 'error',
@@ -19,3 +23,4 @@ if($accion == "list"){
     ]);
 }
 ?>
+
