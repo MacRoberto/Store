@@ -83,24 +83,17 @@ function getAllInventoryMovements() {
     }
 }
 
-function getAllInventoryItems() {
+
+function insertInventory($data) {
     global $db;
     try {
-        // Ejecutamos JOINs hacia productos e inventarios (almacenes) principales
-        // Nota: Ajusta 'inv.name' según el nombre exacto de la columna en tu tabla 'inventories'
-        $query = "SELECT ii.id_inventory_item, ii.product_id, ii.id_inventory, 
-                         ii.cost_price, ii.quantity_received, ii.quantity_available, 
-                         ii.status, ii.sale_price,
-                         p.name AS product_name
-                  FROM inventory_items ii
-                  LEFT JOIN products p ON ii.product_id = p.id_product
-                  LEFT JOIN inventories inv ON ii.id_inventory = inv.id_inventory
-                  ORDER BY ii.id_inventory_item DESC";
-                  
+        $query = "INSERT    INTO inventories (user_id, arrival_date) VALUES (:user_id, :arrival_date)";
         $stmt = $db->prepare($query);
+        $stmt->bindParam(':user_id', $data['user_id']);
+        $stmt->bindParam(':arrival_date', $data['arrival_date']);
         $stmt->execute();
-        
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return $db->lastInsertId();
     } catch (PDOException $e) {
         return ['error' => $e->getMessage()];
     }
@@ -130,9 +123,8 @@ function getAllSales() {
 function getAllInventories() {
     global $db;
     try {
-        // Consultamos la tabla de inventarios vinculando los datos de la cuenta de usuario encargada
         $query = "SELECT i.id_inventory, i.user_id, i.arrival_date,
-                         u.email AS username
+                         u.username AS username
                   FROM inventories i
                   LEFT JOIN users u ON i.user_id = u.id_user
                   ORDER BY i.arrival_date DESC";
