@@ -133,6 +133,18 @@ function saveProduct(event) {
     reorder_level: document.getElementById("reorder_level").value,
     status: document.getElementById("status").value,
 };
+// -------- Mensaje flotante de feedback --------
+function showFeedback(msg, ok) {
+  const el = document.getElementById("feedbackMsg");
+  el.textContent = msg;
+  el.className =
+    "fixed top-4 right-4 px-4 py-3 rounded-md shadow-lg text-sm font-medium z-50 " +
+    (ok ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800");
+
+  setTimeout(() => {
+    el.classList.add("hidden");
+  }, 3500);
+}
 
   fetch("../php/products.php", {
     method: "POST",

@@ -11,17 +11,9 @@ if ($accion == "list") {
     
     echo json_encode($list);
 
-} elseif ($accion == "create") {
+} else if ($accion == "create") {
     $result = createProduct($_get);
     echo json_encode($result);
-
-} elseif ($accion == "update") {
-    $id = $_get['id_product'] ?? null;
-
-    if (!$id) {
-        echo json_encode(['status' => 'error', 'msg' => 'Falta id_product']);
-        exit;
-    }
 
 } else {
     echo json_encode([
