@@ -26,7 +26,7 @@ function getAllProducts() {
     global $db;
     try {
         // Hacemos un JOIN para obtener el nombre de la categoría asignada al producto
-        $query = "SELECT p.id_product, p.barcode, p.name AS product_name, p.description, 
+        $query = "SELECT p.id_product, p.barcode, p.name AS product_name, p.category_id, p.description, 
                          p.reorder_level, p.status, p.unit, c.name AS category_name 
                   FROM products p
                   LEFT JOIN categories c ON p.category_id = c.id_cat
@@ -38,6 +38,32 @@ function getAllProducts() {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
         return ['error' => $e->getMessage()];
+    }
+}
+// Inserta un nuevo producto
+function createProduct($data) {
+    global $db;
+    try {
+        $barcode = $data['barcode'];
+        $name = $data['name'];
+        $category_id = $data['category_id'];
+        $description = $data['description'];
+        $reorder_level = $data['reorder_level'];
+        $status = $data['status'];
+        $unit = $data['unit'];
+
+        $query = "INSERT INTO products (barcode, name, category_id, description, reorder_level, status, unit)
+                  VALUES ('$barcode', '$name', '$category_id', '$description', '$reorder_level', '$status', '$unit')";
+
+        $db->query($query);
+
+        return [
+            'status' => 'success',
+            'msg' => 'Producto creado correctamente',
+            'id_product' => $db->lastInsertId()
+        ];
+    } catch (PDOException $e) {
+        return ['status' => 'error', 'msg' => $e->getMessage()];
     }
 }
 
