@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="es" class="h-full bg-gray-50">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Panel de Módulos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="h-full bg-gray-50 py-10 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-6xl mx-auto">
+      <div class="pb-5 border-b border-gray-200 mb-8">
+        <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight">
+          Módulos del Sistema
+        </h2>
+        <p class="mt-2 text-sm text-gray-500">
+          Selecciona o administra los componentes funcionales instalados.
+        </p>
+      </div>
+
+      <div
+        id="modulesGridContainer"
+        class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+      ></div>
+    </div>
+
+    <script src="../js/modules.js"></script>
+  </body>
+</html>
