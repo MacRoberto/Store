@@ -3,6 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function fetchProducts() {
+  //onload mostrar un icono de cargando
   fetch("../php/products.php", {
     method: "POST",
     headers: {
@@ -45,8 +46,44 @@ function fetchProducts() {
           </td>
         `;
 
+        //Se agrega evento a cada fila
+        tr.addEventListener("click", function (event) {
+          rowClick(event, product); //Se manda a llamar el evento on click y se le pasa el objeto producto
+        });
+
         tableBody.appendChild(tr);
       });
     })
     .catch((error) => console.error("Error al obtener los productos:", error));
+}
+
+//Variables globales
+let filaSeleccionada = null; //variable donde se almacena la fila donde el usuario dio click
+let productoSeleccionadoId = null; // variable para almacenar el id del producto dependiendo en que fila dio click el usuario
+
+//Funcion que se ejecuta cuando se hace click en la fila de la tabla
+//Se usa para mostrar u ocultar el boton que sirve para eliminar un registro
+function rowClick(event, product) {
+  //Mostrar boton para eliminar
+  const btnEliminar = document.getElementById("btnEliminarProductos");
+
+  // Obtener el tr donde se hizo click
+  const tr = event.currentTarget;
+  // Quitar color a la fila seleccionada anteriormente
+  if (filaSeleccionada) {
+    filaSeleccionada.classList.remove(
+      "bg-indigo-100",
+      "ring-2",
+      "ring-indigo-400",
+    );
+  }
+
+  // Guardar la fila y el producto seleccionado
+  filaSeleccionada = tr;
+  productoSeleccionadoId = product.id_product;
+  // Agregar color a la nueva fila seleccionada
+  tr.classList.add("bg-indigo-100", "ring-2", "ring-indigo-400");
+
+  // Mostrar botón eliminar
+  btnEliminar.classList.remove("hidden"); //Quitar la clase hidden para hacer visible el boton
 }
