@@ -21,7 +21,8 @@ function getAllCategories() {
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-
+/*Funciones para el modulo de productos*/
+//
 function getAllProducts() {
     global $db;
     try {
@@ -40,6 +41,45 @@ function getAllProducts() {
         return ['error' => $e->getMessage()];
     }
 }
+
+//funcion para cambiar el estatus de un producto 
+
+function updateProductStatus($id_product){
+    global $db ;
+    try {
+        $query = "UPDATE products Set status = 'Inactive' WHERE id_product = :id_product";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_product', $id_product);
+        $stmt->execute();
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+//funcion para guardar un producto
+
+function saveProduct($barcode, $name, $description, $reorder_level, $status, $unit, $category_id) {
+    global $db;
+    try {
+        $query = "INSERT INTO products (barcode, name, description, reorder_level, status, unit, category_id)
+                    VALUES (:barcode, :name, :desccription, :reorder_level, :status, :unit, :category_id)";
+                    $stmt = $db->prepare($query);
+                    $stmt->bindParam(':barcode', $barcode);
+                    $stmt->bindparam(':name', $name);
+                    $stmt->bindparam(':description', $description);
+                    $stmt->bindparam(':reorder_level', $reorder_level);
+                    $stmt->bindparam(':unit', $unit);
+                    $stmt->bindparam(':status', $status);
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+//funcion para actualizar informacion de un producto
+
+//Funcion para recuperar un registro en especifico
+
+/*Fin de funciones para el modulo de productos*/
 
 function getAllPromotions() {
     global $db;
