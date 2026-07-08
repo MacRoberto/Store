@@ -14,31 +14,13 @@
         <h2 class="text-xl font-bold text-white">Products List</h2>
 
         <div class="flex items-center gap-4">
-          <button id="btnAdd" class="block">
+          <button
+            id="btnRemove"
+            onclick="deleteRecords('products')"
+            class="block hidden"
+          >
             <a
-              href="add_products.html"
-              class="text-white font-semibold hover:text-gray-200 block"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke-width="2.5"
-                stroke="currentColor"
-                class="w-6 h-6"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                />
-              </svg>
-            </a>
-          </button>
-
-          <button id="btnRemove" class="block">
-            <a
-              href="remove_products.html"
+              href="#"
               class="text-white font-semibold hover:text-gray-200 block"
             >
               <svg
@@ -58,9 +40,9 @@
             </a>
           </button>
 
-          <button id="btnEdit" class="block">
+          <button id="btnEdit" onclick="editRecords()" class="block hidden">
             <a
-              href="edit_products.html"
+              href="#"
               class="text-white font-semibold hover:text-gray-200 block"
             >
               <svg
@@ -79,17 +61,29 @@
               </svg>
             </a>
           </button>
-        </div>
 
-        <!--
-        <button
-          type="button"
-          id="btnEliminarProductos"
-          class="hidden bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition"
-        >
-          Eliminar
-        </button>
-        -->
+          <button id="btnAdd" class="block">
+            <a
+              href="forms/products.html"
+              class="text-white font-semibold hover:text-gray-200 block"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="2.5"
+                stroke="currentColor"
+                class="w-6 h-6"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                />
+              </svg>
+            </a>
+          </button>
+        </div>
       </div>
 
       <div class="overflow-x-auto">
@@ -145,7 +139,8 @@
         </table>
       </div>
     </div>
-
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../js/function.js"></script>
     <script src="../js/products.js"></script>
   </body>
 </html>

@@ -25,15 +25,16 @@ function fetchPromotions() {
       data.forEach((promo) => {
         const tr = document.createElement("tr");
 
-        const statusBadgeColor = promo.status === 'Active' 
-          ? 'bg-green-100 text-green-800' 
-          : 'bg-red-100 text-red-800';
+        const statusBadgeColor =
+          promo.status === "Active"
+            ? "bg-green-100 text-green-800"
+            : "bg-red-100 text-red-800";
 
         tr.innerHTML = `
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${promo.id_promotion}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">${promo.promotion_name}</td>
-          <td class="px-6 py-4 text-sm text-gray-500">${promo.description || '-'}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-medium">${promo.product_name || 'Todos los productos'}</td>
+          <td class="px-6 py-4 text-sm text-gray-500">${promo.description || "-"}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-medium">${promo.product_name || "Todos los productos"}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-indigo-600 font-bold">${promo.percent_off}% OFF</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${promo.date_start} a ${promo.date_end}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm">
@@ -46,5 +47,7 @@ function fetchPromotions() {
         tableBody.appendChild(tr);
       });
     })
-    .catch((error) => console.error("Error al obtener las promociones:", error));
+    .catch((error) =>
+      console.error("Error al obtener las promociones:", error),
+    );
 }
