@@ -31,14 +31,14 @@ export function rowClick(event, dataID) {
 export function deleteRecords(file) {
   //products
   Swal.fire({
-    title: "¿Estás seguro?",
-    text: "No podrás revertir esta acción",
+    title: "¿Are you sure to delete this record?",
+    text: "You won't be able to revert this action",
     icon: "warning",
     showCancelButton: true,
     confirmButtonColor: "#3085d6",
     cancelButtonColor: "#d33",
-    confirmButtonText: "Sí, eliminar",
-    cancelButtonText: "Cancelar",
+    confirmButtonText: "Yes, delete",
+    cancelButtonText: "Cancel",
   }).then((result) => {
     if (result.isConfirmed) {
       //Hacer peticion para eliminar el registro
@@ -55,21 +55,91 @@ export function deleteRecords(file) {
         .then((response) => response.json())
         .then((data) => {
           Swal.fire({
-            title: "Eliminado",
-            text: "Registro eliminado correctamente",
+            title: "Deleted",
+            text: "Record deleted successfully",
             icon: "success",
           });
         })
-        .catch((error) =>
-          console.error("Error al eliminar el registro:", error),
-        );
+        .catch((error) => console.error("Error deleting record:", error));
     }
   });
 }
 
 //Funcion que se ejecuta cuando el usuario da clic en el boton de editar
 export function editRecords() {
-  alert("producto seleccionado: " + recordSelectedID);
+  alert("are you sure to edit record? " + recordSelectedID);
+
+  export function editRecords(file, data) {
+    Swal.fire({
+      title: "¿Are you sure to update this record?",
+      text: "This will overwrite the existing information",
+      icon: "info",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, update",
+      cancelButtonText: "Cancel",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        fetch("../php/" + file + ".php", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action: "edit",
+            id: recordSelectedID,
+            ...data,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            Swal.fire({
+              title: "Updated",
+              text: "Record updated successfully",
+              icon: "success",
+            });
+          })
+          .catch((error) => console.error("Error updating record:", error));
+      }
+    });
+  }
+}
+export function AddRecords() {
+  export function addRecords(file, data) {
+    Swal.fire({
+      title: "¿Are you sure to Add record?",
+      text: "Please confirm that the data is correct",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, save",
+      cancelButtonText: "Cancel",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        fetch("../php/" + file + ".php", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action: "add",
+            ...data,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            Swal.fire({
+              title: "Saved",
+              text: "Record saved successfully",
+              icon: "success",
+            });
+          })
+          .catch((error) => console.error("Error saving record:", error));
+      }
+    });
+  }
 }
 
 //Formulario
