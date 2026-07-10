@@ -1,9 +1,23 @@
-import { rowClick, deleteRecords, editRecords } from "./function.js";
+import {
+  rowClick,
+  deleteRecords,
+  editRecords,
+  AddRecords,
+} from "./function.js";
 
 document.addEventListener("DOMContentLoaded", () => {
+  //
   const btnRemove = document.getElementById("btnRemove");
+  const btnEdit = document.getElementById("btnEdit");
+  const btnAdd = document.getElementById("btnAdd");
   btnRemove.addEventListener("click", function (event) {
     deleteRecords("products"); //Se manda a llamar el evento on click
+  });
+  btnEdit.addEventListener("click", function (event) {
+    editRecords(); //Se manda a llamar el evento on click
+  });
+  btnAdd.addEventListener("click", function (event) {
+    AddRecords(); //Se manda a llamar el evento on click
   });
   fetchProducts();
 });
