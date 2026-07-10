@@ -1,4 +1,10 @@
+import { rowClick, deleteRecords, editRecords } from "./function.js";
+
 document.addEventListener("DOMContentLoaded", () => {
+  const btnRemove = document.getElementById("btnRemove");
+  btnRemove.addEventListener("click", function (event) {
+    deleteRecords("products"); //Se manda a llamar el evento on click
+  });
   fetchProducts();
 });
 

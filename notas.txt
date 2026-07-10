@@ -1,1 +1,4 @@
 //Funcionalidad del cambio de estatus de un registro
+
+
+//Ajustes 
