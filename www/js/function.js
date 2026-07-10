@@ -4,7 +4,7 @@ let recordSelectedID = null; // variable para almacenar el id del producto depen
 
 //Funcion que se ejecuta cuando se hace click en la fila de la tabla
 //Se usa para mostrar u ocultar el boton que sirve para eliminar un registro
-function rowClick(event, dataID) {
+export function rowClick(event, dataID) {
   //Mostrar boton para eliminar
   const btnRemove = document.getElementById("btnRemove");
   const btnEdit = document.getElementById("btnEdit");
@@ -28,7 +28,7 @@ function rowClick(event, dataID) {
 }
 
 //Funcion que se ejecuta cuando el usuario da clic en el boton de eliminar
-function deleteRecords(file) {
+export function deleteRecords(file) {
   //products
   Swal.fire({
     title: "¿Estás seguro?",
@@ -68,7 +68,7 @@ function deleteRecords(file) {
 }
 
 //Funcion que se ejecuta cuando el usuario da clic en el boton de editar
-function editRecords() {
+export function editRecords() {
   alert("producto seleccionado: " + recordSelectedID);
 }
 

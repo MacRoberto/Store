@@ -14,7 +14,7 @@ if ($accion == "list") {
     $id_producto = $_get['id']; 
     //llamar funcion para cambiar estatus a inactivo
     $result = updateProductStatus($id_producto);
-    
+    echo json_encode($result);
 }else if($accion == "save") {
     $barcode = $_get['barcode'] ?? "";
     $name = $_get['name'] ?? "";

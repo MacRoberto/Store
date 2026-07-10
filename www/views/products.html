@@ -14,11 +14,7 @@
         <h2 class="text-xl font-bold text-white">Products List</h2>
 
         <div class="flex items-center gap-4">
-          <button
-            id="btnRemove"
-            onclick="deleteRecords('products')"
-            class="block hidden"
-          >
+          <button id="btnRemove" class="block hidden">
             <a
               href="#"
               class="text-white font-semibold hover:text-gray-200 block"
@@ -40,7 +36,7 @@
             </a>
           </button>
 
-          <button id="btnEdit" onclick="editRecords()" class="block hidden">
+          <button id="btnEdit" class="block hidden">
             <a
               href="#"
               class="text-white font-semibold hover:text-gray-200 block"
@@ -140,7 +136,6 @@
       </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="../js/function.js"></script>
-    <script src="../js/products.js"></script>
+    <script type="module" src="../js/products.js"></script>
   </body>
 </html>
