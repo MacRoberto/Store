@@ -2,7 +2,8 @@ import {
   rowClick,
   deleteRecords,
   editRecords,
-  AddRecords,
+  saveRecords,
+  loadView,
 } from "./function.js";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -17,7 +18,15 @@ document.addEventListener("DOMContentLoaded", () => {
     editRecords(); //Se manda a llamar el evento on click
   });
   btnAdd.addEventListener("click", function (event) {
-    AddRecords(); //Se manda a llamar el evento on click
+    loadView("../views/forms/products.html", "content").then(() => {
+      const form = document.getElementById("itemForm");
+
+      form.addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        saveRecords("products", form);
+      });
+    });
   });
   fetchProducts();
 });
