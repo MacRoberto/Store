@@ -66,123 +66,92 @@ export function deleteRecords(file) {
 }
 
 //Funcion que se ejecuta cuando el usuario da clic en el boton de editar
-export function editRecords() {
-  alert("are you sure to edit record? " + recordSelectedID);
-
-  export function editRecords(file, data) {
-    Swal.fire({
-      title: "¿Are you sure to update this record?",
-      text: "This will overwrite the existing information",
-      icon: "info",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Yes, update",
-      cancelButtonText: "Cancel",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        fetch("../php/" + file + ".php", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            action: "edit",
-            id: recordSelectedID,
-            ...data,
-          }),
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            Swal.fire({
-              title: "Updated",
-              text: "Record updated successfully",
-              icon: "success",
-            });
-          })
-          .catch((error) => console.error("Error updating record:", error));
-      }
-    });
-  }
-}
-export function AddRecords() {
-  export function addRecords(file, data) {
-    Swal.fire({
-      title: "¿Are you sure to Add record?",
-      text: "Please confirm that the data is correct",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Yes, save",
-      cancelButtonText: "Cancel",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        fetch("../php/" + file + ".php", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            action: "add",
-            ...data,
-          }),
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            Swal.fire({
-              title: "Saved",
-              text: "Record saved successfully",
-              icon: "success",
-            });
-          })
-          .catch((error) => console.error("Error saving record:", error));
-      }
-    });
-  }
-}
-
-//Formulario
-const itemForm = document.getElementById("itemForm");
-//boton de save
-const btnSave = document.getElementById("btnSave");
-if (itemForm) {
-  //Validar si existe el formulario
-  itemForm.addEventListener("submit", function (event) {
-    event.preventDefault();
-
-    const formData = new FormData(itemForm);
-
-    fetch("../../php/" + itemForm.action + ".php", {
-      method: itemForm.method,
-      body: formData,
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
+export function editRecords(file, data) {
+  Swal.fire({
+    title: "¿Are you sure to update this record?",
+    text: "This will overwrite the existing information",
+    icon: "info",
+    showCancelButton: true,
+    confirmButtonColor: "#3085d6",
+    cancelButtonColor: "#d33",
+    confirmButtonText: "Yes, update",
+    cancelButtonText: "Cancel",
+  }).then((result) => {
+    if (result.isConfirmed) {
+      fetch("../php/" + file + ".php", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "edit",
+          id: recordSelectedID,
+          ...data,
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
           Swal.fire({
-            title: "Saved",
-            text: "The item has been saved successfully.",
+            title: "Updated",
+            text: "Record updated successfully",
             icon: "success",
           });
+        })
+        .catch((error) => console.error("Error updating record:", error));
+    }
+  });
+}
 
-          itemForm.reset();
-        } else {
-          Swal.fire({
-            title: "Error",
-            text: data.message || "The item could not be saved.",
-            icon: "error",
-          });
-        }
-      })
-      .catch((error) => {
-        console.error(error);
+export function loadView(file, containerId) {
+  const container = document.getElementById(containerId);
 
-        Swal.fire({
-          title: "Error",
-          text: "There was a problem saving the item.",
-          icon: "error",
-        });
+  return fetch(file)
+    .then((response) => response.text())
+    .then((html) => {
+      container.innerHTML = html;
+    })
+    .catch((error) => {
+      console.error("Error loading view:", error);
+
+      Swal.fire({
+        title: "Error",
+        text: "The form could not be loaded.",
+        icon: "error",
       });
+    });
+}
+
+export function saveRecords(file, data) {
+  Swal.fire({
+    title: "¿Are you sure to Add record?",
+    text: "Please confirm that the data is correct",
+    icon: "question",
+    showCancelButton: true,
+    confirmButtonColor: "#3085d6",
+    cancelButtonColor: "#d33",
+    confirmButtonText: "Yes, save",
+    cancelButtonText: "Cancel",
+  }).then((result) => {
+    if (result.isConfirmed) {
+      fetch("../php/" + file + ".php", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "save",
+          ...data,
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          Swal.fire({
+            title: "Saved",
+            text: "Record saved successfully",
+            icon: "success",
+          });
+        })
+        .catch((error) => console.error("Error saving record:", error));
+    }
   });
 }
