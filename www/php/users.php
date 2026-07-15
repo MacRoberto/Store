@@ -13,7 +13,19 @@ if ($accion == "list") {
     // Regresa la información solicitada
     echo json_encode($list);
 
-} elseif ($accion == "login") {
+}  elseif ($accion == "selectOptions") {
+    echo json_encode(getRoleOptions());
+
+} elseif ($accion == "save") {
+    $username = $_get['username'] ?? '';
+    $password = $_get['password'] ?? '';
+    $id_rol   = $_get['id_rol'] ?? '';
+    $status   = $_get['status'] ?? 'Active';
+
+    echo json_encode(saveUser($username, $password, $id_rol, $status));
+
+
+}elseif ($accion == "login") {
     $email = $_get['email'] ?? '';
     $password = $_get['password'] ?? '';
 

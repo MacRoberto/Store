@@ -19,14 +19,13 @@ document.addEventListener("DOMContentLoaded", () => {
     editRecords();
   });
   btnAdd.addEventListener("click", function (event) {
-    loadView("../views/forms/products.html", "content").then(() => {
+    loadView("../views/forms/categories.html", "content").then(() => {
       const form = document.getElementById("itemForm");
 
-      loadSelectOptions("categories", "category");
       form.addEventListener("submit", function (event) {
         event.preventDefault();
 
-        saveRecords("products", form);
+        saveRecords("categories", form);
       });
     });
   });

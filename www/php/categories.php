@@ -16,6 +16,13 @@ if($accion == "list"){
     $list = getCategoryOptions();
     //regresa la informacion solicitada
     echo json_encode($list);
+}else if ($accion == "save") {
+    $name = $_get['name'] ?? '';
+    $description = $_get['description'] ?? '';
+
+    $result = saveCategory($name, $description);
+    echo json_encode($result);
+
 
 }else{
     //en caso de parametro invalido

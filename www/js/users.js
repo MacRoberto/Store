@@ -22,7 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
     loadView("../views/forms/users.html", "content").then(() => {
       const form = document.getElementById("itemForm");
 
-      loadSelectOptions("users", "category");
+      loadSelectOptions("users", "id_rol");
       form.addEventListener("submit", function (event) {
         event.preventDefault();
 

@@ -30,6 +30,29 @@ function getCategoryOptions() {
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
+function saveCategory($name, $description) {
+    global $db;
+
+    try {
+        $query = "INSERT INTO categories (name, description)
+                  VALUES (:name, :description)";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':name', $name);
+        $stmt->bindParam(':description', $description);
+        $stmt->execute();
+
+        return [
+            "status" => "success",
+            "message" => "Category saved successfully"
+        ];
+    } catch (PDOException $e) {
+        return [
+            "status" => "error",
+            "message" => $e->getMessage()
+        ];
+    }
+}
+
 /** Fin de Funciones para el modulo de categorias */
 
 /*Funciones para el modulo de productos*/
@@ -215,6 +238,40 @@ function getAllUsers() {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
         return ['error' => $e->getMessage()];
+    }
+}
+
+function getRoleOptions() {
+    global $db;
+    try {
+        $query = "SELECT id_rol AS id, name FROM roles";
+        $stmt = $db->prepare($query);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function saveUser($username, $password, $id_rol, $status) {
+    global $db;
+    try {
+        $password_hash = password_hash($password, PASSWORD_DEFAULT);
+
+        $query = "INSERT INTO users (username, password_hash, id_rol, status)
+                  VALUES (:username, :password_hash, :id_rol, :status)";
+
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':username', $username);
+        $stmt->bindParam(':password_hash', $password_hash);
+        $stmt->bindParam(':id_rol', $id_rol);
+        $stmt->bindParam(':status', $status);
+        $stmt->execute();
+
+        return ['status' => 'success', 'msg' => 'User saved successfully'];
+    } catch (PDOException $e) {
+        return ['status' => 'error', 'msg' => $e->getMessage()];
     }
 }
 
