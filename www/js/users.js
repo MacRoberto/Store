@@ -1,4 +1,36 @@
+import {
+  rowClick,
+  deleteRecords,
+  editRecords,
+  saveRecords,
+  loadView,
+  loadSelectOptions,
+} from "./function.js";
+
 document.addEventListener("DOMContentLoaded", () => {
+  
+  const btnRemove = document.getElementById("btnRemove");
+  const btnEdit = document.getElementById("btnEdit");
+  const btnAdd = document.getElementById("btnAdd");
+  btnRemove.addEventListener("click", function (event) {
+    deleteRecords("users");
+  });
+  btnEdit.addEventListener("click", function (event) {
+    editRecords();
+  });
+  btnAdd.addEventListener("click", function (event) {
+    loadView("../views/forms/users.html", "content").then(() => {
+      const form = document.getElementById("itemForm");
+
+      loadSelectOptions("users", "category");
+      form.addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        saveRecords("users", form);
+      });
+    });
+  });
+
   fetchUsers();
 });
 
@@ -51,6 +83,10 @@ function fetchUsers() {
             </span>
           </td>
         `;
+
+          tr.addEventListener("click", function (event) {
+              rowClick(event, ); //Se manda a llamar el evento on click y se le pasa el objeto producto
+          });
 
         tableBody.appendChild(tr);
       });
