@@ -22,10 +22,10 @@ if ($accion == "list") {
     $description = $_get['description'] ?? "";
     $reorder_level = $_get['reorder_level'] ?? "";
     $status = $_get['status'] ?? "";
-    $unit = $_get['unit'] ?? "";
+    $units = $_get['units'] ?? "";
 
     //llamar funcion para guardar producto
-    $result = saveProduct($barcode, $name, $category_id, $description, $reorder_level, $status, $unit);
+    $result = saveProduct($barcode, $name, $category_id, $description, $reorder_level, $status, $units);
     
     echo json_encode($result);
 } else {

@@ -14,12 +14,23 @@ function login($email, $password) {
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
+/** Funciones para el modulo de categorias */
 // Función para recuperar registros de la tabla categories
 function getAllCategories() {
     global $db;
     $stmt = $db->query("SELECT id_cat, name, description FROM categories");
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
+
+//Funcion para recuperar id y nombre de gategorias, el cual sirve para llenar el select en productos
+
+function getCategoryOptions() {
+    global $db;
+    $stmt = $db->query("SELECT id_cat as id, name FROM categories");
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+/** Fin de Funciones para el modulo de categorias */
 
 /*Funciones para el modulo de productos*/
 //
@@ -63,13 +74,14 @@ function saveProduct($barcode, $name, $description, $reorder_level, $status, $un
     try {
         $query = "INSERT INTO products (barcode, name, description, reorder_level, status, unit, category_id)
                     VALUES (:barcode, :name, :desccription, :reorder_level, :status, :unit, :category_id)";
-                    $stmt = $db->prepare($query);
-                    $stmt->bindParam(':barcode', $barcode);
-                    $stmt->bindparam(':name', $name);
-                    $stmt->bindparam(':description', $description);
-                    $stmt->bindparam(':reorder_level', $reorder_level);
-                    $stmt->bindparam(':unit', $unit);
-                    $stmt->bindparam(':status', $status);
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':barcode', $barcode);
+        $stmt->bindparam(':name', $name);
+        $stmt->bindparam(':description', $description);
+        $stmt->bindparam(':reorder_level', $reorder_level);
+        $stmt->bindparam(':unit', $unit);
+        $stmt->bindparam(':status', $status);
+        $stmt->execute();
     } catch (PDOException $e) {
         return ['error' => $e->getMessage()];
     }

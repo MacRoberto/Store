@@ -121,7 +121,10 @@ export function loadView(file, containerId) {
     });
 }
 
-export function saveRecords(file, data) {
+export function saveRecords(file, form) {
+  const formData = new FormData(form);
+  const dataObject = Object.fromEntries(formData.entries());
+
   Swal.fire({
     title: "¿Are you sure to Add record?",
     text: "Please confirm that the data is correct",
@@ -140,7 +143,7 @@ export function saveRecords(file, data) {
         },
         body: JSON.stringify({
           action: "save",
-          ...data,
+          ...dataObject,
         }),
       })
         .then((response) => response.json())
@@ -154,4 +157,30 @@ export function saveRecords(file, data) {
         .catch((error) => console.error("Error saving record:", error));
     }
   });
+}
+
+export function loadSelectOptions(file, selectId) {
+  fetch("../php/" + file + ".php", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      action: "selectOptions", //List categories to fill select
+    }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      const select = document.getElementById(selectId);
+      console.log(select);
+      select.innerHTML = "";
+
+      data.forEach((option) => {
+        const optionElement = document.createElement("option");
+        optionElement.value = option.id;
+        optionElement.textContent = option.name;
+        select.appendChild(optionElement);
+      });
+    })
+    .catch((error) => console.error("Error loading select options:", error));
 }

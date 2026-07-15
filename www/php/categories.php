@@ -11,6 +11,12 @@ if($accion == "list"){
     $list = getAllCategories();
     //regresa la informacion solicitada
     echo json_encode($list);
+}else if($accion == "selectOptions"){
+    //manda a llamar la funcion que realiza la consulta a la bd
+    $list = getCategoryOptions();
+    //regresa la informacion solicitada
+    echo json_encode($list);
+
 }else{
     //en caso de parametro invalido
     echo json_encode([
@@ -18,4 +24,5 @@ if($accion == "list"){
         'msg' => 'Action invalid'
     ]);
 }
+
 ?>

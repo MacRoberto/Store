@@ -4,6 +4,7 @@ import {
   editRecords,
   saveRecords,
   loadView,
+  loadSelectOptions,
 } from "./function.js";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -21,6 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
     loadView("../views/forms/products.html", "content").then(() => {
       const form = document.getElementById("itemForm");
 
+      loadSelectOptions("categories", "category");
       form.addEventListener("submit", function (event) {
         event.preventDefault();
 
