@@ -184,3 +184,20 @@ export function loadSelectOptions(file, selectId) {
     })
     .catch((error) => console.error("Error loading select options:", error));
 }
+
+
+// Limpia la fila seleccionada y oculta los botones
+export function clearSelection() {
+  const btnRemove = document.getElementById("btnRemove");
+  const btnEdit = document.getElementById("btnEdit");
+
+  if (rowSelected) {
+    rowSelected.classList.remove("bg-indigo-100", "ring-2", "ring-indigo-400");
+    rowSelected = null;
+  }
+
+  recordSelectedID = null;
+
+  if (btnRemove) btnRemove.classList.add("hidden");
+  if (btnEdit) btnEdit.classList.add("hidden");
+}
