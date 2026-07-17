@@ -68,12 +68,11 @@ function updateProductStatus($id_product){
 }
 
 //funcion para guardar un producto
-
-function saveProduct($barcode, $name, $description, $reorder_level, $status, $unit, $category_id) {
+function saveProduct($barcode, $name, $category_id, $description, $reorder_level, $status, $unit) {
     global $db;
     try {
         $query = "INSERT INTO products (barcode, name, description, reorder_level, status, unit, category_id)
-                    VALUES (:barcode, :name, :desccription, :reorder_level, :status, :unit, :category_id)";
+                    VALUES (:barcode, :name, :description, :reorder_level, :status, :unit, :category_id)";
         $stmt = $db->prepare($query);
         $stmt->bindParam(':barcode', $barcode);
         $stmt->bindparam(':name', $name);
@@ -81,7 +80,9 @@ function saveProduct($barcode, $name, $description, $reorder_level, $status, $un
         $stmt->bindparam(':reorder_level', $reorder_level);
         $stmt->bindparam(':unit', $unit);
         $stmt->bindparam(':status', $status);
+        $stmt->bindparam(':category_id', $category_id);
         $stmt->execute();
+        return ['success' => true];
     } catch (PDOException $e) {
         return ['error' => $e->getMessage()];
     }
