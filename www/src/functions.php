@@ -91,7 +91,18 @@ function saveProduct($barcode, $name, $category_id, $description, $reorder_level
 //funcion para actualizar informacion de un producto
 
 //Funcion para recuperar un registro en especifico
-
+function getProductById($id_product){
+    global $db;
+    try {
+        $query = "SELECT * FROM products WHERE id_product = :id_product";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_product', $id_product);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
 /*Fin de funciones para el modulo de productos*/
 
 function getAllPromotions() {
@@ -313,5 +324,7 @@ function getAllRolesPermissions() {
     } catch (PDOException $e) {
         return ['error' => $e->getMessage()];
     }
+
+    function getProductos 
 }
 ?>
