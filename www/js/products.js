@@ -5,6 +5,7 @@ import {
   saveRecords,
   loadView,
   loadSelectOptions,
+  setupGoBackButton,
 } from "./function.js";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -16,7 +17,18 @@ document.addEventListener("DOMContentLoaded", () => {
     deleteRecords("products"); //Se manda a llamar el evento on click
   });
   btnEdit.addEventListener("click", function (event) {
-    editRecords(); //Se manda a llamar el evento on click
+    loadView("../views/forms/products.html", "content").then(() => {
+      const form = document.getElementById("itemForm");
+
+      loadSelectOptions("categories", "category");
+      form.addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        editRecords("products", form);
+        setupGoBackButton("goback");
+      });
+    });
+    //editRecords("../views/forms/products.html", "content").then(); //Se manda a llamar el evento on click
   });
   btnAdd.addEventListener("click", function (event) {
     loadView("../views/forms/products.html", "content").then(() => {
@@ -27,6 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
         event.preventDefault();
 
         saveRecords("products", form);
+        setupGoBackButton("goback");
       });
     });
   });
