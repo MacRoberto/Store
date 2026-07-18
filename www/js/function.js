@@ -199,3 +199,46 @@ export function setupGoBackButton(buttonId) {
     console.warn(`Go Back button with ID "${buttonId}" was not found.`);
   }
 }
+
+export function loadProductDataToForm(productId, formId) {
+  const form = document.getElementById(formId);
+  if (!form) {
+    console.error(`Form with ID "${formId}" was not found.`);
+    return;
+  }
+
+  fetch("../php/products.php", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      action: "getInfoProduct",
+      id: productId,
+    }),
+  })
+    .then((response) => response.json())
+    .then((productData) => {
+      if (productData.error) {
+        console.error("Server error:", productData.error);
+        return;
+      }
+      //document.getelemntById('nombre').value = productData.nombre;
+      Object.keys(productData).forEach((key) => {
+        const input = form.elements[key];
+
+        if (input) {
+          input.value = productData[key];
+        }
+      });
+
+      console.log("Form successfully loaded with product ID:", productId);
+    })
+    .catch(
+      (error) => console.error("Error retrieving product information:", error), //error al recuperar la informacion del producto
+    );
+}
+
+export function getSelectedId() {
+  return recordSelectedID;
+}

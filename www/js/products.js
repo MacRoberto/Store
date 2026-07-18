@@ -6,6 +6,8 @@ import {
   loadView,
   loadSelectOptions,
   setupGoBackButton,
+  loadProductDataToForm,
+  getSelectedId,
 } from "./function.js";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -21,6 +23,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const form = document.getElementById("itemForm");
 
       loadSelectOptions("categories", "category");
+      let id = getSelectedId();
+      loadProductDataToForm(id, "itemForm");
+
       form.addEventListener("submit", function (event) {
         event.preventDefault();
 
@@ -83,7 +88,7 @@ function fetchProducts() {
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.category_name || "Sin Categoría"}</td>
             <td class="px-6 py-4 text-sm text-gray-500">${product.description}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.reorder_level}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.unit}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.units}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm">
               <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusBadgeColor}">
                 ${product.status}

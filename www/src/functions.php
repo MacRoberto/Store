@@ -39,7 +39,7 @@ function getAllProducts() {
     try {
         // Hacemos un JOIN para obtener el nombre de la categoría asignada al producto
         $query = "SELECT p.id_product, p.barcode, p.name AS product_name, p.description, 
-                         p.reorder_level, p.status, p.unit, c.name AS category_name 
+                         p.reorder_level, p.status, p.units, c.name AS category_name 
                   FROM products p
                   LEFT JOIN categories c ON p.category_id = c.id_cat
                   ORDER BY p.id_product DESC";
@@ -68,17 +68,17 @@ function updateProductStatus($id_product){
 }
 
 //funcion para guardar un producto
-function saveProduct($barcode, $name, $category_id, $description, $reorder_level, $status, $unit) {
+function saveProduct($barcode, $name, $category_id, $description, $reorder_level, $status, $units) {
     global $db;
     try {
-        $query = "INSERT INTO products (barcode, name, description, reorder_level, status, unit, category_id)
-                    VALUES (:barcode, :name, :description, :reorder_level, :status, :unit, :category_id)";
+        $query = "INSERT INTO products (barcode, name, description, reorder_level, status, units, category_id)
+                    VALUES (:barcode, :name, :description, :reorder_level, :status, :units, :category_id)";
         $stmt = $db->prepare($query);
         $stmt->bindParam(':barcode', $barcode);
         $stmt->bindparam(':name', $name);
         $stmt->bindparam(':description', $description);
         $stmt->bindparam(':reorder_level', $reorder_level);
-        $stmt->bindparam(':unit', $unit);
+        $stmt->bindparam(':units', $units);
         $stmt->bindparam(':status', $status);
         $stmt->bindparam(':category_id', $category_id);
         $stmt->execute();
@@ -324,7 +324,5 @@ function getAllRolesPermissions() {
     } catch (PDOException $e) {
         return ['error' => $e->getMessage()];
     }
-
-    function getProductos 
 }
 ?>
