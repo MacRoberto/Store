@@ -68,12 +68,11 @@ function updateProductStatus($id_product){
 }
 
 //funcion para guardar un producto
-
-function saveProduct($barcode, $name, $description, $reorder_level, $status, $unit, $category_id) {
+function saveProduct($barcode, $name, $category_id, $description, $reorder_level, $status, $unit) {
     global $db;
     try {
         $query = "INSERT INTO products (barcode, name, description, reorder_level, status, unit, category_id)
-                    VALUES (:barcode, :name, :desccription, :reorder_level, :status, :unit, :category_id)";
+                    VALUES (:barcode, :name, :description, :reorder_level, :status, :unit, :category_id)";
         $stmt = $db->prepare($query);
         $stmt->bindParam(':barcode', $barcode);
         $stmt->bindparam(':name', $name);
@@ -81,7 +80,9 @@ function saveProduct($barcode, $name, $description, $reorder_level, $status, $un
         $stmt->bindparam(':reorder_level', $reorder_level);
         $stmt->bindparam(':unit', $unit);
         $stmt->bindparam(':status', $status);
+        $stmt->bindparam(':category_id', $category_id);
         $stmt->execute();
+        return ['success' => true];
     } catch (PDOException $e) {
         return ['error' => $e->getMessage()];
     }
@@ -90,7 +91,18 @@ function saveProduct($barcode, $name, $description, $reorder_level, $status, $un
 //funcion para actualizar informacion de un producto
 
 //Funcion para recuperar un registro en especifico
-
+function getProductById($id_product){
+    global $db;
+    try {
+        $query = "SELECT * FROM products WHERE id_product = :id_product";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_product', $id_product);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
 /*Fin de funciones para el modulo de productos*/
 
 function getAllPromotions() {
@@ -385,6 +397,8 @@ function getAllRolesPermissions() {
     } catch (PDOException $e) {
         return ['error' => $e->getMessage()];
     }
+
+    function getProductos 
 }
 
 ?>

@@ -103,6 +103,7 @@ export function editRecords(file, data) {
 }
 
 export function loadView(file, containerId) {
+  //Vista de formulario
   const container = document.getElementById(containerId);
 
   return fetch(file)
@@ -166,7 +167,7 @@ export function loadSelectOptions(file, selectId) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      action: "selectOptions", //List categories to fill select
+      action: "selectOptions", //lista de categorias desde la bd para llenar el select
     }),
   })
     .then((response) => response.json())
@@ -200,4 +201,16 @@ export function clearSelection() {
 
   if (btnRemove) btnRemove.classList.add("hidden");
   if (btnEdit) btnEdit.classList.add("hidden");
+//Función para cargar el boton de regresar a la vista anterior
+
+export function setupGoBackButton(buttonId) {
+  const button = document.getElementById(buttonId);
+
+  if (button) {
+    button.addEventListener("click", () => {
+      window.history.back();
+    });
+  } else {
+    console.warn(`Go Back button with ID "${buttonId}" was not found.`);
+  }
 }
