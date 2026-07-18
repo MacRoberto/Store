@@ -306,25 +306,128 @@ function getAllActions() {
 function getAllRolesPermissions() {
     global $db;
     try {
-        // Ejecutamos una consulta con joins compuestos hacia roles, acciones y el respectivo módulo de la acción
         $query = "SELECT rp.id_permission, rp.id_role, rp.id_action, rp.status,
                          r.name AS role_name,
                          a.name AS action_name,
                          m.name AS module_name
-                  FROM roles_permissions rp
+                  FROM role_permissions rp
                   LEFT JOIN roles r ON rp.id_role = r.id_rol
                   LEFT JOIN actions a ON rp.id_action = a.id_action
                   LEFT JOIN modules m ON a.id_module = m.id_module
-                  ORDER BY r.name ASC, m.name ASC, a.name ASC";
-                  
+                 ORDER BY id_permission ASC";
+
         $stmt = $db->prepare($query);
         $stmt->execute();
-        
+
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
         return ['error' => $e->getMessage()];
     }
-
-    function getProductos 
 }
+
+// Guarda un nuevo permiso en la matriz de roles y permisos
+function saveRolePermission($id_role, $id_action, $status) {
+    global $db;
+
+    try {
+        $query = "INSERT INTO role_permissions (id_role, id_action, status)
+                  VALUES (:id_role, :id_action, :status)";
+
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(":id_role", $id_role);
+        $stmt->bindParam(":id_action", $id_action);
+        $stmt->bindParam(":status", $status);
+        $stmt->execute();
+
+        return [
+            "status" => "success",
+            "msg" => "Permission saved successfully"
+        ];
+
+    } catch (PDOException $e) {
+
+        return [
+            "status" => "error",
+            "msg" => $e->getMessage()
+        ];
+
+    }
+}
+
+// Actualiza la información de un permiso existente
+function updateRolePermission($id_permission, $id_role, $id_action, $status) {
+    global $db;
+
+    try {
+
+        $query = "UPDATE role_permissions
+                  SET id_role = :id_role,
+                      id_action = :id_action,
+                      status = :status
+                  WHERE id_permission = :id_permission";
+
+        $stmt = $db->prepare($query);
+
+        $stmt->bindParam(":id_permission", $id_permission);
+        $stmt->bindParam(":id_role", $id_role);
+        $stmt->bindParam(":id_action", $id_action);
+        $stmt->bindParam(":status", $status);
+
+        $stmt->execute();
+
+        return [
+            "status" => "success",
+            "msg" => "Permission updated successfully"
+        ];
+
+    } catch (PDOException $e) {
+
+        return [
+            "status" => "error",
+            "msg" => $e->getMessage()
+        ];
+
+    }
+}
+
+// Elimina un permiso de la base de datos
+function deleteRolePermission($id_permission) {
+    global $db;
+
+    try {
+
+        $query = "DELETE FROM role_permissions
+                  WHERE id_permission = :id_permission";
+
+        $stmt = $db->prepare($query);
+
+        $stmt->bindParam(":id_permission", $id_permission);
+        $stmt->execute();
+
+        return [
+            "status" => "success",
+            "msg" => "Permission deleted successfully"
+        ];
+
+    } catch (PDOException $e) {
+
+        return [
+            "status" => "error",
+            "msg" => $e->getMessage()
+        ];
+
+    }
+}
+
+function getProductos() {
+    global $db;
+    try {
+        $stmt = $db->prepare("SELECT * FROM products");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ['status' => 'error', 'msg' => $e->getMessage()];
+    }
+}
+
 ?>

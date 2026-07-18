@@ -199,3 +199,18 @@ export function setupGoBackButton(buttonId) {
     console.warn(`Go Back button with ID "${buttonId}" was not found.`);
   }
 }
+
+export function clearSelection() {
+  const btnRemove = document.getElementById("btnRemove");
+  const btnEdit = document.getElementById("btnEdit");
+
+  if (rowSelected) {
+    rowSelected.classList.remove("bg-indigo-100", "ring-2", "ring-indigo-400");
+    rowSelected = null;
+  }
+
+  recordSelectedID = null;
+
+  if (btnRemove) btnRemove.classList.add("hidden");
+  if (btnEdit) btnEdit.classList.add("hidden");
+}
