@@ -73,7 +73,7 @@ function fetchSales() {
 
       sales.forEach((sale) => {
         const tr = document.createElement("tr");
-        tr.className = "cursor-pointer hover:bg-gray-50 transition";
+       
 
         const currencyFormatter = new Intl.NumberFormat("en-US", {
           style: "currency",
