@@ -294,7 +294,7 @@ function getAllModules() {
     global $db;
     try {
         // Consultamos el registro de módulos ordenados alfabéticamente por su nombre descriptivo
-        $query = "SELECT m.id_module, m.name, m.description, m.img 
+        $query = "SELECT m.id_module, m.name, m.description, m.img, m.url  
                   FROM modules m
                   ORDER BY m.name ASC";
                   
