@@ -1,7 +1,7 @@
 import {
   rowClick,
   deleteRecords,
-  editRecords,
+  updateRecord,
   saveRecords,
   loadView,
   loadSelectOptions,
@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
       form.addEventListener("submit", function (event) {
         event.preventDefault();
 
-        editRecords("products", form);
+        updateRecord("itemForm", id);
         setupGoBackButton("goback");
       });
     });

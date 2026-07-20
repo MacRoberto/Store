@@ -89,6 +89,29 @@ function saveProduct($barcode, $name, $category_id, $description, $reorder_level
 }
 
 //funcion para actualizar informacion de un producto
+function updateProduct($id_product, $barcode, $name, $category_id, $description, $reorder_level, $status, $units) {
+    global $db;
+    try {
+        $query = "UPDATE products 
+                  SET barcode = :barcode, name = :name, description = :description, 
+                      reorder_level = :reorder_level, status = :status, units = :units,
+                      category_id = :category_id
+                  WHERE id_product = :id_product";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':barcode', $barcode);
+        $stmt->bindParam(':name', $name);
+        $stmt->bindParam(':description', $description);
+        $stmt->bindParam(':reorder_level', $reorder_level);
+        $stmt->bindParam(':status', $status);
+        $stmt->bindParam(':units', $units);
+        $stmt->bindParam(':category_id', $category_id);
+        $stmt->bindParam(':id_product', $id_product);
+        $stmt->execute();
+        return ['success' => true];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
 
 //Funcion para recuperar un registro en especifico
 function getProductById($id_product){

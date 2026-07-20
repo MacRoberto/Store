@@ -242,3 +242,60 @@ export function loadProductDataToForm(productId, formId) {
 export function getSelectedId() {
   return recordSelectedID;
 }
+
+export function updateRecord(formId, productId) {
+  //handleProductUpdate
+  const form = document.getElementById(formId);
+  // Obtener los valores de los inputs obligatorios
+  const barcode = form.elements["barcode"].value.trim();
+  const name = form.elements["name"].value.trim();
+  const category = form.elements["category"].value.trim();
+  const status = form.elements["status"].value.trim();
+  const description = form.elements["description"].value.trim();
+  const reorderLevel = form.elements["reorder_level"].value.trim();
+  const units = form.elements["units"].value.trim();
+
+  // Ajuste por datos vacíos: Validación simple antes de mandar al servidor
+  if (!barcode || !name || !category || !status || !units) {
+    alert(
+      "Please fill in all required fields (Barcode, Name, Category, Status, and Units).",
+    );
+    return; // Detiene el flujo de guardado si hay campos vacíos
+  }
+
+  // Construcción del objeto con los datos recolectados
+  const updatedData = {
+    action: "updateProduct",
+    id: productId,
+    barcode: barcode,
+    name: name,
+    category: category,
+    status: status,
+    description: description,
+    reorder_level: reorderLevel === "" ? 0 : parseInt(reorderLevel),
+    units: parseInt(units),
+  };
+
+  // Envío de datos al backend
+  fetch("../php/products.php", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(updatedData),
+  })
+    .then((response) => response.json())
+    .then((result) => {
+      if (result.error) {
+        alert("Error: " + result.error);
+        console.error("Server error during update:", result.error);
+      } else {
+        alert("Product updated successfully!");
+        console.log("Product update successful:", result.message);
+        //window.history.back(); // Regresa automáticamente a la lista al guardar
+      }
+    })
+    .catch((error) =>
+      console.error("Error updating product information:", error),
+    );
+}
