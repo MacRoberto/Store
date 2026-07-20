@@ -1,23 +1,36 @@
 <?php
 require_once "../src/functions.php";
 
-// Se reciben los parámetros raw del JSON payload
-$_get = json_decode(file_get_contents("php://input"), true);
-$accion = $_get['action'] ?? "";
-
 header("Content-Type: application/json");
 
-if ($accion == "list") {
-    // Manda a llamar la función que realiza la consulta a la bd
-    $list = getAllSales();
-    
-    // Regresa la información solicitada
-    echo json_encode($list);
-} else {
-    // En caso de parámetro inválido
-    echo json_encode([
-        'status' => 'error',
-        'msg' => 'Action invalid'
-    ]);
+$input = json_decode(file_get_contents("php://input"), true);
+$action = $input["action"] ?? "";
+
+switch ($action) {
+    case "list":
+        echo json_encode(getAllSales());
+        break;
+
+    case "selectOptions":
+        echo json_encode(getUserOptions());
+        break;
+
+    case "save":
+        echo json_encode(saveSale($input));
+        break;
+
+    case "edit":
+        echo json_encode(updateSale($input));
+        break;
+
+    case "delete":
+        echo json_encode(deleteSale($input));
+        break;
+
+    default:
+        echo json_encode([
+            "status" => "error",
+            "msg" => "Action invalid"
+        ]);
+        break;
 }
-?>

@@ -1,112 +1,59 @@
-//Variables globales
-let rowSelected = null; //variable donde se almacena la fila donde el usuario dio click
-let recordSelectedID = null; // variable para almacenar el id del producto dependiendo en que fila dio click el usuario
+// Variables globales
+let rowSelected = null;
+let recordSelectedID = null;
 
-//Funcion que se ejecuta cuando se hace click en la fila de la tabla
-//Se usa para mostrar u ocultar el boton que sirve para eliminar un registro
-export function rowClick(event, dataID) {
-  //Mostrar boton para eliminar
-  const btnRemove = document.getElementById("btnRemove");
+// Obtiene el ID seleccionado
+export function getSelectedId() {
+  return recordSelectedID;
+}
+
+// Selecciona una fila y muestra los botones de edición y eliminación
+export function rowClick(event, id) {
   const btnEdit = document.getElementById("btnEdit");
+  const btnRemove = document.getElementById("btnRemove");
+  const currentRow = event.currentTarget;
 
-  // Obtener el tr donde se hizo click
-  const tr = event.currentTarget;
-  // Quitar color a la fila seleccionada anteriormente
   if (rowSelected) {
     rowSelected.classList.remove("bg-indigo-100", "ring-2", "ring-indigo-400");
   }
 
-  // Guardar la fila y el producto seleccionado
-  rowSelected = tr;
-  recordSelectedID = dataID;
-  // Agregar color a la nueva fila seleccionada
-  tr.classList.add("bg-indigo-100", "ring-2", "ring-indigo-400");
+  rowSelected = currentRow;
+  recordSelectedID = id;
+  window.recordSelectedID = id;
 
-  // Mostrar botón eliminar
-  btnRemove.classList.remove("hidden"); //Quitar la clase hidden para hacer visible el boton
-  btnEdit.classList.remove("hidden");
+  currentRow.classList.add("bg-indigo-100", "ring-2", "ring-indigo-400");
+
+  if (btnEdit) btnEdit.classList.remove("hidden");
+  if (btnRemove) btnRemove.classList.remove("hidden");
 }
 
-//Funcion que se ejecuta cuando el usuario da clic en el boton de eliminar
-export function deleteRecords(file) {
-  //products
-  Swal.fire({
-    title: "¿Are you sure to delete this record?",
-    text: "You won't be able to revert this action",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonColor: "#3085d6",
-    cancelButtonColor: "#d33",
-    confirmButtonText: "Yes, delete",
-    cancelButtonText: "Cancel",
-  }).then((result) => {
-    if (result.isConfirmed) {
-      //Hacer peticion para eliminar el registro
-      fetch("../php/" + file + ".php", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          action: "delete",
-          id: recordSelectedID,
-        }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          Swal.fire({
-            title: "Deleted",
-            text: "Record deleted successfully",
-            icon: "success",
-          });
-        })
-        .catch((error) => console.error("Error deleting record:", error));
-    }
-  });
+// Limpia la selección actual
+export function clearSelection() {
+  const btnEdit = document.getElementById("btnEdit");
+  const btnRemove = document.getElementById("btnRemove");
+
+  if (rowSelected) {
+    rowSelected.classList.remove("bg-indigo-100", "ring-2", "ring-indigo-400");
+  }
+
+  rowSelected = null;
+  recordSelectedID = null;
+  window.recordSelectedID = null;
+
+  if (btnEdit) btnEdit.classList.add("hidden");
+  if (btnRemove) btnRemove.classList.add("hidden");
 }
 
-//Funcion que se ejecuta cuando el usuario da clic en el boton de editar
-export function editRecords(file, data) {
-  Swal.fire({
-    title: "¿Are you sure to update this record?",
-    text: "This will overwrite the existing information",
-    icon: "info",
-    showCancelButton: true,
-    confirmButtonColor: "#3085d6",
-    cancelButtonColor: "#d33",
-    confirmButtonText: "Yes, update",
-    cancelButtonText: "Cancel",
-  }).then((result) => {
-    if (result.isConfirmed) {
-      fetch("../php/" + file + ".php", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          action: "edit",
-          id: recordSelectedID,
-          ...data,
-        }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          Swal.fire({
-            title: "Updated",
-            text: "Record updated successfully",
-            icon: "success",
-          });
-        })
-        .catch((error) => console.error("Error updating record:", error));
-    }
-  });
-}
-
-export function loadView(file, containerId) {
-  //Vista de formulario
+// Carga una vista dentro de un contenedor
+export function loadView(url, containerId = "content") {
   const container = document.getElementById(containerId);
 
-  return fetch(file)
+  if (!container) {
+    console.warn(`Container with ID "${containerId}" was not found.`);
+    return;
+  }
+
+  return fetch(url)
     .then((response) => response.text())
     .then((html) => {
       container.innerHTML = html;
@@ -114,80 +61,247 @@ export function loadView(file, containerId) {
     .catch((error) => {
       console.error("Error loading view:", error);
 
-      Swal.fire({
-        title: "Error",
-        text: "The form could not be loaded.",
-        icon: "error",
-      });
+      if (typeof Swal !== "undefined") {
+        Swal.fire({
+          title: "Error",
+          text: "The form could not be loaded.",
+          icon: "error",
+        });
+      }
     });
 }
 
-export function saveRecords(file, form) {
-  const formData = new FormData(form);
-  const dataObject = Object.fromEntries(formData.entries());
+// Carga opciones en un select desde el PHP
+export function loadSelectOptions(arg1, arg2, arg3) {
+  let selectId = "";
+  let endpoint = "";
+  let action = "selectOptions";
 
-  Swal.fire({
-    title: "¿Are you sure to Add record?",
-    text: "Please confirm that the data is correct",
-    icon: "question",
-    showCancelButton: true,
-    confirmButtonColor: "#3085d6",
-    cancelButtonColor: "#d33",
-    confirmButtonText: "Yes, save",
-    cancelButtonText: "Cancel",
-  }).then((result) => {
-    if (result.isConfirmed) {
-      fetch("../php/" + file + ".php", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          action: "save",
-          ...dataObject,
-        }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          Swal.fire({
-            title: "Saved",
-            text: "Record saved successfully",
-            icon: "success",
-          });
-        })
-        .catch((error) => console.error("Error saving record:", error));
-    }
-  });
-}
+  if (typeof arg3 !== "undefined") {
+    selectId = arg1;
+    endpoint = arg2;
+    action = arg3;
+  } else {
+    endpoint = "../php/" + arg1 + ".php";
+    selectId = arg2;
+  }
 
-export function loadSelectOptions(file, selectId) {
-  fetch("../php/" + file + ".php", {
+  fetch(endpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      action: "selectOptions", //lista de categorias desde la bd para llenar el select
-    }),
+    body: JSON.stringify({ action }),
   })
     .then((response) => response.json())
-    .then((data) => {
+    .then((json) => {
       const select = document.getElementById(selectId);
-      console.log(select);
-      select.innerHTML = "";
+      if (!select) return;
 
-      data.forEach((option) => {
-        const optionElement = document.createElement("option");
-        optionElement.value = option.id;
-        optionElement.textContent = option.name;
-        select.appendChild(optionElement);
+      const data = Array.isArray(json) ? json : json.data;
+
+      if (!Array.isArray(data)) {
+        return;
+      }
+
+      select.innerHTML = `<option value="">Seleccione una opción</option>`;
+
+      data.forEach((item) => {
+        const option = document.createElement("option");
+        option.value =
+          item.id ?? item.value ?? item.id_user ?? item.id_module ?? "";
+        option.textContent =
+          item.name ??
+          item.label ??
+          item.username ??
+          item.description ??
+          item.title ??
+          "Opción";
+        select.appendChild(option);
       });
     })
     .catch((error) => console.error("Error loading select options:", error));
 }
 
-//Función para cargar el boton de regresar a la vista anterior
+// Guarda un registro
+export function saveRecords(arg1, arg2, arg3) {
+  let endpoint = "";
+  let payload = null;
+  let onSuccess = null;
 
+  if (arg2 instanceof HTMLFormElement) {
+    endpoint = "../php/" + arg1 + ".php";
+    const formData = new FormData(arg2);
+    payload = Object.fromEntries(formData.entries());
+    payload.action = "save";
+  } else {
+    endpoint = arg1;
+    payload = arg2;
+    onSuccess = typeof arg3 === "function" ? arg3 : null;
+  }
+
+  const sendRequest = () => {
+    fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    })
+      .then((response) => response.json())
+      .then((json) => {
+        if (json.status === "success") {
+          if (onSuccess) onSuccess(json);
+        } else {
+          Swal.fire("Error", json.msg || "No se pudo guardar el registro", "error");
+        }
+      })
+      .catch((error) => console.error("Error saving record:", error));
+  };
+
+  if (typeof Swal !== "undefined") {
+    Swal.fire({
+      title: "¿Are you sure to Add record?",
+      text: "Please confirm that the data is correct",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, save",
+      cancelButtonText: "Cancel",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        sendRequest();
+      }
+    });
+  } else {
+    sendRequest();
+  }
+}
+
+// Edita un registro
+export function editRecords(arg1, arg2, arg3) {
+  let endpoint = "";
+  let payload = null;
+  let onSuccess = null;
+
+  if (typeof arg3 === "undefined" && typeof arg1 === "string" && arg1.endsWith(".php") === false) {
+    endpoint = "../php/" + arg1 + ".php";
+    payload = {
+      action: "edit",
+      id: recordSelectedID,
+      ...arg2,
+    };
+  } else if (typeof arg3 === "undefined" && typeof arg1 === "string") {
+    endpoint = "../php/" + arg1 + ".php";
+    payload = {
+      action: "edit",
+      id: recordSelectedID,
+      ...arg2,
+    };
+  } else {
+    endpoint = arg1;
+    payload = arg2;
+    onSuccess = typeof arg3 === "function" ? arg3 : null;
+  }
+
+  const sendRequest = () => {
+    fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    })
+      .then((response) => response.json())
+      .then((json) => {
+        if (json.status === "success") {
+          if (onSuccess) onSuccess(json);
+        } else {
+          Swal.fire("Error", json.msg || "No se pudo actualizar el registro", "error");
+        }
+      })
+      .catch((error) => console.error("Error updating record:", error));
+  };
+
+  if (typeof Swal !== "undefined") {
+    Swal.fire({
+      title: "¿Are you sure to update this record?",
+      text: "This will overwrite the existing information",
+      icon: "info",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, update",
+      cancelButtonText: "Cancel",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        sendRequest();
+      }
+    });
+  } else {
+    sendRequest();
+  }
+}
+
+// Elimina un registro
+export function deleteRecords(arg1, arg2, arg3) {
+  let endpoint = "";
+  let payload = null;
+  let onSuccess = null;
+
+  if (typeof arg2 === "undefined") {
+    endpoint = "../php/" + arg1 + ".php";
+    payload = {
+      action: "delete",
+      id: recordSelectedID,
+    };
+  } else {
+    endpoint = arg1;
+    payload = arg2;
+    onSuccess = typeof arg3 === "function" ? arg3 : null;
+  }
+
+  const sendRequest = () => {
+    fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    })
+      .then((response) => response.json())
+      .then((json) => {
+        if (json.status === "success") {
+          if (onSuccess) onSuccess(json);
+        } else {
+          Swal.fire("Error", json.msg || "No se pudo eliminar el registro", "error");
+        }
+      })
+      .catch((error) => console.error("Error deleting record:", error));
+  };
+
+  if (typeof Swal !== "undefined") {
+    Swal.fire({
+      title: "¿Are you sure to delete this record?",
+      text: "You won't be able to revert this action",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete",
+      cancelButtonText: "Cancel",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        sendRequest();
+      }
+    });
+  } else {
+    sendRequest();
+  }
+}
+
+// Función para cargar el botón de regresar a la vista anterior
 export function setupGoBackButton(buttonId) {
   const button = document.getElementById(buttonId);
 
@@ -200,8 +314,10 @@ export function setupGoBackButton(buttonId) {
   }
 }
 
+// Carga información de un producto en un formulario
 export function loadProductDataToForm(productId, formId) {
   const form = document.getElementById(formId);
+
   if (!form) {
     console.error(`Form with ID "${formId}" was not found.`);
     return;
@@ -223,10 +339,9 @@ export function loadProductDataToForm(productId, formId) {
         console.error("Server error:", productData.error);
         return;
       }
-      //document.getelemntById('nombre').value = productData.nombre;
+
       Object.keys(productData).forEach((key) => {
         const input = form.elements[key];
-
         if (input) {
           input.value = productData[key];
         }
@@ -234,11 +349,16 @@ export function loadProductDataToForm(productId, formId) {
 
       console.log("Form successfully loaded with product ID:", productId);
     })
-    .catch(
-      (error) => console.error("Error retrieving product information:", error), //error al recuperar la informacion del producto
-    );
+    .catch((error) => console.error("Error retrieving product information:", error));
 }
 
-export function getSelectedId() {
-  return recordSelectedID;
+// Escapa texto para insertarlo en HTML
+export function escapeHtml(text) {
+  if (text === null || text === undefined) return "";
+  return String(text)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }

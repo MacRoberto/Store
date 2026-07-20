@@ -170,26 +170,158 @@ function getAllInventoryItems() {
     }
 }
 
+// Función para recuperar el historial de ventas
 function getAllSales() {
     global $db;
+
     try {
-        // Consultamos el registro de ventas asociando el email del usuario correspondiente
-        // Nota: Si tu columna identificadora de correo se llama distinto (ej: 'user_email'), cámbiala abajo
-        $query = "SELECT s.id_sale, s.user_id, s.transaction_date, 
-                         s.total_amount, s.payment_method, s.status,
-                         u.email AS username
+        $query = "SELECT
+                    s.id_sale,
+                    s.user_id,
+                    s.transaction_date,
+                    s.total_amount,
+                    s.payment_method,
+                    s.status,
+                    u.username AS username
                   FROM sales s
                   LEFT JOIN users u ON s.user_id = u.id_user
                   ORDER BY s.transaction_date DESC";
-                  
+
         $stmt = $db->prepare($query);
         $stmt->execute();
-        
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return [
+            "status" => "success",
+            "data" => $stmt->fetchAll(PDO::FETCH_ASSOC)
+        ];
     } catch (PDOException $e) {
-        return ['error' => $e->getMessage()];
+        return [
+            "status" => "error",
+            "msg" => $e->getMessage()
+        ];
     }
 }
+
+// Función para guardar una venta
+function saveSale($data) {
+    global $db;
+
+    try {
+        $query = "INSERT INTO sales (
+                    user_id,
+                    transaction_date,
+                    total_amount,
+                    payment_method,
+                    status
+                  ) VALUES (
+                    :user_id,
+                    NOW(),
+                    :total_amount,
+                    :payment_method,
+                    :status
+                  )";
+
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':user_id', $data['user_id']);
+        $stmt->bindParam(':total_amount', $data['total_amount']);
+        $stmt->bindParam(':payment_method', $data['payment_method']);
+        $stmt->bindParam(':status', $data['status']);
+        $stmt->execute();
+
+        return [
+            "status" => "success",
+            "msg" => "Venta guardada correctamente"
+        ];
+    } catch (PDOException $e) {
+        return [
+            "status" => "error",
+            "msg" => $e->getMessage()
+        ];
+    }
+}
+
+// Función para actualizar una venta
+function updateSale($data) {
+    global $db;
+
+    try {
+        $query = "UPDATE sales
+                  SET user_id = :user_id,
+                      total_amount = :total_amount,
+                      payment_method = :payment_method,
+                      status = :status
+                  WHERE id_sale = :id_sale";
+
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':user_id', $data['user_id']);
+        $stmt->bindParam(':total_amount', $data['total_amount']);
+        $stmt->bindParam(':payment_method', $data['payment_method']);
+        $stmt->bindParam(':status', $data['status']);
+        $stmt->bindParam(':id_sale', $data['id_sale']);
+        $stmt->execute();
+
+        return [
+            "status" => "success",
+            "msg" => "Venta actualizada correctamente"
+        ];
+    } catch (PDOException $e) {
+        return [
+            "status" => "error",
+            "msg" => $e->getMessage()
+        ];
+    }
+}
+
+// Función para eliminar una venta
+function deleteSale($data) {
+    global $db;
+
+    try {
+        $query = "DELETE FROM sales WHERE id_sale = :id_sale";
+
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_sale', $data['id_sale']);
+        $stmt->execute();
+
+        return [
+            "status" => "success",
+            "msg" => "Venta eliminada correctamente"
+        ];
+    } catch (PDOException $e) {
+        return [
+            "status" => "error",
+            "msg" => $e->getMessage()
+        ];
+    }
+}
+
+
+
+/// Función para recuperar usuarios para un select
+function getUserOptions() {
+    global $db;
+
+    try {
+        $query = "SELECT id_user AS id, username AS name
+                  FROM users
+                  ORDER BY username ASC";
+
+        $stmt = $db->prepare($query);
+        $stmt->execute();
+
+        return [
+            "status" => "success",
+            "data" => $stmt->fetchAll(PDO::FETCH_ASSOC)
+        ];
+    } catch (PDOException $e) {
+        return [
+            "status" => "error",
+            "msg" => $e->getMessage()
+        ];
+    }
+}
+
+
 
 function getAllInventories() {
     global $db;
@@ -325,4 +457,11 @@ function getAllRolesPermissions() {
         return ['error' => $e->getMessage()];
     }
 }
+
+// Función para recuperar el historial de ventas
+// Función para recuperar el historial de ventas
+// Función para recuperar el historial de ventas
+
+
+
 ?>
