@@ -28,7 +28,7 @@ if ($accion == "list") {
     $result = saveProduct($barcode, $name, $category_id, $description, $reorder_level, $status, $units);
     
     echo json_encode($result);
-}else if($accion == "getInfoProduct") {
+}else if($accion == "getInfoByID") {
     $id_producto = $_get['id'] ?? "";
     //llamar funcion para recuperar la informacion especifica del producto
     $result = getProductById($id_producto);
