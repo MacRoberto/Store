@@ -53,7 +53,7 @@ export async function saveRecords(file, form) {
 //Funcion que se ejecuta para cargar opciones dentro de un select, recibe el nombre del archivo y el id del select
 
 export function loadSelectOptions(file, selectId) {
-  fetch("../php/" + file + ".php", {
+  return fetch("../php/" + file + ".php", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -79,6 +79,8 @@ export function loadSelectOptions(file, selectId) {
         optionElement.textContent = option.name;
         select.appendChild(optionElement);
       });
+
+      return data;
     })
     .catch((error) => console.error("Error loading select options:", error));
 }
@@ -90,7 +92,7 @@ export function loadRecordDataToForm(file, recordId, formId) {
     return;
   }
 
-  fetch("../php/" + file + ".php", {
+  return fetch("../php/" + file + ".php", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -114,8 +116,8 @@ export function loadRecordDataToForm(file, recordId, formId) {
           input.value = recordData[key];
         }
       });
-
       console.log("Form successfully loaded with record ID:", recordId);
+      return recordData;
     })
     .catch(
       (error) => console.error("Error retrieving record information:", error), //error al recuperar la informacion del registro
@@ -248,7 +250,7 @@ export function updateAction(file, formId, recordId) {
     return;
   }
 
-  fetch("../php/" + file + ".php", {
+  return fetch("../php/" + file + ".php", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -269,5 +271,39 @@ export function updateAction(file, formId, recordId) {
     })
     .catch((error) =>
       console.error("Error updating action information:", error)
+    );
+}
+
+export function updateUsers(file, formId, recordId) {
+  const form = document.getElementById(formId);
+  const formData = new FormData(form);
+  const dataObject = Object.fromEntries(formData.entries());
+
+  if (!dataObject.username) {
+    alert("Please fill in the username field.");
+    return;
+  }
+
+  return fetch("../php/" + file + ".php", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      action: "update",
+      id: recordId,
+      ...dataObject,
+    }),
+  })
+    .then((response) => response.json())
+    .then((result) => {
+      if (result.error) {
+        alert("Error: " + result.error);
+      } else {
+        alert("Users updated successfully!");
+      }
+    })
+    .catch((error) =>
+      console.error("Error updating user information:", error)
     );
 }

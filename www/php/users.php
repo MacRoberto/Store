@@ -69,6 +69,34 @@ if ($accion == "list") {
         ]);
     }
 
+} else if ($accion == "selectOptions") {
+    echo json_encode(getRoleOptions());
+
+} else if ($accion == "getInfoByID") {
+    $id = $_get['id'] ?? "";
+    echo json_encode(getUserById($id));
+
+} else if ($accion == "save") {
+    $username = $_get['username'] ?? "";
+    $id_rol = $_get['id_rol'] ?? "";
+    $status = $_get['status'] ?? "";
+    $password_hash = $_get['password_hash'] ?? "";
+
+    echo json_encode(saveUsers($username, $id_rol, $status, $password_hash));
+
+} else if ($accion == "update") {
+    $id = $_get['id'] ?? "";
+    $username = $_get['username'] ?? "";
+    $id_rol = $_get['id_rol'] ?? "";
+    $status = $_get['status'] ?? "";
+    $password_hash = $_get['password_hash'] ?? "";
+
+    echo json_encode(updateUsers($id, $username, $id_rol, $status, $password_hash));
+    
+} else if ($accion == "delete") {
+    $id = $_get['id'] ?? "";
+    echo json_encode(deleteUsers($id));
+
 } else {
     // En caso de parámetro inválido
     echo json_encode([

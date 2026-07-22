@@ -301,7 +301,7 @@ function getAllUsers() {
     try {
         // Obtenemos los usuarios y su rol descriptivo. 
         // IMPORTANTE: Excluimos password_hash por completo por razones de seguridad.
-        $query = "SELECT u.id_user, u.username, u.id_rol, u.status,
+        $query = "SELECT u.id_user AS id, u.username, u.id_rol, u.status,
                          r.name AS role_name 
                   FROM users u
                   LEFT JOIN roles r ON u.id_rol = r.id_rol
@@ -311,6 +311,109 @@ function getAllUsers() {
         $stmt->execute();
         
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function getUserById($id) {
+    global $db;
+    try {
+        $query = "SELECT id_user AS id, username, id_rol, status
+                  FROM users
+                  WHERE id_user = :id_user";
+
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_user', $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function getRoleOptions() {
+    global $db;
+    try {
+        $query = "SELECT id_rol AS id, name
+                  FROM roles
+                  ORDER BY name ASC";
+        $stmt = $db->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function saveUsers($username, $id_rol, $status, $password_hash) {
+    global $db;
+    try {
+        $hashedPassword = password_hash($password_hash, PASSWORD_DEFAULT);
+
+        $query = "INSERT INTO users (username, id_rol, status, password_hash)
+                  VALUES (:username, :id_rol, :status, :password_hash)";
+
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':username', $username);
+        $stmt->bindParam(':id_rol', $id_rol, PDO::PARAM_INT);
+        $stmt->bindParam(':status', $status);
+        $stmt->bindParam(':password_hash', $hashedPassword);
+
+        $stmt->execute();
+        return ['success' => true];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function updateUsers($id, $username, $id_rol, $status, $password_hash = null) {
+    global $db;
+    try {
+        if ($password_hash !== null && $password_hash !== "") {
+            $hashedPassword = password_hash($password_hash, PASSWORD_DEFAULT);
+
+            $query = "UPDATE users
+                      SET username = :username,
+                          id_rol = :id_rol,
+                          status = :status,
+                          password_hash = :password_hash
+                      WHERE id_user = :id_user";
+        } else {
+            $query = "UPDATE users
+                      SET username = :username,
+                          id_rol = :id_rol,
+                          status = :status
+                      WHERE id_user = :id_user";
+        }
+
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_user', $id, PDO::PARAM_INT);
+        $stmt->bindParam(':username', $username);
+        $stmt->bindParam(':id_rol', $id_rol, PDO::PARAM_INT);
+        $stmt->bindParam(':status', $status);
+
+        if ($password_hash !== null && $password_hash !== "") {
+            $stmt->bindParam(':password_hash', $hashedPassword);
+        }
+
+        $stmt->execute();
+        return ['success' => true];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function deleteUsers($id) {
+    global $db;
+    try {
+        $query = "DELETE FROM users WHERE id_user = :id_user";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_user', $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return ['success' => true];
     } catch (PDOException $e) {
         return ['error' => $e->getMessage()];
     }
