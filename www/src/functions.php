@@ -42,6 +42,7 @@ function getAllProducts() {
                          p.reorder_level, p.status, p.units, c.name AS category_name 
                   FROM products p
                   LEFT JOIN categories c ON p.category_id = c.id_cat
+                  where p.deleted_at IS NULL
                   ORDER BY p.id_product DESC";
                   
         $stmt = $db->prepare($query);
@@ -55,10 +56,10 @@ function getAllProducts() {
 
 //funcion para cambiar el estatus de un producto 
 
-function updateProductStatus($id_product){
+function softDeleteProduct($id_product){
     global $db ;
     try {
-        $query = "UPDATE products Set status = 'Inactive' WHERE id_product = :id_product";
+        $query = "UPDATE products Set deleted_at = now() WHERE id_product = :id_product";
         $stmt = $db->prepare($query);
         $stmt->bindParam(':id_product', $id_product);
         $stmt->execute();
