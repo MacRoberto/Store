@@ -194,3 +194,39 @@ export function fetchRecords(file) {
       return data;
     });
 }
+
+export function updateCategories(file, formId, recordId) {
+  const form = document.getElementById(formId);
+
+  const name = form.elements["name"].value.trim();
+  const description = form.elements["description"].value.trim();
+
+  if (!name) {
+    alert("Please fill in the name field.");
+    return;
+  }
+
+  fetch("../php/" + file + ".php", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      action: "update",
+      id: recordId,
+      name: name,
+      description: description,
+    }),
+  })
+    .then((response) => response.json())
+    .then((result) => {
+      if (result.error) {
+        alert("Error: " + result.error);
+      } else {
+        alert("Category updated successfully!");
+      }
+    })
+    .catch((error) =>
+      console.error("Error updating category information:", error)
+    );
+}

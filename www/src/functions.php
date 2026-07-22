@@ -18,9 +18,72 @@ function login($email, $password) {
 // Función para recuperar registros de la tabla categories
 function getAllCategories() {
     global $db;
-    $stmt = $db->query("SELECT id_cat, name, description FROM categories");
+    $stmt = $db->query("SELECT id_cat AS id, name, description FROM categories");
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
+
+//funcion para guardar un producto
+function saveCategories( $name, $description) {
+    global $db;
+    try {
+        $query = "INSERT INTO categories (name, description)
+                    VALUES ( :name, :description)";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':name', $name);
+        $stmt->bindParam(':description', $description);
+        $stmt->execute();
+        return ['success' => true];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+//funcion para actualizar informacion de un producto
+function updateCategories($id_cat, $name, $description) {
+    global $db;
+    try {
+        $query = "UPDATE categories 
+                  SET name = :name, description = :description
+                  WHERE id_cat = :id_cat";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_cat', $id_cat);
+        $stmt->bindParam(':name', $name);
+        $stmt->bindParam(':description', $description);
+        $stmt->execute();
+        return ['success' => true];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function deleteCategories($id) {
+    global $db;
+    try {
+        $query = "DELETE FROM categories WHERE id_cat = :id";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return ['success' => true];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+//Funcion para recuperar un registro en especifico
+function getCategoryById($id_cat){
+    global $db;
+    try {
+        $query = "SELECT id_cat AS id, name, description FROM categories WHERE id_cat = :id_cat";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_cat', $id_cat);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+/*Fin de funciones para el modulo de productos*/
 
 //Funcion para recuperar id y nombre de gategorias, el cual sirve para llenar el select en productos
 
