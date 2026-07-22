@@ -13,7 +13,7 @@ if ($accion == "list") {
 }else if($accion == "delete"){
     $id_producto = $_get['id']; 
     //llamar funcion para cambiar estatus a inactivo
-    $result = updateProductStatus($id_producto);
+    $result = softDeleteProduct($id_producto);
     echo json_encode($result);
 }else if($accion == "save") {
     $barcode = $_get['barcode'] ?? "";
