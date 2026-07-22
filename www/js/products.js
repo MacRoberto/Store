@@ -120,7 +120,22 @@ async function initProductForm(mode, id = null) {
 
       try {
         if (mode === "edit") {
-          await updateRecord("products", "itemForm", id);
+          Swal.fire({
+            title: "¿Are you sure to update this record?",
+            text: "This will overwrite the existing information",
+            icon: "info",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, update",
+            cancelButtonText: "Cancel",
+          }).then(async (result) => {
+            if (result.isConfirmed) {
+              await updateRecord("products", form, id);
+              // Después de guardar, regresar al listado.
+              await loadProductsView();
+            }
+          });
         } else {
           Swal.fire({
             title: "¿Are you sure to Add record?",
