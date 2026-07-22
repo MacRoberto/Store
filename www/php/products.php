@@ -34,7 +34,7 @@ if ($accion == "list") {
     $result = getProductById($id_producto);
     
     echo json_encode($result);
-}else if($accion == "updateProduct") {
+}else if($accion == "update") {
     $id_producto = $_get['id'] ?? 0;
     $barcode = $_get['barcode'] ?? "";
     $name = $_get['name'] ?? "";

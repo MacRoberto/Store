@@ -115,62 +115,31 @@ export function loadRecordDataToForm(file, recordId, formId) {
     );
 }
 
-export function updateRecord(file, formId, productId) {
-  //handleProductUpdate
+export function updateRecord(file, itemForm, id) {
+  const formData = new FormData(itemForm);
+  const dataObject = Object.fromEntries(formData.entries());
 
-  const form = document.getElementById(formId);
-  // Obtener los valores de los inputs obligatorios
-  const barcode = form.elements["barcode"].value.trim();
-  const name = form.elements["name"].value.trim();
-  const category = form.elements["category"].value.trim();
-  const status = form.elements["status"].value.trim();
-  const description = form.elements["description"].value.trim();
-  const reorderLevel = form.elements["reorder_level"].value.trim();
-  const units = form.elements["units"].value.trim();
-
-  // Ajuste por datos vacíos: Validación simple antes de mandar al servidor
-  if (!barcode || !name || !category || !status || !units) {
-    alert(
-      "Please fill in all required fields (Barcode, Name, Category, Status, and Units).",
-    );
-    return; // Detiene el flujo de guardado si hay campos vacíos
-  }
-
-  // Construcción del objeto con los datos recolectados
-  const updatedData = {
-    action: "updateProduct",
-    id: productId,
-    barcode: barcode,
-    name: name,
-    category: category,
-    status: status,
-    description: description,
-    reorder_level: reorderLevel === "" ? 0 : parseInt(reorderLevel),
-    units: parseInt(units),
-  };
-
-  // Envío de datos al backend
   fetch("../php/" + file + ".php", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(updatedData),
+    body: JSON.stringify({
+      action: "update",
+      id: id,
+      ...dataObject,
+    }),
   })
     .then((response) => response.json())
-    .then((result) => {
-      if (result.error) {
-        alert("Error: " + result.error);
-        console.error("Server error during update:", result.error);
-      } else {
-        alert("Product updated successfully!");
-        console.log("Product update successful:", result.message);
-        //window.history.back(); // Regresa automáticamente a la lista al guardar
-      }
+    .then((data) => {
+      console.log(data);
+      Swal.fire({
+        title: "Updated",
+        text: "Record updated successfully",
+        icon: "success",
+      });
     })
-    .catch((error) =>
-      console.error("Error updating product information:", error),
-    );
+    .catch((error) => console.error("Error updating record:", error));
 }
 
 //Función para recuperar los registros
