@@ -370,20 +370,117 @@ function getAllModules() {
     }
 }
 
+// Recuperar todas las acciones
 function getAllActions() {
     global $db;
     try {
-        // Ejecutamos un LEFT JOIN para obtener el nombre legible del módulo al que pertenece cada acción
-        $query = "SELECT a.id_action, a.name AS action_name, a.description, a.id_module,
+        $query = "SELECT a.id_action AS id,
+                         a.name,
+                         a.description,
+                         a.id_module,
                          m.name AS module_name
                   FROM actions a
                   LEFT JOIN modules m ON a.id_module = m.id_module
                   ORDER BY m.name ASC, a.id_action ASC";
-                  
+
         $stmt = $db->prepare($query);
         $stmt->execute();
-        
+
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+// Opciones para el select de módulos
+function getModuleOptions() {
+    global $db;
+    try {
+        $query = "SELECT id_module AS id, name
+                  FROM modules
+                  ORDER BY name ASC";
+        $stmt = $db->prepare($query);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+// Recuperar una acción por ID
+function getActionById($id) {
+    global $db;
+    try {
+        $query = "SELECT id_action AS id,
+                         name,
+                         description,
+                         id_module
+                  FROM actions
+                  WHERE id_action = :id_action";
+
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_action', $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+// Guardar acción
+function saveActions($name, $description, $id_module) {
+    global $db;
+    try {
+        $query = "INSERT INTO actions (name, description, id_module)
+                  VALUES (:name, :description, :id_module)";
+
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':name', $name);
+        $stmt->bindParam(':description', $description);
+        $stmt->bindParam(':id_module', $id_module, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return ['success' => true];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+// Actualizar acción
+function updateActions($id, $name, $description, $id_module) {
+    global $db;
+    try {
+        $query = "UPDATE actions
+                  SET name = :name,
+                      description = :description,
+                      id_module = :id_module
+                  WHERE id_action = :id_action";
+
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_action', $id, PDO::PARAM_INT);
+        $stmt->bindParam(':name', $name);
+        $stmt->bindParam(':description', $description);
+        $stmt->bindParam(':id_module', $id_module, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return ['success' => true];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+// Eliminar acción
+function deleteActions($id) {
+    global $db;
+    try {
+        $query = "DELETE FROM actions WHERE id_action = :id_action";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_action', $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return ['success' => true];
     } catch (PDOException $e) {
         return ['error' => $e->getMessage()];
     }
