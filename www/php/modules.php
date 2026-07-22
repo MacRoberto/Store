@@ -13,7 +13,12 @@ if ($accion == "list") {
     
     // Regresa la información solicitada
     echo json_encode($list);
-} else {
+}else if ($accion == "selectOptions") {
+
+    echo json_encode(getModuleOptions()); 
+
+
+}else {
     // En caso de parámetro inválido
     echo json_encode([
         'status' => 'error',

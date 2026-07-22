@@ -14,6 +14,7 @@ export async function deleteRecords(file, recordSelectedID) {
   })
     .then((response) => response.json())
     .then((data) => {
+      console.log(data)
       Swal.fire({
         title: "Deleted",
         text: "Record deleted successfully",
@@ -64,6 +65,12 @@ export function loadSelectOptions(file, selectId) {
     .then((response) => response.json())
     .then((data) => {
       const select = document.getElementById(selectId);
+
+      if(!select) {
+        console.warn(`Select element with ID "${selectId}" not found.`);
+        return;
+      }
+
       select.innerHTML = "";
 
       data.forEach((option) => {
@@ -228,5 +235,39 @@ export function updateCategories(file, formId, recordId) {
     })
     .catch((error) =>
       console.error("Error updating category information:", error)
+    );
+}
+
+export function updateAction(file, formId, recordId) {
+  const form = document.getElementById(formId);
+  const formData = new FormData(form);
+  const dataObject = Object.fromEntries(formData.entries());
+
+  if (!dataObject.name) {
+    alert("Please fill in the name field.");
+    return;
+  }
+
+  fetch("../php/" + file + ".php", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      action: "update",
+      id: recordId,
+      ...dataObject,
+    }),
+  })
+    .then((response) => response.json())
+    .then((result) => {
+      if (result.error) {
+        alert("Error: " + result.error);
+      } else {
+        alert("Actions updated successfully!");
+      }
+    })
+    .catch((error) =>
+      console.error("Error updating action information:", error)
     );
 }

@@ -1,0 +1,50 @@
+<div class="h-full flex flex-col items-center py-10 px-4 gap-6">
+    <div class="w-full max-w-6xl bg-white shadow-md rounded-lg overflow-hidden">
+
+        <div class="px-6 py-4 bg-indigo-600 border-b border-gray-200 rounded-t-xl">
+            <h2 class="text-xl font-bold text-white">Actions Information</h2>
+        </div>
+
+        <form id="itemForm" method="POST" class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
+                Action Name
+                </label>
+                <input type="text" name="name" placeholder="Delete Product" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
+                Module
+                </label>
+
+                <select id="module" name="id_module" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                </select>
+            </div>
+
+            <div class="md:col-span-2">
+                <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
+                    Description
+                </label>
+
+                <input type="text" name="description" placeholder="Allows deleting records" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+            </div>
+
+            <div class="lg:col-span-4 flex justify-end gap-3 pt-2 border-t border-gray-100 mt-2">
+
+                <button type="button" id="goback" class="px-4 py-2 border border-gray-300 text-gray-700 font-medium   text-sm rounded-md shadow-sm hover:bg-gray-50 mr-auto">Go Back
+                </button>
+
+                <button type="reset" class="px-4 py-2 border border-gray-300 text-gray-700 font-medium text-sm rounded-md shadow-sm hover:bg-gray-50"> Clear Form
+                </button>
+
+                <button type="submit" class="px-5 py-2 bg-indigo-600 text-white font-medium text-sm rounded-md shadow-sm hover:bg-indigo-700">Save Action
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+</div>
