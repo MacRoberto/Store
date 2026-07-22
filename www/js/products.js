@@ -1,106 +1,172 @@
 import {
-  rowClick,
   deleteRecords,
-  editRecords,
+  updateRecord,
   saveRecords,
-  loadView,
   loadSelectOptions,
-  setupGoBackButton,
-} from "./function.js";
+  loadRecordDataToForm,
+  fetchRecords,
+} from "./api.js";
 
-document.addEventListener("DOMContentLoaded", () => {
-  //
+import { initView as initViewMain } from "./enviroment.js";
+
+import { rowClick, loadView, getSelectedId } from "./function.js";
+
+export async function initView() {
+  const products = await fetchRecords("products");
+  const tableBody = document.getElementById("productsTableBody");
   const btnRemove = document.getElementById("btnRemove");
   const btnEdit = document.getElementById("btnEdit");
   const btnAdd = document.getElementById("btnAdd");
-  btnRemove.addEventListener("click", function (event) {
-    deleteRecords("products"); //Se manda a llamar el evento on click
-  });
-  btnEdit.addEventListener("click", function (event) {
-    loadView("../views/forms/products.html", "content").then(() => {
-      const form = document.getElementById("itemForm");
-
-      loadSelectOptions("categories", "category");
-      form.addEventListener("submit", function (event) {
-        event.preventDefault();
-
-        editRecords("products", form);
-        setupGoBackButton("goback");
-      });
-    });
-    //editRecords("../views/forms/products.html", "content").then(); //Se manda a llamar el evento on click
-  });
-  btnAdd.addEventListener("click", function (event) {
-    loadView("../views/forms/products.html", "content").then(() => {
-      const form = document.getElementById("itemForm");
-
-      loadSelectOptions("categories", "category");
-      form.addEventListener("submit", function (event) {
-        event.preventDefault();
-
-        saveRecords("products", form);
-        setupGoBackButton("goback");
-      });
+  const btnGoBack = document.getElementById("goback");
+  //Detecta cuando el usuario da clic en el boton de eliminar
+  btnRemove.addEventListener("click", async function (event) {
+    //Se muestra la alerta para que confirme la eliminación del registro seleccionado
+    Swal.fire({
+      title: "¿Are you sure to delete this record?",
+      text: "You won't be able to revert this action",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete",
+      cancelButtonText: "Cancel",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        //Hacer peticion para eliminar el registro
+        await deleteRecords("products", getSelectedId());
+        // Volver a cargar el listado para reflejar la eliminación.
+        await loadProductsView();
+      }
     });
   });
-  fetchProducts();
-});
 
-function fetchProducts() {
-  const tableBody = document.getElementById("productsTableBody");
+  if (btnEdit) {
+    btnEdit.addEventListener("click", async function () {
+      const id = getSelectedId();
+      await loadView("../views/forms/products.html", "content");
+      await initProductForm("edit", id);
+    });
+  }
+
+  if (btnAdd) {
+    btnAdd.addEventListener("click", async function () {
+      await loadView("../views/forms/products.html", "content");
+      await initProductForm("add");
+    });
+  }
+
   if (tableBody) {
-    //onload mostrar un icono de cargando
-    fetch("../php/products.php", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        action: "list",
-      }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        tableBody.innerHTML = "";
+    products.forEach((product) => {
+      const tr = document.createElement("tr");
 
-        if (data.error) {
-          console.error(data.error);
-          return;
-        }
+      const statusBadgeColor =
+        product.status === "Active"
+          ? "bg-green-100 text-green-800"
+          : "bg-red-100 text-red-800";
 
-        data.forEach((product) => {
-          const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${product.id_product}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.barcode || "-"}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">${product.product_name}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.category_name || "Sin Categoría"}</td>
+        <td class="px-6 py-4 text-sm text-gray-500">${product.description}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.reorder_level}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.units}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm">
+          <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusBadgeColor}">
+            ${product.status}
+          </span>
+        </td>
+      `;
 
-          const statusBadgeColor =
-            product.status === "Active"
-              ? "bg-green-100 text-green-800"
-              : "bg-red-100 text-red-800";
+      //Se agrega evento a cada fila
+      tr.addEventListener("click", function (event) {
+        rowClick(event, product.id_product); //Se manda a llamar el evento on click y se le pasa el objeto producto
+      });
 
-          tr.innerHTML = `
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${product.id_product}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.barcode || "-"}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">${product.product_name}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.category_name || "Sin Categoría"}</td>
-            <td class="px-6 py-4 text-sm text-gray-500">${product.description}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.reorder_level}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.unit}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm">
-              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusBadgeColor}">
-                ${product.status}
-              </span>
-            </td>
-          `;
+      tableBody.appendChild(tr);
+    });
+  }
 
-          //Se agrega evento a cada fila
-          tr.addEventListener("click", function (event) {
-            rowClick(event, product.id_product); //Se manda a llamar el evento on click y se le pasa el objeto producto
+  if (btnGoBack) {
+    btnGoBack.addEventListener("click", async function (event) {
+      event.preventDefault();
+
+      await initViewMain();
+    });
+  }
+}
+
+async function loadProductsView() {
+  await loadView("../views/products.html", "content");
+  await initView();
+}
+
+async function initProductForm(mode, id = null) {
+  try {
+    const form = document.getElementById("itemForm");
+    const btnGoBack = document.getElementById("goback");
+
+    // Cargar las categorías del select.
+    await loadSelectOptions("categories", "category");
+
+    // Si se está editando, cargar los datos del producto.
+    if (mode === "edit" && id) {
+      await loadRecordDataToForm("products", id, "itemForm");
+    }
+
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      try {
+        if (mode === "edit") {
+          Swal.fire({
+            title: "¿Are you sure to update this record?",
+            text: "This will overwrite the existing information",
+            icon: "info",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, update",
+            cancelButtonText: "Cancel",
+          }).then(async (result) => {
+            if (result.isConfirmed) {
+              await updateRecord("products", form, id);
+              // Después de guardar, regresar al listado.
+              await loadProductsView();
+            }
           });
+        } else {
+          Swal.fire({
+            title: "¿Are you sure to Add record?",
+            text: "Please confirm that the data is correct",
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, save",
+            cancelButtonText: "Cancel",
+          }).then(async (result) => {
+            if (result.isConfirmed) {
+              await saveRecords("products", form);
+              // Después de guardar, regresar al listado.
+              await loadProductsView();
+            }
+          });
+        }
+      } catch (error) {
+        console.error("Error al guardar el producto:", error);
+      }
+    });
 
-          tableBody.appendChild(tr);
-        });
-      })
-      .catch((error) =>
-        console.error("Error al obtener los productos:", error),
-      );
+    if (btnGoBack) {
+      btnGoBack.addEventListener("click", async function (event) {
+        event.preventDefault();
+
+        await loadProductsView();
+      });
+    }
+  } catch (error) {
+    console.error("Error al inicializar el formulario:", error);
   }
 }

@@ -1,3 +1,5 @@
+//En este archivo se van a agregar funciones que no hagan peticiones a la base de datos
+
 //Variables globales
 let rowSelected = null; //variable donde se almacena la fila donde el usuario dio click
 let recordSelectedID = null; // variable para almacenar el id del producto dependiendo en que fila dio click el usuario
@@ -25,81 +27,6 @@ export function rowClick(event, dataID) {
   // Mostrar botón eliminar
   btnRemove.classList.remove("hidden"); //Quitar la clase hidden para hacer visible el boton
   btnEdit.classList.remove("hidden");
-}
-
-//Funcion que se ejecuta cuando el usuario da clic en el boton de eliminar
-export function deleteRecords(file) {
-  //products
-  Swal.fire({
-    title: "¿Are you sure to delete this record?",
-    text: "You won't be able to revert this action",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonColor: "#3085d6",
-    cancelButtonColor: "#d33",
-    confirmButtonText: "Yes, delete",
-    cancelButtonText: "Cancel",
-  }).then((result) => {
-    if (result.isConfirmed) {
-      //Hacer peticion para eliminar el registro
-      fetch("../php/" + file + ".php", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          action: "delete",
-          id: recordSelectedID,
-        }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          Swal.fire({
-            title: "Deleted",
-            text: "Record deleted successfully",
-            icon: "success",
-          });
-        })
-        .catch((error) => console.error("Error deleting record:", error));
-    }
-  });
-}
-
-//Funcion que se ejecuta cuando el usuario da clic en el boton de editar
-export function editRecords(file, data) {
-  Swal.fire({
-    title: "¿Are you sure to update this record?",
-    text: "This will overwrite the existing information",
-    icon: "info",
-    showCancelButton: true,
-    confirmButtonColor: "#3085d6",
-    cancelButtonColor: "#d33",
-    confirmButtonText: "Yes, update",
-    cancelButtonText: "Cancel",
-  }).then((result) => {
-    if (result.isConfirmed) {
-      fetch("../php/" + file + ".php", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          action: "edit",
-          id: recordSelectedID,
-          ...data,
-        }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          Swal.fire({
-            title: "Updated",
-            text: "Record updated successfully",
-            icon: "success",
-          });
-        })
-        .catch((error) => console.error("Error updating record:", error));
-    }
-  });
 }
 
 export function loadView(file, containerId) {
@@ -213,4 +140,6 @@ export function setupGoBackButton(buttonId) {
   } else {
     console.warn(`Go Back button with ID "${buttonId}" was not found.`);
   }
+export function getSelectedId() {
+  return recordSelectedID;
 }
