@@ -21,7 +21,7 @@ button.addEventListener("click", (e) => {
       console.log(data);
 
       if (data.status === "success") {
-        window.location.href = "users/index.html";
+        window.location.href = "views/enviroment.html";
       } else {
         const msg = data.message ?? data.msg ?? "Respuesta inválida del servidor";
         alert(msg);
