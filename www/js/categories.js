@@ -2,7 +2,6 @@ import {
   deleteRecords,
   updateRecord,
   saveRecords,
-  loadSelectOptions,
   loadRecordDataToForm,
   fetchRecords,
 } from "./api.js";
