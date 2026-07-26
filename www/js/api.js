@@ -51,7 +51,7 @@ export async function saveRecords(file, form) {
 
 //Funcion que se ejecuta para cargar opciones dentro de un select, recibe el nombre del archivo y el id del select
 
-export function loadSelectOptions(file, selectId) {
+export async function loadSelectOptions(file, selectId) {
   fetch("../php/" + file + ".php", {
     method: "POST",
     headers: {
@@ -76,7 +76,7 @@ export function loadSelectOptions(file, selectId) {
     .catch((error) => console.error("Error loading select options:", error));
 }
 
-export function loadRecordDataToForm(file, recordId, formId) {
+export async function loadRecordDataToForm(file, recordId, formId) {
   const form = document.getElementById(formId);
   if (!form) {
     console.error(`Form with ID "${formId}" was not found.`);
@@ -107,12 +107,15 @@ export function loadRecordDataToForm(file, recordId, formId) {
           input.value = recordData[key];
         }
       });
+      
 
       console.log("Form successfully loaded with record ID:", recordId);
     })
     .catch(
       (error) => console.error("Error retrieving record information:", error), //error al recuperar la informacion del registro
     );
+
+    
 }
 
 export async function updateRecord(file, itemForm, id) {
