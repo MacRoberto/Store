@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . "/lib/db.php";
-
+require_once __DIR__ ."/helpers.php";
 //Quiero realizar un login, buscando en la tabla de usuario por email y contraseña
 function login($email, $password) {
     global $db;
@@ -97,21 +97,51 @@ function getCategoryOptions() {
 
 /*Funciones para el modulo de productos*/
 //
-function getAllProducts() {
+function getAllProducts($requestData) {
     global $db;
     try {
+
+        // Configuración del listado.
+        $page = max(1, (int) ($requestData["page"] ?? 1)); // por defecto 1
+        $limit = max(1, (int) ($requestData["limit"] ?? 50)); // por defecto 1
+
+        $orderBy = getProductOrderField(
+            $requestData["orderBy"] ?? "id_product"
+        );
+
+        $orderDirection = getOrderDirection(
+            $requestData["orderDirection"] ?? "DESC"
+        );
+
+        // Calcular desde qué registro iniciará la consulta.
+        $offset = ($page - 1) * $limit;
+
+        // Obtener el total de productos.
+        $total = getTotalProducts();
+
         // Hacemos un JOIN para obtener el nombre de la categoría asignada al producto
         $query = "SELECT p.id_product, p.barcode, p.name AS product_name, p.description, 
                          p.reorder_level, p.status, p.units, c.name AS category_name 
                   FROM products p
                   LEFT JOIN categories c ON p.category_id = c.id_cat
                   where p.deleted_at IS NULL
-                  ORDER BY p.id_product DESC";
+                  ORDER BY $orderBy $orderDirection 
+                  LIMIT :limit OFFSET :offset ";
                   
         $stmt = $db->prepare($query);
+        $stmt->bindValue(":limit", $limit, PDO::PARAM_INT);
+        $stmt->bindValue(":offset", $offset, PDO::PARAM_INT);
+        
         $stmt->execute();
         
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return [
+            "records" => $records,
+            "total" => $total,
+            "page" => $page,
+            "limit" => $limit,
+            "totalPages" => (int) ceil($total / $limit)
+        ];
     } catch (PDOException $e) {
         return ['error' => $e->getMessage()];
     }
@@ -195,6 +225,38 @@ function getProductOptions() {
     global $db;
     $stmt = $db->query("SELECT id_product as id, name FROM products");
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+/**
+ * Valida el campo utilizado para ordenar el listado de productos
+ * y devuelve el nombre de la columna correspondiente en la consulta SQL.
+ */
+function getProductOrderField($field) {
+    $fields = [
+        "id_product" => "p.id_product",
+        "product_name" => "p.name",
+        "barcode" => "p.barcode",
+        "category_name" => "c.name",
+        "reorder_level" => "p.reorder_level",
+        "status" => "p.status",
+        "units" => "p.units"
+    ];
+
+    return $fields[$field] ?? "p.id_product";
+}
+
+// Obtiene el total de productos activos que no han sido eliminados lógicamente.
+function getTotalProducts() {
+    global $db;
+
+    $query = "SELECT COUNT(*)
+              FROM products
+              WHERE deleted_at IS NULL";
+
+    $stmt = $db->prepare($query);
+    $stmt->execute();
+
+    return (int) $stmt->fetchColumn();
 }
 
 /*Fin de funciones para el modulo de productos*/

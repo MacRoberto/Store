@@ -143,16 +143,25 @@ export async function updateRecord(file, itemForm, id) {
 }
 
 //Función para recuperar los registros
-export function fetchRecords(file) {
+export function fetchRecords(file, options = {}) {
+  const payload = {
+    action: "list",
+  };
+
+  // Agrega al payload los parámetros opcionales recibidos.
+  Object.entries(options).forEach(([key, value]) => {
+    if (value !== null && value !== undefined) {
+      payload[key] = value;
+    }
+  });
+
   // Hace petición al archivo PHP usando el método POST.
   return fetch(`../php/${file}.php`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      action: "list",
-    }),
+    body: JSON.stringify(payload),
   })
     .then((response) => response.json())
     .then((data) => {
