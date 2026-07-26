@@ -190,8 +190,16 @@ function getProductById($id_product){
         return ['error' => $e->getMessage()];
     }
 }
+
+function getProductOptions() {
+    global $db;
+    $stmt = $db->query("SELECT id_product as id, name FROM products");
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
 /*Fin de funciones para el modulo de productos*/
 
+//Inicio de funciones para promociones
 function getAllPromotions() {
     global $db;
     try {
@@ -211,6 +219,83 @@ function getAllPromotions() {
         return ['error' => $e->getMessage()];
     }
 }
+
+//Crear funcion para guardar un registro de Promotions
+
+function savePromotion( $name, $description, $date_start, $date_end, $percent_off, $id_product, $status) {
+    global $db;
+    try {
+        $query = "INSERT INTO promotions ( name, description, date_start, date_end, percent_off, id_product, status)
+                    VALUES (:name, :description, :date_start, :date_end, :percent_off, :id_product, :status)";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':name', $name);
+        $stmt->bindParam(':description', $description);
+        $stmt->bindParam(':date_start', $date_start);
+        $stmt->bindParam(':date_end', $date_end);
+        $stmt->bindParam(':percent_off', $percent_off);
+        $stmt->bindParam(':id_product', $id_product);
+        $stmt->bindParam(':status', $status);
+        $stmt->execute();
+        return ['success' => true];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+// crear funcion para editar el registro de Promotions
+function updatePromotion($id_promotion, $name, $description, $date_start, $date_end, $percent_off, $id_product, $status) {
+    global $db;
+    try {
+        $query = "UPDATE promotions 
+                  SET name = :name, description = :description, date_start = :date_start, date_end = :date_end, percent_off = :percent_off, id_product = :id_product, status = :status
+                  WHERE id_promotion = :id_promotion";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_promotion', $id_promotion);
+        $stmt->bindParam(':name', $name);
+        $stmt->bindParam(':description', $description);
+        $stmt->bindParam(':date_start', $date_start);
+        $stmt->bindParam(':date_end', $date_end);
+        $stmt->bindParam(':percent_off', $percent_off);
+        $stmt->bindParam(':id_product', $id_product);
+        $stmt->bindParam(':status', $status);
+        $stmt->execute();
+        return ['success' => true];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+// crear funcion para eliminar el registro de Promotions
+
+function deletePromotion($id_promotion) {
+    global $db;
+    try {
+        $query = "DELETE FROM promotions WHERE id_promotion = :id_promotion";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_promotion', $id_promotion);
+        $stmt->execute();
+        return ['success' => true];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+// crear funcion para recuperar un registro en especifico de promocion filtrado por su id de Promotions
+
+function getPromotionById($id_promotion) {
+    global $db;
+    try {
+        $query = "SELECT id_promotion AS id, name, description, date_start, date_end, percent_off, id_product, status FROM promotions WHERE id_promotion = :id_promotion";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_promotion', $id_promotion);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+//Fin de funciones para promociones 
+
 
 function getAllInventoryMovements() {
     global $db;

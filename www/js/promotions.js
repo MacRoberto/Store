@@ -65,18 +65,17 @@ export async function initView() {
           : "bg-red-100 text-red-800";
 
       tr.innerHTML = `
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${promotion.id_promotion}</td>
         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${promotion.promotion_name || "-"}</td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">${promotion.description}</td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${promotion.date_start || "Sin Producto"}</td>
-        <td class="px-6 py-4 text-sm text-gray-500">${promotion.date_end}%</td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${promotion.percent_off}</td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${promotion.product_name}</td>
+        <td class="px-6 py-4 text-sm text-gray-900 font-medium">${promotion.description || "-"}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${promotion.date_start || "-"}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${promotion.date_end || "-"}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${promotion.percent_off ? promotion.percent_off + "%" : "-"}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${promotion.product_name || promotion.id_product || "Sin Producto"}</td>
         <td class="px-6 py-4 whitespace-nowrap text-sm">
-          <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusBadgeColor}">
-            ${promotion.status}
-          </span>
-        </td>
+        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusBadgeColor}">
+      ${promotion.status}
+    </span>
+  </td>
       `;
 
       //Se agrega evento a cada fila
@@ -106,6 +105,9 @@ async function initPromotionForm(mode, id = null) {
   try {
     const form = document.getElementById("itemForm");
     const btnGoBack = document.getElementById("goback");
+
+    // Cargar los productos al select.
+    await loadSelectOptions("products", "id_product");
 
     // Si se está editando, cargar los datos de la promocion.
     if (mode === "edit" && id) {
