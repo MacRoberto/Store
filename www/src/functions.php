@@ -390,6 +390,97 @@ function getAllActions() {
     }
 }
 
+function getModuleOptions() {
+    global $db;
+    try {
+        $query = "SELECT id_module AS id, name
+                  FROM modules
+                  ORDER BY name ASC";
+        $stmt = $db->prepare($query);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+// Recuperar una acción por ID
+function getActionById($id) {
+    global $db;
+    try {
+        $query = "SELECT id_action AS id,
+                         name,
+                         description,
+                         id_module
+                  FROM actions
+                  WHERE id_action = :id_action";
+
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_action', $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function saveActions($name, $description, $id_module) {
+    global $db;
+    try {
+        $query = "INSERT INTO actions (name, description, id_module)
+                  VALUES (:name, :description, :id_module)";
+
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':name', $name);
+        $stmt->bindParam(':description', $description);
+        $stmt->bindParam(':id_module', $id_module, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return ['success' => true];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function updateActions($id, $name, $description, $id_module) {
+    global $db;
+    try {
+        $query = "UPDATE actions
+                  SET name = :name,
+                      description = :description,
+                      id_module = :id_module
+                  WHERE id_action = :id_action";
+
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_action', $id, PDO::PARAM_INT);
+        $stmt->bindParam(':name', $name);
+        $stmt->bindParam(':description', $description);
+        $stmt->bindParam(':id_module', $id_module, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return ['success' => true];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+// Eliminar acción
+function deleteActions($id) {
+    global $db;
+    try {
+        $query = "DELETE FROM actions WHERE id_action = :id_action";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_action', $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return ['success' => true];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
 function getAllRolesPermissions() {
     global $db;
     try {
