@@ -11,13 +11,30 @@ import { initView as initViewMain } from "./enviroment.js";
 
 import { rowClick, loadView, getSelectedId } from "./function.js";
 
+let listOptions = {
+  page: 1,
+  limit: 50,
+  orderBy: "id_product", //campo por default por el que se va a ordenar
+  orderDirection: "DESC",
+};
+
 export async function initView() {
-  const products = await fetchRecords("products");
   const tableBody = document.getElementById("productsTableBody");
   const btnRemove = document.getElementById("btnRemove");
   const btnEdit = document.getElementById("btnEdit");
   const btnAdd = document.getElementById("btnAdd");
   const btnGoBack = document.getElementById("goback");
+
+  const orderBy = document.getElementById("orderBy");
+  const orderDirection = document.getElementById("orderDirection");
+
+  const btnPrevious = document.getElementById("btnPrevious");
+  const btnNext = document.getElementById("btnNext");
+
+  const currentPage = document.getElementById("currentPage");
+  const totalPages = document.getElementById("totalPages");
+  const paginationSummary = document.getElementById("paginationSummary");
+
   //Detecta cuando el usuario da clic en el boton de eliminar
   btnRemove.addEventListener("click", async function (event) {
     //Se muestra la alerta para que confirme la eliminación del registro seleccionado
@@ -55,7 +72,70 @@ export async function initView() {
     });
   }
 
+  if (btnGoBack) {
+    btnGoBack.addEventListener("click", async function (event) {
+      event.preventDefault();
+
+      await initViewMain();
+    });
+  }
+
+  if (orderBy) {
+    orderBy.value = listOptions.orderBy;
+
+    orderBy.addEventListener("change", async function () {
+      listOptions.orderBy = orderBy.value;
+      listOptions.page = 1;
+
+      await loadProducts();
+    });
+  }
+
+  if (orderDirection) {
+    orderDirection.value = listOptions.orderDirection;
+
+    orderDirection.addEventListener("change", async function () {
+      listOptions.orderDirection = orderDirection.value;
+      listOptions.page = 1;
+
+      await loadProducts();
+    });
+  }
+
+  if (btnPrevious) {
+    btnPrevious.addEventListener("click", async function () {
+      if (listOptions.page > 1) {
+        listOptions.page--;
+
+        await loadProducts();
+      }
+    });
+  }
+
+  if (btnNext) {
+    btnNext.addEventListener("click", async function () {
+      if (!btnNext.disabled) {
+        listOptions.page++;
+
+        await loadProducts();
+      }
+    });
+  }
+
+  await loadProducts();
+}
+
+async function loadProducts() {
+  const data = await fetchRecords("products", listOptions);
+
+  const tableBody = document.getElementById("productsTableBody");
+
   if (tableBody) {
+    // Limpiar la tabla antes de volver a pintar los registros.
+    tableBody.innerHTML = "";
+
+    const products = data.records;
+
     products.forEach((product) => {
       const tr = document.createElement("tr");
 
@@ -79,22 +159,35 @@ export async function initView() {
         </td>
       `;
 
-      //Se agrega evento a cada fila
       tr.addEventListener("click", function (event) {
-        rowClick(event, product.id_product); //Se manda a llamar el evento on click y se le pasa el objeto producto
+        rowClick(event, product.id_product);
       });
 
       tableBody.appendChild(tr);
     });
-  }
 
-  if (btnGoBack) {
-    btnGoBack.addEventListener("click", async function (event) {
-      event.preventDefault();
-
-      await initViewMain();
-    });
+    updatePagination(data);
   }
+}
+
+function updatePagination(data) {
+  const currentPage = document.getElementById("currentPage");
+  const totalPages = document.getElementById("totalPages");
+  const paginationSummary = document.getElementById("paginationSummary");
+  const btnPrevious = document.getElementById("btnPrevious");
+  const btnNext = document.getElementById("btnNext");
+
+  currentPage.textContent = data.page;
+  totalPages.textContent = data.totalPages;
+
+  btnPrevious.disabled = data.page <= 1;
+  btnNext.disabled = data.page >= data.totalPages;
+
+  const start = data.total === 0 ? 0 : (data.page - 1) * data.limit + 1;
+
+  const end = Math.min(data.page * data.limit, data.total);
+
+  paginationSummary.textContent = `Showing ${start} to ${end} of ${data.total} products`;
 }
 
 async function loadProductsView() {
