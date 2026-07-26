@@ -54,6 +54,11 @@ if ($accion == "list") {
     echo json_encode($result);
 
     
+}else if($accion == "selectOptions"){
+    //manda a llamar la funcion que realiza la consulta a la bd
+    $list = getProductOptions();
+    //regresa la informacion solicitada
+    echo json_encode($list);
 }
 else {
     echo json_encode([

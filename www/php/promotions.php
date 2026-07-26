@@ -10,7 +10,40 @@ if ($accion == "list") {
     $list = getAllPromotions();
     
     echo json_encode($list);
-} else {
+}else if ($accion == "save") {
+    $name = $_get['name'] ?? "";
+    $description = $_get['description'] ?? "";
+    $date_start = $_get['date_start'] ?? "";
+    $date_end = $_get['date_end'] ?? "";
+    $percent_off = $_get['percent_off'] ?? "";
+    $id_product = $_get['id_product'] ?? "";
+    $status = $_get['status'] ?? "";
+    $result = savePromotion($name, $description, $date_start, $date_end, $percent_off, $id_product, $status);
+    echo json_encode($result);
+}else if($accion == "delete"){
+     $id_promotion = $_get['id']; 
+    $result = deletePromotion($id_promotion);
+    echo json_encode($result);
+}else if($accion == "getInfoByID") {
+    $id_promotion = $_get['id'] ?? "";
+    //llamar funcion para recuperar la informacion especifica del producto
+    $result = getPromotionById($id_promotion);
+    
+    echo json_encode($result);
+}else if ($accion == "update") {
+    $id_promotion = $_get['id'] ?? 0;
+    $name = $_get['name'] ?? "";
+    $description = $_get['description'] ?? "";
+    $date_start = $_get['date_start'] ?? "";
+    $date_end = $_get['date_end'] ?? "";
+    $percent_off = $_get['percent_off'] ?? "";
+    $id_product = $_get['id_product'] ?? "";
+    $status = $_get['status'] ?? "";
+    $result = updatePromotion($id_promotion, $name, $description, $date_start, $date_end, $percent_off, $id_product, $status);
+    echo json_encode($result);
+}
+//agregar else if para validar cuando se crea un registro, actualizacion y eliminacion
+else {
     echo json_encode([
         'status' => 'error',
         'msg' => 'Action invalid'

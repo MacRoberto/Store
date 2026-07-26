@@ -2,3 +2,55 @@
 
 
 //Ajustes 
+
+//Estructura de else if
+if
+todos los else if necesarios
+
+al final un else
+
+//Enlazar funciones con la vista
+1. crear el elemento en la vista y asignarle un id
+2. Crear la funcion, asignarle un nombre adecuado coherente a lo que realice y exportarla (funcion.js)
+3. Importar la funcion (products.js)
+4. crear una constante y buscar el elemento con su id al cual se va a enlazar la funcion (products.js)
+5. Asignar el evento on click listener e invocar(llamar) la funcion creada
+
+//Mostrar vista de formulario para editar un registro
+1. Crear el elemento "Editar" en la vista y asignarle un id
+2. Crear la funcion que carga el formulario y exportar la funcion 
+3. Importar la funcion
+4. Crear una cosntante y buscar el elemento con su id
+5. Asignar el evento on click listener e invocar o llamar la funcion que carga el formulario
+    Flujo o proceso para editar un registro
+    1. Seleccionar un registro
+    2. Visualiza opciones para editar o eliminar
+    3. Dar click en edit y mostrar el formulario
+    4. Setear el valor a cada campo con la informacion del registro
+    5. Reliza cambios y guarda cambios
+    6. Confirmar en mensaje de alerta y grabar cambios
+
+//Flujo o proceso para llenar el fomrulario con la informacion del producto seleccionado
+1. Crear una funcion "functions.php" de lado de php que retorne el regstro especifico del producto filtrado ya sea por su id primario
+2. Agregar un elseif con action "getInfoProduct" que llame la funcion previamente creada en el paso anterior y retornar el resultado
+3. Hacer fetch para recuperar la informacion del producto psando como parametro action : getInfoProduct y id: "id correspondiente al registro seleccionado"
+4. Setear cada valor a cada input correspondiente
+
+// guarar edit
+if else para guardar campos
+ajuste por datos vacíos (functions.js)
+
+//Replicar funcionalidad del modulo de productos en otros modulos
+1. Agregar un registro en la bd "tabla de modules", 
+    en el campo img debe ir el nombre del icono a mostrar
+    en el campo de url debe ir el nombre del archivo que se usa para enlistar los registros correspoenientes
+2.  En el archivo de listado se debe quitar la estructura basica del html y la etiqueta body se debe convertir en etiqueta div
+    Tambien se deben quitar las librerias js y hojas de estilo que se esten usando
+3.  Realizar ajustes en el archivo js correspondiente al modulo
+
+Funcionalidad general de los archivos
+// Vista o interface (html)
+// codigo js que entrelaza la vista con la api
+// api entrelaza con la clase correspondiente de la tabla
+// la clase se conecta con la de functions(consultas) y ejecuta la consulta
+
