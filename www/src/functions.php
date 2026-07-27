@@ -113,25 +113,48 @@ function getAllProducts($requestData) {
             $requestData["orderDirection"] ?? "DESC"
         );
 
+        $searchField = getProductSearchField(
+            $requestData["searchField"] ?? "all"
+        );
+
+        $search = trim($requestData["search"] ?? "");
+
         // Calcular desde qué registro iniciará la consulta.
         $offset = ($page - 1) * $limit;
 
         // Obtener el total de productos.
-        $total = getTotalProducts();
+        $total = getTotalProducts($searchField, $search);
+        
+        $where = "WHERE p.deleted_at IS NULL";
+        if ($search !== "") {
 
+            if ($searchField === "all") {
+                $where .= " AND (
+                    p.name LIKE :search
+                    OR p.barcode LIKE :search
+                    OR c.name LIKE :search
+                    OR p.description LIKE :search
+                    OR p.status LIKE :search
+                )";
+            } else {
+                $where .= " AND $searchField LIKE :search";
+            }
+        }
         // Hacemos un JOIN para obtener el nombre de la categoría asignada al producto
         $query = "SELECT p.id_product, p.barcode, p.name AS product_name, p.description, 
                          p.reorder_level, p.status, p.units, c.name AS category_name 
                   FROM products p
-                  LEFT JOIN categories c ON p.category_id = c.id_cat
-                  where p.deleted_at IS NULL
+                  LEFT JOIN categories c ON p.category_id = c.id_cat 
+                  $where 
                   ORDER BY $orderBy $orderDirection 
                   LIMIT :limit OFFSET :offset ";
-                  
+             
         $stmt = $db->prepare($query);
         $stmt->bindValue(":limit", $limit, PDO::PARAM_INT);
         $stmt->bindValue(":offset", $offset, PDO::PARAM_INT);
-        
+        if ($search !== "") {
+            $stmt->bindValue(":search", "%$search%");
+        }
         $stmt->execute();
         
         $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -246,17 +269,50 @@ function getProductOrderField($field) {
 }
 
 // Obtiene el total de productos activos que no han sido eliminados lógicamente.
-function getTotalProducts() {
+function getTotalProducts($searchField = "", $search = "") {
     global $db;
+    
+    $where = "WHERE deleted_at IS NULL";
 
-    $query = "SELECT COUNT(*)
-              FROM products
-              WHERE deleted_at IS NULL";
+    if ($search !== "") {
+        if ($searchField === "all") {
+            $where .= " AND (
+                p.name LIKE :search
+                OR p.barcode LIKE :search
+                OR c.name LIKE :search
+                OR p.description LIKE :search
+                OR p.status LIKE :search
+            )";
+        } else {
+            $where .= " AND $searchField LIKE :search";
+        }
+    }
+    $query = "SELECT count(*)  
+                  FROM products p
+                  LEFT JOIN categories c ON p.category_id = c.id_cat 
+              $where";
 
     $stmt = $db->prepare($query);
+
+    if ($search !== "") {
+        $stmt->bindValue(":search", "%$search%");
+    }
+
     $stmt->execute();
 
     return (int) $stmt->fetchColumn();
+}
+
+function getProductSearchField($field) {
+    $fields = [
+        "product_name" => "p.name",
+        "barcode" => "p.barcode",
+        "category_name" => "c.name",
+        "description" => "p.description",
+        "status" => "p.status"
+    ];
+
+    return $fields[$field] ?? "all";
 }
 
 /*Fin de funciones para el modulo de productos*/

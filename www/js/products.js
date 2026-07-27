@@ -16,6 +16,8 @@ let listOptions = {
   limit: 50,
   orderBy: "id_product", //campo por default por el que se va a ordenar
   orderDirection: "DESC",
+  searchField: "all",
+  search: "",
 };
 
 export async function initView() {
@@ -34,6 +36,18 @@ export async function initView() {
   const currentPage = document.getElementById("currentPage");
   const totalPages = document.getElementById("totalPages");
   const paginationSummary = document.getElementById("paginationSummary");
+
+  const searchField = document.getElementById("searchField");
+  const searchInput = document.getElementById("searchInput");
+  const btnSearch = document.getElementById("btnSearch");
+
+  if (searchField) {
+    searchField.value = listOptions.searchField;
+  }
+
+  if (searchInput) {
+    searchInput.value = listOptions.search;
+  }
 
   //Detecta cuando el usuario da clic en el boton de eliminar
   btnRemove.addEventListener("click", async function (event) {
@@ -116,6 +130,29 @@ export async function initView() {
     btnNext.addEventListener("click", async function () {
       if (!btnNext.disabled) {
         listOptions.page++;
+
+        await loadProducts();
+      }
+    });
+  }
+
+  if (btnSearch) {
+    btnSearch.addEventListener("click", async function () {
+      listOptions.searchField = searchField.value;
+      listOptions.search = searchInput.value.trim();
+      listOptions.page = 1;
+
+      await loadProducts();
+    });
+  }
+
+  //Busqueda con enter
+  if (searchInput) {
+    searchInput.addEventListener("keydown", async function (event) {
+      if (event.key === "Enter") {
+        listOptions.searchField = searchField.value;
+        listOptions.search = searchInput.value.trim();
+        listOptions.page = 1;
 
         await loadProducts();
       }
