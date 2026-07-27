@@ -17,6 +17,9 @@ let listOptions = {
   search: "",
 };
 
+// Guarda el rol seleccionado
+let selectedRole = null;
+
 // Inicializa la vista
 export async function initView() {
   const btnRemove = document.getElementById("btnRemove");
@@ -94,9 +97,7 @@ export async function initView() {
 
     orderDirection.addEventListener("change", async function () {
       listOptions.orderDirection = orderDirection.value;
-      if (listOptions.filterType === "id") {
-        await loadRoles();
-      }
+      await loadRoles();
     });
   }
 
@@ -195,7 +196,12 @@ async function loadNameFilterOptions() {
   const nameFilter = document.getElementById("nameFilter");
   if (!nameFilter) return;
 
-  const data = await fetchRecords("roles", { orderDirection: "ASC" });
+  const data = await fetchRecords("roles", {
+    filterType: "",
+    filterValues: [],
+    orderDirection: "ASC",
+    search: "",
+  });
 
   const roles = Array.isArray(data?.records)
     ? data.records
@@ -240,39 +246,11 @@ async function loadRoles() {
 
   tableBody.innerHTML = "";
 
-  let roles = Array.isArray(data?.records)
+  const roles = Array.isArray(data?.records)
     ? data.records
     : Array.isArray(data)
       ? data
       : [];
-
-  // Buscador
-  if (listOptions.search && listOptions.search.trim() !== "") {
-    const term = listOptions.search.trim().toLowerCase();
-    roles = roles.filter((role) =>
-      `${role.id_rol} ${role.name ?? ""} ${role.description ?? ""}`
-        .toLowerCase()
-        .includes(term)
-    );
-  }
-
-  // Filtro por nombres seleccionados
-  if (listOptions.filterType === "name" && listOptions.filterValues.length > 0) {
-    roles = roles.filter((role) =>
-      listOptions.filterValues.includes(role.name)
-    );
-  }
-
-  // Orden
-  if (listOptions.filterType === "id") {
-    roles.sort((a, b) => {
-      return listOptions.orderDirection === "ASC"
-        ? Number(a.id_rol) - Number(b.id_rol)
-        : Number(b.id_rol) - Number(a.id_rol);
-    });
-  } else {
-    roles.sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""));
-  }
 
   roles.forEach((role) => {
     const tr = document.createElement("tr");

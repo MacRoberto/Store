@@ -490,32 +490,43 @@ function getAllRoles($requestData = []) {
     try {
         $query = "SELECT r.id_rol, r.name, r.description
                   FROM roles r";
-
         $params = [];
+        $where = [];
+
+        $search = trim($requestData["search"] ?? "");
+        if ($search !== "") {
+            $where[] = "(CAST(r.id_rol AS CHAR) LIKE :search
+                        OR r.name LIKE :search
+                        OR r.description LIKE :search)";
+            $params[":search"] = "%" . $search . "%";
+        }
 
         $filterType = $requestData["filterType"] ?? "";
         $filterValues = $requestData["filterValues"] ?? [];
-        $orderDirection = strtoupper($requestData["orderDirection"] ?? "DESC");
-
-        if ($orderDirection !== "ASC") {
-            $orderDirection = "DESC";
-        }
 
         if ($filterType === "name" && is_array($filterValues) && count($filterValues) > 0) {
             $placeholders = [];
 
-            foreach ($filterValues as $index => $name) {
-                $placeholder = ":name{$index}";
-                $placeholders[] = $placeholder;
-                $params[$placeholder] = $name;
+            foreach ($filterValues as $index => $value) {
+                $ph = ":name" . $index;
+                $placeholders[] = $ph;
+                $params[$ph] = $value;
             }
 
-            $query .= " WHERE r.name IN (" . implode(",", $placeholders) . ")";
-            $query .= " ORDER BY r.name ASC";
+            $where[] = "r.name IN (" . implode(", ", $placeholders) . ")";
+        }
 
-        } elseif ($filterType === "id") {
+        if (count($where) > 0) {
+            $query .= " WHERE " . implode(" AND ", $where);
+        }
+
+        $orderDirection = strtoupper($requestData["orderDirection"] ?? "DESC");
+        if ($orderDirection !== "ASC") {
+            $orderDirection = "DESC";
+        }
+
+        if ($filterType === "id") {
             $query .= " ORDER BY r.id_rol " . $orderDirection;
-
         } else {
             $query .= " ORDER BY r.name ASC";
         }
@@ -524,7 +535,6 @@ function getAllRoles($requestData = []) {
         $stmt->execute($params);
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
-
     } catch (PDOException $e) {
         return ['error' => $e->getMessage()];
     }
