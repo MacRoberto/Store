@@ -501,6 +501,83 @@ function getAllRoles() {
     }
 }
 
+function saveRole($name, $description) {
+    global $db;
+
+    try {
+        $stmt = $db->prepare("INSERT INTO roles (name, description) VALUES (:name, :description)");
+        $stmt->execute([
+            ':name' => $name,
+            ':description' => $description
+        ]);
+
+        return [
+            'status' => 'success',
+            'msg' => 'Role saved successfully'
+        ];
+    } catch (PDOException $e) {
+        return [
+            'status' => 'error',
+            'msg' => $e->getMessage()
+        ];
+    }
+}
+
+function getRoleById($id_rol) {
+    global $db;
+
+    $stmt = $db->prepare("SELECT id_rol, name, description FROM roles WHERE id_rol = :id_rol LIMIT 1");
+    $stmt->execute([':id_rol' => $id_rol]);
+
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
+
+
+
+
+function updateRole($id_rol, $name, $description) {
+    global $db;
+
+    try {
+        $stmt = $db->prepare("UPDATE roles SET name = :name, description = :description WHERE id_rol = :id_rol");
+        $stmt->execute([
+            ':id_rol' => $id_rol,
+            ':name' => $name,
+            ':description' => $description
+        ]);
+
+        return [
+            'status' => 'success',
+            'msg' => 'Role updated successfully'
+        ];
+    } catch (PDOException $e) {
+        return [
+            'status' => 'error',
+            'msg' => $e->getMessage()
+        ];
+    }
+}
+
+function deleteRole($id_rol) {
+    global $db;
+
+    try {
+        $stmt = $db->prepare("DELETE FROM roles WHERE id_rol = :id_rol");
+        $stmt->execute([':id_rol' => $id_rol]);
+
+        return [
+            'status' => 'success',
+            'msg' => 'Role deleted successfully'
+        ];
+    } catch (PDOException $e) {
+        return [
+            'status' => 'error',
+            'msg' => $e->getMessage()
+        ];
+    }
+}
+
 function getAllModules() {
     global $db;
     try {

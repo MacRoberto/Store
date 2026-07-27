@@ -1,36 +1,45 @@
-//En este archivo se van a agregar funciones que no hagan peticiones a la base de datos
+// Guarda la fila y el ID seleccionado
+let rowSelected = null;
+let recordSelectedID = null;
 
-//Variables globales
-let rowSelected = null; //variable donde se almacena la fila donde el usuario dio click
-let recordSelectedID = null; // variable para almacenar el id del producto dependiendo en que fila dio click el usuario
-
-//Funcion que se ejecuta cuando se hace click en la fila de la tabla
-//Se usa para mostrar u ocultar el boton que sirve para eliminar un registro
+// Marca una fila como seleccionada
 export function rowClick(event, dataID) {
-  //Mostrar boton para eliminar
   const btnRemove = document.getElementById("btnRemove");
   const btnEdit = document.getElementById("btnEdit");
 
-  // Obtener el tr donde se hizo click
   const tr = event.currentTarget;
-  // Quitar color a la fila seleccionada anteriormente
+
   if (rowSelected) {
     rowSelected.classList.remove("bg-indigo-100", "ring-2", "ring-indigo-400");
   }
 
-  // Guardar la fila y el producto seleccionado
   rowSelected = tr;
   recordSelectedID = dataID;
-  // Agregar color a la nueva fila seleccionada
+
   tr.classList.add("bg-indigo-100", "ring-2", "ring-indigo-400");
 
-  // Mostrar botón eliminar
-  btnRemove.classList.remove("hidden"); //Quitar la clase hidden para hacer visible el boton
-  btnEdit.classList.remove("hidden");
+  if (btnRemove) btnRemove.classList.remove("hidden");
+  if (btnEdit) btnEdit.classList.remove("hidden");
 }
 
+// Limpia la selección actual
+export function clearSelection() {
+  if (rowSelected) {
+    rowSelected.classList.remove("bg-indigo-100", "ring-2", "ring-indigo-400");
+  }
+
+  rowSelected = null;
+  recordSelectedID = null;
+
+  const btnRemove = document.getElementById("btnRemove");
+  const btnEdit = document.getElementById("btnEdit");
+
+  if (btnRemove) btnRemove.classList.add("hidden");
+  if (btnEdit) btnEdit.classList.add("hidden");
+}
+
+// Carga una vista dentro del contenedor principal
 export function loadView(file, containerId) {
-  //Vista de formulario
   const container = document.getElementById(containerId);
 
   return fetch(file)
@@ -40,7 +49,6 @@ export function loadView(file, containerId) {
     })
     .catch((error) => {
       console.error("Error loading view:", error);
-
       Swal.fire({
         title: "Error",
         text: "The form could not be loaded.",
@@ -49,6 +57,7 @@ export function loadView(file, containerId) {
     });
 }
 
+// Devuelve el ID del registro seleccionado
 export function getSelectedId() {
   return recordSelectedID;
 }
