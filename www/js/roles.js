@@ -7,28 +7,16 @@ import {
 } from "./api.js";
 
 import { initView as initViewMain } from "./enviroment.js";
-import {
-  rowClick,
-  loadView,
-  getSelectedId,
-  clearSelection,
-} from "./function.js";
+import { rowClick, loadView, getSelectedId } from "./function.js";
 
-// Guarda todos los roles cargados
-let allRoles = [];
-
-// Guarda el rol seleccionado
-let selectedRole = null;
-
-// Opciones de consulta
+// Filtros del listado
 let listOptions = {
-  page: 1,
-  limit: 50,
-  orderBy: "id_rol",
+  filterType: "",
+  filterValues: [],
   orderDirection: "DESC",
 };
 
-// Inicializa la vista de Roles
+// Inicializa la vista
 export async function initView() {
   const btnRemove = document.getElementById("btnRemove");
   const btnEdit = document.getElementById("btnEdit");
@@ -44,7 +32,21 @@ export async function initView() {
 
   // Muestra u oculta filtros
   if (filterType) {
-    filterType.addEventListener("change", () => {
+    filterType.value = listOptions.filterType;
+
+    filterType.addEventListener("change", async function () {
+      listOptions.filterType = filterType.value;
+
+      if (listOptions.filterType !== "name") {
+        listOptions.filterValues = [];
+
+        if (nameFilter) {
+          Array.from(nameFilter.querySelectorAll('input[type="checkbox"]')).forEach((checkbox) => {
+            checkbox.checked = false;
+          });
+        }
+      }
+
       if (nameFilterBox) {
         nameFilterBox.classList.toggle("hidden", filterType.value !== "name");
       }
@@ -53,36 +55,58 @@ export async function initView() {
         idFilterBox.classList.toggle("hidden", filterType.value !== "id");
       }
 
-      applyFilters();
+      await loadRoles();
     });
   }
 
-  // Filtra por nombre
+  // Selección de nombres
   if (nameFilter) {
-    nameFilter.addEventListener("change", applyFilters);
+    nameFilter.addEventListener("change", async function (event) {
+      if (!(event.target instanceof HTMLInputElement)) return;
+      if (event.target.type !== "checkbox") return;
+
+      listOptions.filterType = "name";
+      if (filterType) filterType.value = "name";
+
+      listOptions.filterValues = Array.from(
+        nameFilter.querySelectorAll('input[type="checkbox"]:checked')
+      ).map((checkbox) => checkbox.value);
+
+      await loadRoles();
+    });
   }
 
   // Orden asc / desc
   if (orderDirection) {
-    orderDirection.addEventListener("change", applyFilters);
+    orderDirection.value = listOptions.orderDirection;
+
+    orderDirection.addEventListener("change", async function () {
+      listOptions.orderDirection = orderDirection.value;
+      if (listOptions.filterType === "id") {
+        await loadRoles();
+      }
+    });
   }
 
   // Limpia filtros
   if (btnClearFilters) {
-   btnClearFilters.addEventListener("click", () => {
-  filterType.value = "";
-  orderDirection.value = "DESC";
+    btnClearFilters.addEventListener("click", async function () {
+      listOptions.filterType = "";
+      listOptions.filterValues = [];
+      listOptions.orderDirection = "DESC";
 
-  document.querySelectorAll(".name-checkbox").forEach((checkbox) => {
-    checkbox.checked = false;
-  });
+      if (filterType) filterType.value = "";
+      if (orderDirection) orderDirection.value = "DESC";
 
-  nameFilterBox.classList.add("hidden");
-  idFilterBox.classList.add("hidden");
+      if (nameFilterBox) nameFilterBox.classList.add("hidden");
+      if (idFilterBox) idFilterBox.classList.add("hidden");
 
-  applyFilters();
-});
-   ;
+      Array.from(nameFilter?.querySelectorAll('input[type="checkbox"]') ?? []).forEach((checkbox) => {
+        checkbox.checked = false;
+      });
+
+      await loadRoles();
+    });
   }
 
   // Volver al menú principal
@@ -93,7 +117,7 @@ export async function initView() {
     });
   }
 
-  // Eliminar rol
+  // Eliminar
   if (btnRemove) {
     btnRemove.addEventListener("click", async function (event) {
       event.preventDefault();
@@ -119,7 +143,7 @@ export async function initView() {
     });
   }
 
-  // Editar rol
+  // Editar
   if (btnEdit) {
     btnEdit.addEventListener("click", async function (event) {
       event.preventDefault();
@@ -132,7 +156,7 @@ export async function initView() {
     });
   }
 
-  // Agregar rol
+  // Agregar
   if (btnAdd) {
     btnAdd.addEventListener("click", async function (event) {
       event.preventDefault();
@@ -142,82 +166,66 @@ export async function initView() {
     });
   }
 
-  // Carga inicial
+  // Carga opciones y tabla
+  await loadNameFilterOptions();
   await loadRoles();
 }
 
-// Carga los roles desde la base de datos
-async function loadRoles() {
-  const data = await fetchRecords("roles", listOptions);
+// Carga las opciones de nombres
+async function loadNameFilterOptions() {
+  const nameFilter = document.getElementById("nameFilter");
+  if (!nameFilter) return;
 
-  allRoles = Array.isArray(data?.records)
+  const data = await fetchRecords("roles", { orderDirection: "ASC" });
+
+  const roles = Array.isArray(data?.records)
     ? data.records
     : Array.isArray(data)
       ? data
       : [];
 
-  selectedRole = null;
-  clearSelection();
-
-  fillNameFilter();
-  applyFilters();
-}
-
-// Llena el filtro de nombres
-function fillNameFilter() {
-  const nameFilter = document.getElementById("nameFilter");
-  if (!nameFilter) return;
+  const uniqueNames = [...new Set(roles.map((role) => role.name).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b));
 
   nameFilter.innerHTML = "";
 
-  const uniqueNames = [...new Set(allRoles.map((role) => role.name).filter(Boolean))]
-    .sort((a, b) => a.localeCompare(b));
-
   uniqueNames.forEach((name) => {
-    const item = document.createElement("label");
-    item.className = "flex items-center gap-2 py-1 cursor-pointer";
+    const label = document.createElement("label");
+    label.className = "flex items-center gap-2 py-1 cursor-pointer";
 
-    item.innerHTML = `
-      <input type="checkbox" class="name-checkbox" value="${name}">
-      <span class="text-sm text-gray-700">${name}</span>
-    `;
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.value = name;
 
-    nameFilter.appendChild(item);
+    const text = document.createElement("span");
+    text.className = "text-sm text-gray-700";
+    text.textContent = name;
+
+    label.appendChild(checkbox);
+    label.appendChild(text);
+    nameFilter.appendChild(label);
   });
 }
 
-// Aplica filtro y orden
-function applyFilters() {
-  const filterType = document.getElementById("filterType")?.value ?? "";
-  const direction = document.getElementById("orderDirection")?.value ?? "DESC";
-  const selectedNames = Array.from(document.querySelectorAll(".name-checkbox:checked"))
-    .map((checkbox) => checkbox.value);
-
-  let roles = [...allRoles];
-
-  if (filterType === "name" && selectedNames.length > 0) {
-    roles = roles.filter((role) => selectedNames.includes(role.name));
-  }
-
-  if (filterType === "id") {
-    roles.sort((a, b) => {
-      return direction === "ASC"
-        ? Number(a.id_rol) - Number(b.id_rol)
-        : Number(b.id_rol) - Number(a.id_rol);
-    });
-  } else {
-    roles.sort((a, b) => a.name.localeCompare(b.name));
-  }
-
-  renderTable(roles);
-}
-
-// Dibuja la tabla
-function renderTable(roles) {
+// Carga la tabla
+async function loadRoles() {
+  const data = await fetchRecords("roles", listOptions);
   const tableBody = document.getElementById("rolesTableBody");
+  const btnRemove = document.getElementById("btnRemove");
+  const btnEdit = document.getElementById("btnEdit");
+
+  if (btnRemove) btnRemove.classList.add("hidden");
+  if (btnEdit) btnEdit.classList.add("hidden");
+
   if (!tableBody) return;
 
   tableBody.innerHTML = "";
+
+  const roles = Array.isArray(data?.records)
+    ? data.records
+    : Array.isArray(data)
+      ? data
+      : [];
 
   roles.forEach((role) => {
     const tr = document.createElement("tr");
@@ -230,7 +238,6 @@ function renderTable(roles) {
     `;
 
     tr.addEventListener("click", function (event) {
-      selectedRole = role;
       rowClick(event, role.id_rol);
     });
 
@@ -238,24 +245,23 @@ function renderTable(roles) {
   });
 }
 
-// Vuelve a cargar la vista de Roles
+// Vuelve a cargar la vista
 async function loadRolesView() {
   await loadView("../views/roles.html", "content");
   await initView();
 }
 
-// Inicializa el formulario de agregar o editar
+// Inicializa el formulario
 async function initRoleForm(mode, id = null) {
   try {
     const form = document.getElementById("itemForm");
-    const btnGoBack = document.getElementById("btnBack");
+    const btnGoBack = document.getElementById("btnBack") || document.getElementById("goback");
 
-    // Si es edición, carga los datos
+    // Carga datos al editar
     if (mode === "edit" && id) {
       await loadRecordDataToForm("roles", id, "itemForm");
     }
 
-    // Guarda o actualiza el rol
     form.addEventListener("submit", async function (event) {
       event.preventDefault();
 

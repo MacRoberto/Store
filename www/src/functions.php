@@ -484,55 +484,49 @@ function getAllSalesDetails() {
     }
 }
 
-function getAllRoles($options = []) {
+function getAllRoles($requestData = []) {
     global $db;
 
     try {
-
-        $query = "SELECT
-                    id_rol,
-                    name,
-                    description
-                  FROM roles";
+        $query = "SELECT r.id_rol, r.name, r.description
+                  FROM roles r";
 
         $params = [];
 
-        // Aplicar filtro
-        if (!empty($options["filterType"]) && !empty($options["filterValue"])) {
-
-            if ($options["filterType"] == "name") {
-
-                $query .= " WHERE name = :filterValue";
-                $params[":filterValue"] = $options["filterValue"];
-
-            }
-
-        }
-
-        // Campo de orden
-        $orderBy = $options["orderBy"] ?? "id_rol";
-
-        // Dirección del orden
-        $orderDirection = strtoupper($options["orderDirection"] ?? "DESC");
+        $filterType = $requestData["filterType"] ?? "";
+        $filterValues = $requestData["filterValues"] ?? [];
+        $orderDirection = strtoupper($requestData["orderDirection"] ?? "DESC");
 
         if ($orderDirection !== "ASC") {
             $orderDirection = "DESC";
         }
 
-        $query .= " ORDER BY {$orderBy} {$orderDirection}";
+        if ($filterType === "name" && is_array($filterValues) && count($filterValues) > 0) {
+            $placeholders = [];
+
+            foreach ($filterValues as $index => $name) {
+                $placeholder = ":name{$index}";
+                $placeholders[] = $placeholder;
+                $params[$placeholder] = $name;
+            }
+
+            $query .= " WHERE r.name IN (" . implode(",", $placeholders) . ")";
+            $query .= " ORDER BY r.name ASC";
+
+        } elseif ($filterType === "id") {
+            $query .= " ORDER BY r.id_rol " . $orderDirection;
+
+        } else {
+            $query .= " ORDER BY r.name ASC";
+        }
 
         $stmt = $db->prepare($query);
-
         $stmt->execute($params);
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     } catch (PDOException $e) {
-
-        return [
-            "error" => $e->getMessage()
-        ];
-
+        return ['error' => $e->getMessage()];
     }
 }
 

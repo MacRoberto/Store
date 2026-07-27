@@ -7,35 +7,26 @@ $accion = $requestData["action"] ?? "";
 header("Content-Type: application/json");
 
 if ($accion == "list") {
-    $list = getAllRoles($requestData);
-    echo json_encode($list);
+    echo json_encode(getAllRoles($requestData));
 
 } else if ($accion == "delete") {
-    $id_rol = $requestData["id"];
-    $result = deleteRole($id_rol);
-    echo json_encode($result);
+    $id_rol = $requestData["id"] ?? "";
+    echo json_encode(deleteRole($id_rol));
 
 } else if ($accion == "save") {
     $name = $requestData["name"] ?? "";
     $description = $requestData["description"] ?? "";
-    $status = $requestData["status"] ?? "Active";
-
-    $result = saveRole($name, $description, $status);
-    echo json_encode($result);
+    echo json_encode(saveRole($name, $description));
 
 } else if ($accion == "getInfoByID") {
     $id_rol = $requestData["id"] ?? "";
-    $result = getRoleById($id_rol);
-    echo json_encode($result);
+    echo json_encode(getRoleById($id_rol));
 
 } else if ($accion == "update") {
-    $id_rol = $requestData["id"] ?? 0;
+    $id_rol = $requestData["id"] ?? "";
     $name = $requestData["name"] ?? "";
     $description = $requestData["description"] ?? "";
-    $status = $requestData["status"] ?? "Active";
-
-    $result = updateRole($id_rol, $name, $description, $status);
-    echo json_encode($result);
+    echo json_encode(updateRole($id_rol, $name, $description));
 
 } else {
     echo json_encode([
