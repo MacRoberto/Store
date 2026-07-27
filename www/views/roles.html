@@ -1,74 +1,6 @@
 <div class="h-full flex flex-col items-center py-10">
   <div class="w-full max-w-6xl bg-white shadow-md rounded-lg overflow-hidden">
 
-    <!-- Filtros -->
-    <div
-      class="px-6 py-4 border-b border-gray-200 flex flex-wrap items-end justify-between gap-4"
-    >
-      <div class="flex flex-wrap items-end gap-3">
-        <div>
-          <label class="block text-sm font-medium text-gray-600 mb-1">
-            Search
-          </label>
-
-          <input
-            id="searchRole"
-            type="text"
-            placeholder="Search role..."
-            class="border border-gray-300 rounded-md px-3 py-2 bg-white w-64"
-          />
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-600 mb-1">
-            Filter
-          </label>
-
-          <select
-            id="filterType"
-            class="border border-gray-300 rounded-md px-3 py-2 bg-white"
-          >
-            <option value="">Select filter...</option>
-            <option value="name">Name</option>
-            <option value="id">ID</option>
-          </select>
-        </div>
-
-        <div id="nameFilterBox" class="hidden">
-          <label class="block text-sm font-medium text-gray-600 mb-1">
-            Name
-          </label>
-
-          <div
-            id="nameFilter"
-            class="w-56 max-h-40 overflow-y-auto rounded-md border border-gray-300 bg-white px-3 py-2"
-          ></div>
-        </div>
-
-        <div id="idFilterBox" class="hidden">
-          <label class="block text-sm font-medium text-gray-600 mb-1">
-            Direction
-          </label>
-
-          <select
-            id="orderDirection"
-            class="border border-gray-300 rounded-md px-3 py-2 bg-white"
-          >
-            <option value="DESC">Descending</option>
-            <option value="ASC">Ascending</option>
-          </select>
-        </div>
-      </div>
-
-      <button
-        id="btnClearFilters"
-        type="button"
-        class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition"
-      >
-        Clear Filters
-      </button>
-    </div>
-
     <!-- Encabezado -->
     <div
       class="px-6 py-4 bg-indigo-600 border-b border-gray-200 flex items-center justify-between rounded-t-xl"
@@ -78,6 +10,28 @@
       </h2>
 
       <div class="flex items-center gap-4">
+
+        <!-- Regresar -->
+        <button id="btnBack" class="block">
+          <a href="#" class="text-white font-semibold hover:text-gray-200 block">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="2.5"
+              stroke="currentColor"
+              class="w-6 h-6"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"
+              />
+            </svg>
+          </a>
+        </button>
+
+        <!-- Eliminar -->
         <button id="btnRemove" class="block hidden">
           <a href="#" class="text-white font-semibold hover:text-gray-200 block">
             <svg
@@ -97,6 +51,7 @@
           </a>
         </button>
 
+        <!-- Editar -->
         <button id="btnEdit" class="block hidden">
           <a href="#" class="text-white font-semibold hover:text-gray-200 block">
             <svg
@@ -116,6 +71,7 @@
           </a>
         </button>
 
+        <!-- Agregar -->
         <button id="btnAdd" class="block">
           <a href="#" class="text-white font-semibold hover:text-gray-200 block">
             <svg
@@ -134,10 +90,78 @@
             </svg>
           </a>
         </button>
+
       </div>
     </div>
 
-    <!-- Tabla -->
+    <!-- Filtros -->
+    <div
+      class="px-6 py-4 border-b border-gray-200 flex flex-wrap items-end gap-4"
+    >
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">
+          Search
+        </label>
+
+        <input
+          id="searchRole"
+          type="text"
+          placeholder="Search role..."
+          class="border border-gray-300 rounded-md px-3 py-2 bg-white w-64"
+        />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">
+          Filter
+        </label>
+
+        <select
+          id="filterType"
+          class="border border-gray-300 rounded-md px-3 py-2 bg-white"
+        >
+          <option value="">Select filter...</option>
+          <option value="name">Name</option>
+          <option value="id">ID</option>
+        </select>
+      </div>
+
+      <div id="nameFilterBox" class="hidden">
+        <label class="block text-sm font-medium text-gray-600 mb-1">
+          Name
+        </label>
+
+        <div
+          id="nameFilter"
+          class="w-56 max-h-40 overflow-y-auto rounded-md border border-gray-300 bg-white px-3 py-2"
+        ></div>
+      </div>
+
+      <div id="idFilterBox" class="hidden">
+        <label class="block text-sm font-medium text-gray-600 mb-1">
+          Direction
+        </label>
+
+        <select
+          id="orderDirection"
+          class="border border-gray-300 rounded-md px-3 py-2 bg-white"
+        >
+          <option value="DESC">Descending</option>
+          <option value="ASC">Ascending</option>
+        </select>
+      </div>
+
+      <button
+        id="btnClearFilters"
+        type="button"
+        class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition"
+      >
+        Clear Filters
+      </button>
+    </div>
+
+
+        <!-- Tabla -->
     <div class="overflow-x-auto">
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
