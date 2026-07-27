@@ -14,6 +14,7 @@ let listOptions = {
   filterType: "",
   filterValues: [],
   orderDirection: "DESC",
+  search: "",
 };
 
 // Inicializa la vista
@@ -29,6 +30,15 @@ export async function initView() {
   const nameFilter = document.getElementById("nameFilter");
   const orderDirection = document.getElementById("orderDirection");
   const btnClearFilters = document.getElementById("btnClearFilters");
+  const searchRole = document.getElementById("searchRole");
+
+  // Buscador
+  if (searchRole) {
+    searchRole.addEventListener("input", async function () {
+      listOptions.search = searchRole.value.trim();
+      await loadRoles();
+    });
+  }
 
   // Muestra u oculta filtros
   if (filterType) {
@@ -41,7 +51,9 @@ export async function initView() {
         listOptions.filterValues = [];
 
         if (nameFilter) {
-          Array.from(nameFilter.querySelectorAll('input[type="checkbox"]')).forEach((checkbox) => {
+          Array.from(
+            nameFilter.querySelectorAll('input[type="checkbox"]')
+          ).forEach((checkbox) => {
             checkbox.checked = false;
           });
         }
@@ -94,6 +106,11 @@ export async function initView() {
       listOptions.filterType = "";
       listOptions.filterValues = [];
       listOptions.orderDirection = "DESC";
+      listOptions.search = "";
+
+      if (searchRole) {
+        searchRole.value = "";
+      }
 
       if (filterType) filterType.value = "";
       if (orderDirection) orderDirection.value = "DESC";
@@ -101,7 +118,9 @@ export async function initView() {
       if (nameFilterBox) nameFilterBox.classList.add("hidden");
       if (idFilterBox) idFilterBox.classList.add("hidden");
 
-      Array.from(nameFilter?.querySelectorAll('input[type="checkbox"]') ?? []).forEach((checkbox) => {
+      Array.from(
+        nameFilter?.querySelectorAll('input[type="checkbox"]') ?? []
+      ).forEach((checkbox) => {
         checkbox.checked = false;
       });
 
@@ -221,11 +240,39 @@ async function loadRoles() {
 
   tableBody.innerHTML = "";
 
-  const roles = Array.isArray(data?.records)
+  let roles = Array.isArray(data?.records)
     ? data.records
     : Array.isArray(data)
       ? data
       : [];
+
+  // Buscador
+  if (listOptions.search && listOptions.search.trim() !== "") {
+    const term = listOptions.search.trim().toLowerCase();
+    roles = roles.filter((role) =>
+      `${role.id_rol} ${role.name ?? ""} ${role.description ?? ""}`
+        .toLowerCase()
+        .includes(term)
+    );
+  }
+
+  // Filtro por nombres seleccionados
+  if (listOptions.filterType === "name" && listOptions.filterValues.length > 0) {
+    roles = roles.filter((role) =>
+      listOptions.filterValues.includes(role.name)
+    );
+  }
+
+  // Orden
+  if (listOptions.filterType === "id") {
+    roles.sort((a, b) => {
+      return listOptions.orderDirection === "ASC"
+        ? Number(a.id_rol) - Number(b.id_rol)
+        : Number(b.id_rol) - Number(a.id_rol);
+    });
+  } else {
+    roles.sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""));
+  }
 
   roles.forEach((role) => {
     const tr = document.createElement("tr");
