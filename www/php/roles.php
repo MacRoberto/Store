@@ -1,37 +1,45 @@
 <?php
 require_once "../src/functions.php";
 
+$requestData = json_decode(file_get_contents("php://input"), true) ?? [];
+$accion = $requestData["action"] ?? "";
+
 header("Content-Type: application/json");
 
-$input = json_decode(file_get_contents("php://input"), true);
-$action = $input["action"] ?? "";
+if ($accion == "list") {
+    $list = getAllRoles($requestData);
+    echo json_encode($list);
 
-if ($action === "list") {
-    echo json_encode(getAllRoles());
+} else if ($accion == "delete") {
+    $id_rol = $requestData["id"];
+    $result = deleteRole($id_rol);
+    echo json_encode($result);
 
-} elseif ($action === "save") {
-    $name = trim($input["name"] ?? "");
-    $description = trim($input["description"] ?? "");
-    echo json_encode(saveRole($name, $description));
+} else if ($accion == "save") {
+    $name = $requestData["name"] ?? "";
+    $description = $requestData["description"] ?? "";
+    $status = $requestData["status"] ?? "Active";
 
-} elseif ($action === "getInfoByID") {
-    $id = $input["id"] ?? "";
-    echo json_encode(getRoleById($id));
+    $result = saveRole($name, $description, $status);
+    echo json_encode($result);
 
-} elseif ($action === "update") {
-    $id = $input["id"] ?? "";
-    $name = trim($input["name"] ?? "");
-    $description = trim($input["description"] ?? "");
-    echo json_encode(updateRole($id, $name, $description));
+} else if ($accion == "getInfoByID") {
+    $id_rol = $requestData["id"] ?? "";
+    $result = getRoleById($id_rol);
+    echo json_encode($result);
 
-} elseif ($action === "delete") {
-    $id = $input["id"] ?? "";
-    echo json_encode(deleteRole($id));
+} else if ($accion == "update") {
+    $id_rol = $requestData["id"] ?? 0;
+    $name = $requestData["name"] ?? "";
+    $description = $requestData["description"] ?? "";
+    $status = $requestData["status"] ?? "Active";
+
+    $result = updateRole($id_rol, $name, $description, $status);
+    echo json_encode($result);
 
 } else {
     echo json_encode([
-        "status" => "error",
-        "msg" => "Action invalid"
+        "error" => "Action invalid"
     ]);
 }
 ?>

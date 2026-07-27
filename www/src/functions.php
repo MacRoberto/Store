@@ -484,20 +484,55 @@ function getAllSalesDetails() {
     }
 }
 
-function getAllRoles() {
+function getAllRoles($options = []) {
     global $db;
+
     try {
-        // Obtenemos los roles registrados ordenados por su ID correlativo
-        $query = "SELECT r.id_rol, r.name, r.description 
-                  FROM roles r
-                  ORDER BY r.id_rol ASC";
-                  
+
+        $query = "SELECT
+                    id_rol,
+                    name,
+                    description
+                  FROM roles";
+
+        $params = [];
+
+        // Aplicar filtro
+        if (!empty($options["filterType"]) && !empty($options["filterValue"])) {
+
+            if ($options["filterType"] == "name") {
+
+                $query .= " WHERE name = :filterValue";
+                $params[":filterValue"] = $options["filterValue"];
+
+            }
+
+        }
+
+        // Campo de orden
+        $orderBy = $options["orderBy"] ?? "id_rol";
+
+        // Dirección del orden
+        $orderDirection = strtoupper($options["orderDirection"] ?? "DESC");
+
+        if ($orderDirection !== "ASC") {
+            $orderDirection = "DESC";
+        }
+
+        $query .= " ORDER BY {$orderBy} {$orderDirection}";
+
         $stmt = $db->prepare($query);
-        $stmt->execute();
-        
+
+        $stmt->execute($params);
+
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
     } catch (PDOException $e) {
-        return ['error' => $e->getMessage()];
+
+        return [
+            "error" => $e->getMessage()
+        ];
+
     }
 }
 

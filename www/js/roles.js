@@ -1,50 +1,222 @@
-import { deleteRecords, fetchRecords } from "./api.js";
-import { getSelectedId, rowClick } from "./function.js";
-import { initView as loadEnvironment } from "./enviroment.js";
+import {
+  deleteRecords,
+  updateRecord,
+  saveRecords,
+  loadRecordDataToForm,
+  fetchRecords,
+} from "./api.js";
 
+import { initView as initViewMain } from "./enviroment.js";
+import {
+  rowClick,
+  loadView,
+  getSelectedId,
+  clearSelection,
+} from "./function.js";
+
+// Guarda todos los roles cargados
 let allRoles = [];
 
-// Se ejecuta cuando se carga esta vista
-export async function initView() {
-  setupFilterEvents();
-  setupActionButtons();
-  setupBackButton();
-  await loadRoles();
-}
+// Guarda el rol seleccionado
+let selectedRole = null;
 
-function setupBackButton() {
+// Opciones de consulta
+let listOptions = {
+  page: 1,
+  limit: 50,
+  orderBy: "id_rol",
+  orderDirection: "DESC",
+};
+
+// Inicializa la vista de Roles
+export async function initView() {
+  const btnRemove = document.getElementById("btnRemove");
+  const btnEdit = document.getElementById("btnEdit");
+  const btnAdd = document.getElementById("btnAdd");
   const btnBack = document.getElementById("btnBack");
 
-  if (!btnBack) return;
+  const filterType = document.getElementById("filterType");
+  const nameFilterBox = document.getElementById("nameFilterBox");
+  const idFilterBox = document.getElementById("idFilterBox");
+  const nameFilter = document.getElementById("nameFilter");
+  const orderDirection = document.getElementById("orderDirection");
+  const btnClearFilters = document.getElementById("btnClearFilters");
 
-  btnBack.addEventListener("click", async (event) => {
-    event.preventDefault();
-    await loadEnvironment();
+  // Muestra u oculta filtros
+  if (filterType) {
+    filterType.addEventListener("change", () => {
+      if (nameFilterBox) {
+        nameFilterBox.classList.toggle("hidden", filterType.value !== "name");
+      }
+
+      if (idFilterBox) {
+        idFilterBox.classList.toggle("hidden", filterType.value !== "id");
+      }
+
+      applyFilters();
+    });
+  }
+
+  // Filtra por nombre
+  if (nameFilter) {
+    nameFilter.addEventListener("change", applyFilters);
+  }
+
+  // Orden asc / desc
+  if (orderDirection) {
+    orderDirection.addEventListener("change", applyFilters);
+  }
+
+  // Limpia filtros
+  if (btnClearFilters) {
+   btnClearFilters.addEventListener("click", () => {
+  filterType.value = "";
+  orderDirection.value = "DESC";
+
+  document.querySelectorAll(".name-checkbox").forEach((checkbox) => {
+    checkbox.checked = false;
   });
+
+  nameFilterBox.classList.add("hidden");
+  idFilterBox.classList.add("hidden");
+
+  applyFilters();
+});
+   ;
+  }
+
+  // Volver al menú principal
+  if (btnBack) {
+    btnBack.addEventListener("click", async function (event) {
+      event.preventDefault();
+      await initViewMain();
+    });
+  }
+
+  // Eliminar rol
+  if (btnRemove) {
+    btnRemove.addEventListener("click", async function (event) {
+      event.preventDefault();
+
+      const id = getSelectedId();
+      if (!id) return;
+
+      Swal.fire({
+        title: "¿Are you sure to delete this record?",
+        text: "You won't be able to revert this action",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Yes, delete",
+        cancelButtonText: "Cancel",
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          await deleteRecords("roles", id);
+          await loadRoles();
+        }
+      });
+    });
+  }
+
+  // Editar rol
+  if (btnEdit) {
+    btnEdit.addEventListener("click", async function (event) {
+      event.preventDefault();
+
+      const id = getSelectedId();
+      if (!id) return;
+
+      await loadView("../views/forms/roles.html", "content");
+      await initRoleForm("edit", id);
+    });
+  }
+
+  // Agregar rol
+  if (btnAdd) {
+    btnAdd.addEventListener("click", async function (event) {
+      event.preventDefault();
+
+      await loadView("../views/forms/roles.html", "content");
+      await initRoleForm("add");
+    });
+  }
+
+  // Carga inicial
+  await loadRoles();
 }
 
 // Carga los roles desde la base de datos
 async function loadRoles() {
-  try {
-    const data = await fetchRecords("roles");
+  const data = await fetchRecords("roles", listOptions);
 
-    if (!Array.isArray(data)) {
-      console.error("Respuesta inválida:", data);
-      return;
-    }
+  allRoles = Array.isArray(data?.records)
+    ? data.records
+    : Array.isArray(data)
+      ? data
+      : [];
 
-    allRoles = data;
+  selectedRole = null;
+  clearSelection();
 
-    renderRoleFilter(allRoles);
-    applyFilters();
-  } catch (error) {
-    console.error("Error al cargar roles:", error);
+  fillNameFilter();
+  applyFilters();
+}
+
+// Llena el filtro de nombres
+function fillNameFilter() {
+  const nameFilter = document.getElementById("nameFilter");
+  if (!nameFilter) return;
+
+  nameFilter.innerHTML = "";
+
+  const uniqueNames = [...new Set(allRoles.map((role) => role.name).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b));
+
+  uniqueNames.forEach((name) => {
+    const item = document.createElement("label");
+    item.className = "flex items-center gap-2 py-1 cursor-pointer";
+
+    item.innerHTML = `
+      <input type="checkbox" class="name-checkbox" value="${name}">
+      <span class="text-sm text-gray-700">${name}</span>
+    `;
+
+    nameFilter.appendChild(item);
+  });
+}
+
+// Aplica filtro y orden
+function applyFilters() {
+  const filterType = document.getElementById("filterType")?.value ?? "";
+  const direction = document.getElementById("orderDirection")?.value ?? "DESC";
+  const selectedNames = Array.from(document.querySelectorAll(".name-checkbox:checked"))
+    .map((checkbox) => checkbox.value);
+
+  let roles = [...allRoles];
+
+  if (filterType === "name" && selectedNames.length > 0) {
+    roles = roles.filter((role) => selectedNames.includes(role.name));
   }
+
+  if (filterType === "id") {
+    roles.sort((a, b) => {
+      return direction === "ASC"
+        ? Number(a.id_rol) - Number(b.id_rol)
+        : Number(b.id_rol) - Number(a.id_rol);
+    });
+  } else {
+    roles.sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  renderTable(roles);
 }
 
 // Dibuja la tabla
 function renderTable(roles) {
   const tableBody = document.getElementById("rolesTableBody");
+  if (!tableBody) return;
+
   tableBody.innerHTML = "";
 
   roles.forEach((role) => {
@@ -53,11 +225,12 @@ function renderTable(roles) {
 
     tr.innerHTML = `
       <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${role.id_rol}</td>
-      <td class="px-6 py-4 whitespace-nowrap text-sm text-indigo-600 font-semibold">${role.name}</td>
-      <td class="px-6 py-4 text-sm text-gray-500">${role.description}</td>
+      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">${role.name || "-"}</td>
+      <td class="px-6 py-4 text-sm text-gray-500">${role.description || "-"}</td>
     `;
 
-    tr.addEventListener("click", (event) => {
+    tr.addEventListener("click", function (event) {
+      selectedRole = role;
       rowClick(event, role.id_rol);
     });
 
@@ -65,285 +238,74 @@ function renderTable(roles) {
   });
 }
 
-// Crea los checkboxes con los roles existentes
-function renderRoleFilter(roles) {
-  const roleFilter = document.getElementById("roleFilter");
-  if (!roleFilter) return;
-
-  const uniqueRoles = [...new Set(roles.map((role) => role.name))].sort((a, b) =>
-    a.localeCompare(b)
-  );
-
-  roleFilter.innerHTML = "";
-
-  uniqueRoles.forEach((roleName) => {
-    const safeId = `role-${roleName.replaceAll(" ", "-").replaceAll("/", "-").toLowerCase()}`;
-
-    const item = document.createElement("label");
-    item.className = "flex items-center gap-2 py-1 cursor-pointer";
-
-    item.innerHTML = `
-      <input type="checkbox" id="${safeId}" value="${roleName}" class="role-checkbox">
-      <span class="text-sm text-gray-700">${roleName}</span>
-    `;
-
-    roleFilter.appendChild(item);
-  });
+// Vuelve a cargar la vista de Roles
+async function loadRolesView() {
+  await loadView("../views/roles.html", "content");
+  await initView();
 }
 
-// Obtiene los roles marcados
-function getSelectedRoles() {
-  return Array.from(document.querySelectorAll(".role-checkbox:checked")).map(
-    (checkbox) => checkbox.value
-  );
-}
+// Inicializa el formulario de agregar o editar
+async function initRoleForm(mode, id = null) {
+  try {
+    const form = document.getElementById("itemForm");
+    const btnGoBack = document.getElementById("btnBack");
 
-// Muestra u oculta los filtros
-function setupFilterEvents() {
-  const filterType = document.getElementById("filterType");
-  const nameFilterBox = document.getElementById("nameFilterBox");
-  const idFilterBox = document.getElementById("idFilterBox");
-  const idSort = document.getElementById("idSort");
-  const btnClearFilter = document.getElementById("btnClearFilter");
-
-  if (!filterType || !nameFilterBox || !idFilterBox || !idSort || !btnClearFilter) return;
-
-  const refreshVisibility = () => {
-    nameFilterBox.classList.toggle("hidden", filterType.value !== "name");
-    idFilterBox.classList.toggle("hidden", filterType.value !== "id");
-  };
-
-  filterType.addEventListener("change", () => {
-    refreshVisibility();
-    applyFilters();
-  });
-
-  document.addEventListener("change", (event) => {
-    if (event.target.classList.contains("role-checkbox")) {
-      applyFilters();
+    // Si es edición, carga los datos
+    if (mode === "edit" && id) {
+      await loadRecordDataToForm("roles", id, "itemForm");
     }
-  });
 
-  idSort.addEventListener("change", () => {
-    applyFilters();
-  });
-
-  btnClearFilter.addEventListener("click", () => {
-    filterType.value = "";
-    idSort.value = "ASC";
-
-    document.querySelectorAll(".role-checkbox").forEach((checkbox) => {
-      checkbox.checked = false;
-    });
-
-    refreshVisibility();
-    applyFilters();
-  });
-}
-
-// Aplica filtros y orden
-function applyFilters() {
-  const filterType = document.getElementById("filterType")?.value ?? "";
-  const selectedRoles = getSelectedRoles();
-  const idSort = document.getElementById("idSort")?.value ?? "ASC";
-
-  let filtered = [...allRoles];
-
-  // Filtro por nombre
-  if (filterType === "name") {
-    if (selectedRoles.length > 0) {
-      filtered = filtered.filter((role) => selectedRoles.includes(role.name));
-    } else {
-      filtered.sort((a, b) => a.name.localeCompare(b.name));
-    }
-  }
-
-  // Filtro por ID
-  if (filterType === "id") {
-    filtered.sort((a, b) => {
-      const aId = Number(a.id_rol);
-      const bId = Number(b.id_rol);
-      return idSort === "DESC" ? bId - aId : aId - bId;
-    });
-  }
-
-  // Sin filtro, orden por nombre
-  if (filterType === "") {
-    filtered.sort((a, b) => a.name.localeCompare(b.name));
-  }
-
-  renderTable(filtered);
-}
-
-// Botones de agregar, editar y eliminar
-function setupActionButtons() {
-  const btnRemove = document.getElementById("btnRemove");
-  const btnEdit = document.getElementById("btnEdit");
-  const btnAdd = document.getElementById("btnAdd");
-
-  if (btnRemove) {
-    btnRemove.addEventListener("click", async () => {
-      const id = getSelectedId();
-      if (!id) return;
-
-      const result = await Swal.fire({
-        title: "Delete role?",
-        text: "This action cannot be undone.",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonText: "Yes, delete it",
-        cancelButtonText: "Cancel",
-      });
-
-      if (!result.isConfirmed) return;
+    // Guarda o actualiza el rol
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
 
       try {
-        await deleteRecords("roles", id);
-        await Swal.fire("Deleted", "The role was deleted successfully.", "success");
-        await loadRoles();
-      } catch (error) {
-        Swal.fire("Error", error.message, "error");
-      }
-    });
-  }
-
-  if (btnAdd) {
-    btnAdd.addEventListener("click", async () => {
-      const result = await Swal.fire({
-        title: "Add role",
-        html: `
-          <input id="swal-role-name" class="swal2-input" placeholder="Role name">
-          <textarea id="swal-role-description" class="swal2-textarea" placeholder="Description"></textarea>
-        `,
-        showCancelButton: true,
-        confirmButtonText: "Save",
-        cancelButtonText: "Cancel",
-        focusConfirm: false,
-        preConfirm: () => {
-          const name = document.getElementById("swal-role-name").value.trim();
-          const description = document.getElementById("swal-role-description").value.trim();
-
-          if (!name) {
-            Swal.showValidationMessage("The role name is required");
-            return false;
-          }
-
-          return { name, description };
-        },
-      });
-
-      if (!result.isConfirmed) return;
-
-      try {
-        const response = await fetch("../php/roles.php", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            action: "save",
-            name: result.value.name,
-            description: result.value.description,
-          }),
-        });
-
-        const data = await response.json();
-        if (data.error) throw new Error(data.error);
-
-        await Swal.fire("Saved", "The role was added successfully.", "success");
-        await loadRoles();
-      } catch (error) {
-        Swal.fire("Error", error.message, "error");
-      }
-    });
-  }
-
-  if (btnEdit) {
-    btnEdit.addEventListener("click", async () => {
-      const id = getSelectedId();
-      if (!id) return;
-
-      try {
-        const role = await getRoleById(id);
-
-        const result = await Swal.fire({
-          title: "Edit role",
-          html: `
-            <input id="swal-role-name" class="swal2-input" placeholder="Role name" value="${escapeHtml(role.name)}">
-            <textarea id="swal-role-description" class="swal2-textarea" placeholder="Description">${escapeHtml(role.description)}</textarea>
-          `,
-          showCancelButton: true,
-          confirmButtonText: "Update",
-          cancelButtonText: "Cancel",
-          focusConfirm: false,
-          preConfirm: () => {
-            const name = document.getElementById("swal-role-name").value.trim();
-            const description = document.getElementById("swal-role-description").value.trim();
-
-            if (!name) {
-              Swal.showValidationMessage("The role name is required");
-              return false;
+        if (mode === "edit") {
+          Swal.fire({
+            title: "¿Are you sure to update this record?",
+            text: "This will overwrite the existing information",
+            icon: "info",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, update",
+            cancelButtonText: "Cancel",
+          }).then(async (result) => {
+            if (result.isConfirmed) {
+              await updateRecord("roles", form, id);
+              await loadRolesView();
             }
-
-            return { name, description };
-          },
-        });
-
-        if (!result.isConfirmed) return;
-
-        const response = await fetch("../php/roles.php", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            action: "update",
-            id,
-            name: result.value.name,
-            description: result.value.description,
-          }),
-        });
-
-        const data = await response.json();
-        if (data.error) throw new Error(data.error);
-
-        await Swal.fire("Updated", "The role was updated successfully.", "success");
-        await loadRoles();
+          });
+        } else {
+          Swal.fire({
+            title: "¿Are you sure to Add record?",
+            text: "Please confirm that the data is correct",
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, save",
+            cancelButtonText: "Cancel",
+          }).then(async (result) => {
+            if (result.isConfirmed) {
+              await saveRecords("roles", form);
+              await loadRolesView();
+            }
+          });
+        }
       } catch (error) {
-        Swal.fire("Error", error.message, "error");
+        console.error("Error al guardar el rol:", error);
       }
     });
+
+    // Regresa al listado
+    if (btnGoBack) {
+      btnGoBack.addEventListener("click", async function (event) {
+        event.preventDefault();
+        await loadRolesView();
+      });
+    }
+  } catch (error) {
+    console.error("Error al inicializar el formulario:", error);
   }
-}
-
-// Obtiene un rol por ID
-async function getRoleById(id) {
-  const response = await fetch("../php/roles.php", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      action: "getInfoByID",
-      id,
-    }),
-  });
-
-  const data = await response.json();
-
-  if (data.error) {
-    throw new Error(data.error);
-  }
-
-  return data;
-}
-
-// Evita problemas con comillas en SweetAlert
-function escapeHtml(text) {
-  return String(text ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
 }

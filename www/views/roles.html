@@ -1,134 +1,104 @@
-
-
-
 <div class="h-full flex flex-col items-center py-10">
   <div class="w-full max-w-7xl bg-white shadow-md rounded-lg overflow-hidden">
 
-    
-
    <!-- Barra de filtros -->
-<div class="px-6 py-4 bg-white border-b border-gray-200 flex items-end justify-between">
+<div class="px-6 py-4 border-b border-gray-200 flex items-start justify-between gap-4">
 
-    <!-- Botón Back -->
-    <button
-        id="btnBack"
-        type="button"
-        class="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition">
+  <div></div>
 
-        <i class="fa-solid fa-arrow-left"></i>
-            Back
+  <div class="flex flex-wrap items-end justify-end gap-4">
 
-    </button>
-
-    <!-- Filtros -->
-    <div class="flex flex-wrap items-end gap-4">
-
-        <!-- Tipo de filtro -->
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-                Filter
-            </label>
-
-            <select
-                id="filterType"
-                class="w-56 rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500">
-
-                <option value="">Select filter...</option>
-                <option value="name">Name</option>
-                <option value="id">ID</option>
-
-            </select>
-        </div>
-
-        <!-- Roles -->
-        <div id="nameFilterBox" class="hidden">
-
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-                Role
-            </label>
-
-            <div
-                id="roleFilter"
-                class="w-60 max-h-40 overflow-y-auto rounded-md border border-gray-300 bg-white px-3 py-2">
-
-            </div>
-
-        </div>
-
-        <!-- Orden -->
-        <div id="idFilterBox" class="hidden">
-
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-                Order
-            </label>
-
-            <select
-                id="idSort"
-                class="w-44 rounded-md border border-gray-300 px-3 py-2">
-
-                <option value="ASC">Ascending</option>
-                <option value="DESC">Descending</option>
-
-            </select>
-
-        </div>
-
-        <!-- Limpiar filtros -->
-        <button
-            id="btnClearFilter"
-            type="button"
-            class="h-10 px-4 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition">
-
-            Clear Filters
-
-        </button>
-
+    <div>
+      <label class="block text-sm font-medium text-gray-600 mb-1">Filter</label>
+      <select
+        id="filterType"
+        class="border border-gray-300 rounded-md px-3 py-2 bg-white w-44"
+      >
+        <option value="">Select filter...</option>
+        <option value="name">Name</option>
+        <option value="id">ID</option>
+      </select>
     </div>
 
+    <div id="nameFilterBox" class="hidden">
+      <label class="block text-sm font-medium text-gray-600 mb-1">Name</label>
+      <div
+        id="nameFilter"
+        class="w-56 max-h-40 overflow-y-auto rounded-md border border-gray-300 bg-white px-3 py-2"
+      ></div>
+    </div>
+
+    <div id="idFilterBox" class="hidden">
+      <label class="block text-sm font-medium text-gray-600 mb-1">Direction</label>
+      <select
+        id="orderDirection"
+        class="border border-gray-300 rounded-md px-3 py-2 bg-white w-44"
+      >
+        <option value="DESC">Descending</option>
+        <option value="ASC">Ascending</option>
+      </select>
+    </div>
+
+    <button
+      id="btnClearFilters"
+      type="button"
+      class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition"
+    >
+      Clear Filters
+    </button>
+  </div>
 </div>
 
-<!-- Encabezado -->
-<div class="px-6 py-4 bg-indigo-600 flex items-center justify-between">
-
-    <h2 class="text-xl font-bold text-white">
+    <!-- Encabezado -->
+    <div class="px-6 py-4 bg-indigo-600 flex items-center justify-between">
+      <h2 class="text-xl font-bold text-white">
         Roles List
-    </h2>
+      </h2>
 
-    <div class="flex items-center gap-4 text-white">
+      <!-- Botones -->
+      <div class="flex items-center gap-4 text-white">
+
+        <!-- Volver -->
+        <button
+          id="btnBack"
+          type="button"
+          class="hover:text-gray-200 transition"
+          title="Back"
+        >
+          <i class="fa-solid fa-arrow-left text-lg"></i>
+        </button>
 
         <!-- Eliminar -->
         <button
-            id="btnRemove"
-            type="button"
-            class="hidden hover:text-gray-200 transition">
-
-            <i class="fa-solid fa-trash text-lg"></i>
-
+          id="btnRemove"
+          type="button"
+          class="hidden hover:text-gray-200 transition"
+          title="Delete"
+        >
+          <i class="fa-solid fa-trash text-lg"></i>
         </button>
 
         <!-- Editar -->
         <button
-            id="btnEdit"
-            type="button"
-            class="hidden hover:text-gray-200 transition">
-
-            <i class="fa-solid fa-pen-to-square text-lg"></i>
-
+          id="btnEdit"
+          type="button"
+          class="hidden hover:text-gray-200 transition"
+          title="Edit"
+        >
+          <i class="fa-solid fa-pen-to-square text-lg"></i>
         </button>
 
         <!-- Agregar -->
         <button
-            id="btnAdd"
-            type="button"
-            class="hover:text-gray-200 transition">
-
-            <i class="fa-solid fa-circle-plus text-lg"></i>
-
+          id="btnAdd"
+          type="button"
+          class="hover:text-gray-200 transition"
+          title="Add"
+        >
+          <i class="fa-solid fa-circle-plus text-lg"></i>
         </button>
-
+      </div>
     </div>
-
-</div>
 
     <!-- Tabla -->
     <div class="overflow-x-auto">
@@ -153,5 +123,6 @@
         ></tbody>
       </table>
     </div>
+
   </div>
 </div>
