@@ -172,3 +172,21 @@ export function fetchRecords(file, options = {}) {
       return data;
     });
 }
+
+export function sendRequest(file, payload) {
+  return fetch(`../php/${file}.php`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      return data;
+    });
+}

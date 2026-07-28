@@ -5,9 +5,81 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Menú Principal</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.3.1/css/all.min.css"/>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.3.1/css/all.min.css"
+    />
   </head>
-  <body>
+  <body class="hidden">
+    <!-- Header global -->
+    <header class="bg-white border-b border-gray-200 shadow-sm">
+      <div
+        class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between"
+      >
+        <!-- Logo + navegación -->
+        <div class="flex items-center gap-8">
+          <!-- Logo -->
+          <div class="flex items-center gap-3">
+            <i class="fa-solid fa-store text-indigo-600 text-xl"></i>
+
+            <span class="text-xl font-bold tracking-tight text-gray-900">
+              Store
+            </span>
+          </div>
+
+          <!-- Navegación -->
+          <nav class="flex items-center gap-2">
+            <a
+              href="#"
+              id="btnDashboard"
+              class="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-50 text-indigo-600 font-semibold"
+            >
+              <i class="fa-solid fa-chart-line"></i>
+              Dashboard
+            </a>
+
+            <a
+              href="#"
+              id="btnMenu"
+              class="flex items-center gap-2 px-4 py-2 rounded-lg text-gray-600 font-medium hover:bg-gray-100 transition"
+            >
+              <i class="fa-solid fa-table-cells-large"></i>
+              Menu
+            </a>
+          </nav>
+        </div>
+
+        <!-- Usuario -->
+        <div class="flex items-center gap-4">
+          <div class="flex items-center gap-3">
+            <div
+              class="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center"
+            >
+              <i class="fa-solid fa-user text-indigo-600"></i>
+            </div>
+
+            <div class="leading-tight">
+              <p id="loggedUser" class="text-sm font-semibold text-gray-800">
+                User
+              </p>
+
+              <p class="text-xs text-gray-400" id="loggedRole">Rol</p>
+            </div>
+          </div>
+
+          <div class="h-8 w-px bg-gray-200"></div>
+
+          <button
+            id="btnLogout"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-500 hover:bg-red-50 hover:text-red-600 transition"
+            title="Logout"
+          >
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span class="text-sm font-medium"> Logout </span>
+          </button>
+        </div>
+      </div>
+    </header>
     <div id="content">
       <!-- Aqui se cargan las vistas -->
     </div>

@@ -13,4 +13,19 @@ function getOrderDirection($direction) {
         : "DESC";
 }
 
+function hasPermission($idModule, $idAction) {
+    $permissions = $_SESSION["user"]["permissions"] ?? [];
+
+    foreach ($permissions as $permission) {
+        if (
+            (int) $permission["id_module"] === (int) $idModule &&
+            (int) $permission["id_action"] === (int) $idAction
+        ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 ?>
