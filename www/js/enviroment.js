@@ -1,32 +1,136 @@
-import { fetchRecords } from "./api.js";
+import { fetchRecords, sendRequest } from "./api.js";
 import { loadView } from "./function.js";
 
 export async function initView() {
-  await loadView("../views/menu.html", "content");
-  // Recuperar modulos al que un usuario tiene acceso
-  const modules = await fetchRecords("modules");
+  const sessionData = await sendRequest("users", {
+    action: "session",
+  });
+
+  if (sessionData.status !== "success") {
+    window.location.href = "../index.html";
+    return;
+  }
+
+  document.body.classList.remove("hidden");
+
+  const loggedUser = document.getElementById("loggedUser");
+  const loggedRole = document.getElementById("loggedRole");
+
+  if (sessionData.status === "success" && loggedUser) {
+    loggedUser.textContent = sessionData.user.username;
+    loggedRole.textContent = sessionData.user.role;
+  }
+
+  const defaultView = sessionData.user.defaultView ?? "dashboard";
+  await loadView(`../views/${defaultView}.html`, "content");
+  if (defaultView === "menu") {
+    await loadModules();
+  }
+
+  const btnMenu = document.getElementById("btnMenu");
+  const btnDashboard = document.getElementById("btnDashboard");
+  const btnLogout = document.getElementById("btnLogout");
+
+  if (btnDashboard) {
+    btnDashboard.addEventListener("click", async function (event) {
+      event.preventDefault();
+      btnDashboard.classList.remove("text-gray-600", "font-medium");
+      btnDashboard.classList.add(
+        "bg-indigo-50",
+        "text-indigo-600",
+        "font-semibold",
+      );
+
+      btnMenu.classList.remove(
+        "bg-indigo-50",
+        "text-indigo-600",
+        "font-semibold",
+      );
+      btnMenu.classList.add("text-gray-600", "font-medium");
+      await loadView("../views/dashboard.html", "content");
+    });
+  }
+
+  if (btnMenu) {
+    btnMenu.addEventListener("click", async function (event) {
+      event.preventDefault();
+      btnMenu.classList.remove("text-gray-600", "font-medium");
+      btnMenu.classList.add("bg-indigo-50", "text-indigo-600", "font-semibold");
+
+      btnDashboard.classList.remove(
+        "bg-indigo-50",
+        "text-indigo-600",
+        "font-semibold",
+      );
+      btnDashboard.classList.add("text-gray-600", "font-medium");
+      await loadView("../views/menu.html", "content");
+      await loadModules();
+    });
+  }
+
+  if (btnLogout) {
+    btnLogout.addEventListener("click", async function () {
+      const result = await Swal.fire({
+        icon: "question",
+        title: "Logout",
+        text: "Are you sure you want to log out?",
+        showCancelButton: true,
+        confirmButtonText: "Yes, logout",
+        cancelButtonText: "Cancel",
+      });
+
+      if (!result.isConfirmed) {
+        return;
+      }
+
+      const data = await sendRequest("users", {
+        action: "logout",
+      });
+
+      if (data.status === "success") {
+        window.location.href = "../index.html";
+      }
+    });
+  }
+}
+
+async function loadModules() {
+  const sessionData = await sendRequest("users", {
+    action: "session",
+  });
+
+  const modules = sessionData.user.modules;
   const gridContainer = document.getElementById("modulesGridContainer");
+
+  if (!gridContainer) {
+    return;
+  }
+
   gridContainer.innerHTML = "";
 
-  // Recorre los resultados para construir tarjetas (Cards) visuales
   modules.forEach((module) => {
     const card = document.createElement("div");
+
     card.innerHTML = `
-        <a href="#" class="flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition">
-            <div class=""><i class="fa-solid fa-${module.img}"></i></div>
-            <span class="text-sm font-semibold text-gray-800 text-center">${module.name}</span>
-        </a>
+      <a href="#" class="flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition">
+        <div>
+          <i class="fa-solid fa-${module.img}"></i>
+        </div>
+
+        <span class="text-sm font-semibold text-gray-800 text-center">
+          ${module.module}
+        </span>
+      </a>
     `;
+
     card.addEventListener("click", async () => {
-      // Cargar la vista correspondiente.
       await loadView(`${module.url}.html`, "content");
 
-      // Cargar dinámicamente el controlador correspondiente.
       const moduleController = await import(`./${module.url}.js`);
 
-      // Inicializar el controlador.
       moduleController.initView();
     });
+
     gridContainer.appendChild(card);
   });
 }

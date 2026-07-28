@@ -1,17 +1,81 @@
 <?php
 require_once __DIR__ . "/lib/db.php";
 require_once __DIR__ ."/helpers.php";
-//Quiero realizar un login, buscando en la tabla de usuario por email y contraseña
-function login($email, $password) {
+
+function getUserByEmail($email) {
     global $db;
 
-    $stmt = $db->prepare("SELECT * FROM users WHERE username = :email AND password_hash = :password");
+        $stmt = $db->prepare("
+        SELECT 
+            u.id_user,
+            u.username,
+            u.password_hash,
+            u.id_rol,
+            u.status,
+            r.name AS role
+        FROM users u
+        LEFT JOIN roles r ON u.id_rol = r.id_rol
+        WHERE u.username = :email
+        AND u.status='Active'
+        LIMIT 1
+    ");
 
     $stmt->bindParam(':email', $email);
-    $stmt->bindParam(':password', $password);
     $stmt->execute();
 
     return $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
+//Quiero realizar un login, buscando en la tabla de usuario por email y contraseña
+function verifyUserPassword($password, $storedPassword) {
+    if (empty($storedPassword)) {
+        return false;
+    }
+
+    return password_verify($password, $storedPassword);
+}
+
+function getRolePermissions($idRole) {
+    global $db;
+
+    $stmt = $db->prepare("
+        SELECT 
+            rp.id_permission,
+            a.id_action,
+            a.name AS action,
+            a.id_module
+        FROM role_permissions rp
+        INNER JOIN actions a ON rp.id_action = a.id_action
+        WHERE rp.id_role = :id_role
+            AND rp.status = 'Active'
+    ");
+
+    $stmt->bindParam(':id_role', $idRole, PDO::PARAM_INT);
+    $stmt->execute();
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function getRoleModules($idRole) {
+    global $db;
+
+    $stmt = $db->prepare("
+        SELECT DISTINCT
+            m.id_module,
+            m.name AS module,
+            m.img,
+            m.url
+        FROM role_permissions rp
+        INNER JOIN actions a ON rp.id_action = a.id_action
+        INNER JOIN modules m ON a.id_module = m.id_module
+        WHERE rp.id_role = :id_role
+          AND rp.status = 'Active'
+    ");
+
+    $stmt->bindParam(':id_role', $idRole, PDO::PARAM_INT);
+    $stmt->execute();
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 /** Funciones para el modulo de categorias */

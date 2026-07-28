@@ -1,9 +1,10 @@
 <?php
+session_start();
 require_once "../src/functions.php";
 
 // Se reciben los parámetros raw del JSON payload
-$_get = json_decode(file_get_contents("php://input"), true);
-$accion = $_get['action'] ?? "";
+$requestData = json_decode(file_get_contents("php://input"), true) ?? [];
+$accion = $requestData['action'] ?? "";
 
 header("Content-Type: application/json");
 if ($accion == "list") {
@@ -14,8 +15,8 @@ if ($accion == "list") {
     echo json_encode($list);
 
 } elseif ($accion == "login") {
-    $email = $_get['email'] ?? '';
-    $password = $_get['password'] ?? '';
+    $email = $requestData['email'] ?? '';
+    $password = $requestData['password'] ?? '';
 
     if (empty($email) || empty($password)) {
         echo json_encode([
@@ -26,29 +27,33 @@ if ($accion == "list") {
     }
 
     try {
-        global $db;
-        $stmt = $db->prepare("SELECT id_user, username, password_hash, id_rol, status FROM users WHERE username = :email LIMIT 1");
-        $stmt->bindParam(':email', $email);
-        $stmt->execute();
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        $user = getUserByEmail($email);
 
         if ($user) {
-            $stored = $user['password_hash'] ?? '';
-
-            $verified = false;
-            if (!empty($stored) && password_verify($password, $stored)) {
-                $verified = true;
-            } elseif ($password === $stored) {
-                // Fallback for unhashed passwords (compatibilidad)
-                $verified = true;
-            }
+            $verified = verifyUserPassword(
+                $password,
+                $user['password_hash'] ?? ''
+            );
 
             if ($verified) {
                 unset($user['password_hash']);
+                $_SESSION["user"] = [
+                    "id_user" => $user["id_user"],
+                    "username" => $user["username"],
+                    "id_rol" => $user["id_rol"],
+                    "status" => $user["status"],
+                    "role" => $user["role"],
+                    "defaultView" => "dashboard"
+                ];
+
+                $permissions = getRolePermissions($user["id_rol"]);
+                $_SESSION["user"]['permissions'] = $permissions;
+                $modules = getRoleModules($user["id_rol"]);
+                $_SESSION["user"]['modules'] = $modules;
                 echo json_encode([
                     'status' => 'success',
                     'message' => 'Login correcto',
-                    'user' => $user
+                    'user' => $_SESSION["user"]
                 ]);
             } else {
                 echo json_encode([
@@ -69,6 +74,29 @@ if ($accion == "list") {
         ]);
     }
 
+}elseif ($accion == "session") {
+
+    if (isset($_SESSION["user"])) {
+        echo json_encode([
+            "status" => "success",
+            "user" => $_SESSION["user"]
+        ]);
+    } else {
+        echo json_encode([
+            "status" => "error",
+            "message" => "No active session"
+        ]);
+    }
+
+}elseif ($accion == "logout") {
+
+    session_unset();
+    session_destroy();
+
+    echo json_encode([
+        "status" => "success",
+        "message" => "Session closed"
+    ]);
 } else {
     // En caso de parámetro inválido
     echo json_encode([
