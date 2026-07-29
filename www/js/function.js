@@ -11,6 +11,7 @@ export function rowClick(event, dataID) {
   const btnRemove = document.getElementById("btnRemove");
   const btnEdit = document.getElementById("btnEdit");
   const btnDetail = document.getElementById("btnDetail");
+  const btnPermission = document.getElementById("btnPermissions");
   // Obtener el tr donde se hizo click
   const tr = event.currentTarget;
   // Quitar color a la fila seleccionada anteriormente
@@ -37,6 +38,11 @@ export function rowClick(event, dataID) {
   if (btnDetail) {
     //Quitar la clase hidden para hacer visible el boton
     btnDetail.classList.remove("hidden");
+  }
+
+  if (btnPermission) {
+    //Quitar la clase hidden para hacer visible el boton
+    btnPermission.classList.remove("hidden");
   }
 }
 

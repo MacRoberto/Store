@@ -31,7 +31,7 @@ export async function initView() {
   const searchField = document.getElementById("searchField");
   const searchInput = document.getElementById("searchInput");
   const btnSearch = document.getElementById("btnSearch");
-
+  const btnPermissions = document.getElementById("btnPermissions");
   if (searchField) {
     searchField.value = listOptions.searchField;
 
@@ -70,6 +70,13 @@ export async function initView() {
       const id = getSelectedId();
       await loadView("../views/forms/roles.html", "content");
       await initRoleForm("edit", id);
+    });
+  }
+
+  if (btnPermissions) {
+    btnPermissions.addEventListener("click", async function () {
+      await loadView("../views/forms/assign_permissions.html", "content");
+      await initAssignPermissionsView();
     });
   }
 
@@ -268,5 +275,15 @@ async function initRoleForm(mode, id = null) {
     }
   } catch (error) {
     console.error("Error al inicializar el formulario:", error);
+  }
+}
+
+async function initAssignPermissionsView() {
+  const btnBackToRoles = document.getElementById("btnBackToRoles");
+
+  if (btnBackToRoles) {
+    btnBackToRoles.addEventListener("click", async function () {
+      await loadRoleView();
+    });
   }
 }

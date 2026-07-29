@@ -82,18 +82,18 @@ if ($accion == "list") {
     $username = $requestData['username'] ?? "";
     $id_rol = $requestData['id_rol'] ?? "";
     $status = $requestData['status'] ?? "";
-    $password_hash = $requestData['password_hash'] ?? "";
+    $password = $requestData['password'] ?? "";
 
-    echo json_encode(saveUsers($username, $id_rol, $status, $password_hash));
+    echo json_encode(saveUsers($username, $id_rol, $status, $password));
 
 } else if ($accion == "update") {
     $id = $requestData['id'] ?? "";
     $username = $requestData['username'] ?? "";
     $id_rol = $requestData['id_rol'] ?? "";
     $status = $requestData['status'] ?? "";
-    $password_hash = $requestData['password_hash'] ?? "";
+    $password = $requestData['password'] ?? "";
 
-    echo json_encode(updateUsers($id, $username, $id_rol, $status, $password_hash));
+    echo json_encode(updateUsers($id, $username, $id_rol, $status, $password));
     
 } else if ($accion == "delete") {
     $id = $requestData['id'] ?? "";
