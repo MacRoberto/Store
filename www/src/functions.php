@@ -806,18 +806,172 @@ function getAllSalesDetails() {
     }
 }
 
-function getAllRoles() {
+function getAllRoles($requestData) {
     global $db;
     try {
-        // Obtenemos los roles registrados ordenados por su ID correlativo
-        $query = "SELECT r.id_rol, r.name, r.description 
+        $page = max(1, (int) ($requestData["page"] ?? 1));
+        $limit = max(1, (int) ($requestData["limit"] ?? 50));
+
+        $orderBy = getRoleOrderField(
+            $requestData["orderBy"] ?? "id_rol"
+        );
+
+        $orderDirection = getOrderDirection(
+            $requestData["orderDirection"] ?? "DESC"
+        );
+
+        $searchField = getRoleSearchField(
+            $requestData["searchField"] ?? "all"
+        );
+
+        $search = trim($requestData["search"] ?? "");
+        $offset = ($page - 1) * $limit;
+
+        $total = getTotalRoles($searchField, $search);
+
+        $where = "WHERE 1=1";
+        if ($search !== "") {
+            if ($searchField === "all") {
+                $where .= " AND (
+                    r.name LIKE :search
+                    OR r.description LIKE :search
+                )";
+            } else {
+                $where .= " AND $searchField LIKE :search";
+            }
+        }
+
+        $query = "SELECT
+                    r.id_rol,
+                    r.name,
+                    r.description
                   FROM roles r
-                  ORDER BY r.id_rol ASC";
-                  
+                  $where
+                  ORDER BY $orderBy $orderDirection
+                  LIMIT :limit OFFSET :offset";
+
         $stmt = $db->prepare($query);
+        if ($search !== "") {
+            $stmt->bindValue(":search", "%$search%");
+        }
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
         $stmt->execute();
-        
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return [
+            "records" => $records,
+            "total" => $total,
+            "page" => $page,
+            "limit" => $limit,
+            "totalPages" => (int) ceil($total / $limit)
+        ];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function getTotalRoles($searchField = "all", $search = "") {
+    global $db;
+
+    $where = "WHERE 1=1";
+    if ($search !== "") {
+        if ($searchField === "all") {
+            $where .= " AND (
+                r.name LIKE :search
+                OR r.description LIKE :search
+            )";
+        } else {
+            $where .= " AND $searchField LIKE :search";
+        }
+    }
+
+    $query = "SELECT count(*)
+              FROM roles r
+              $where";
+
+    $stmt = $db->prepare($query);
+    if ($search !== "") {
+        $stmt->bindValue(":search", "%$search%");
+    }
+    $stmt->execute();
+
+    return (int) $stmt->fetchColumn();
+}
+
+function getRoleOrderField($field) {
+    $fields = [
+        "id_rol" => "r.id_rol",
+        "name" => "r.name",
+        "description" => "r.description"
+    ];
+
+    return $fields[$field] ?? "r.id_rol";
+}
+
+function getRoleSearchField($field) {
+    $fields = [
+        "name" => "r.name",
+        "description" => "r.description"
+    ];
+
+    return $fields[$field] ?? "all";
+}
+
+function getRoleById($id_rol) {
+    global $db;
+    try {
+        $query = "SELECT id_rol AS id, name, description FROM roles WHERE id_rol = :id_rol";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_rol', $id_rol);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function saveRole($name, $description) {
+    global $db;
+    try {
+        $query = "INSERT INTO roles (name, description)
+                  VALUES (:name, :description)";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':name', $name);
+        $stmt->bindParam(':description', $description);
+        $stmt->execute();
+        return ['success' => true];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function updateRole($id_rol, $name, $description) {
+    global $db;
+    try {
+        $query = "UPDATE roles
+                  SET name = :name, description = :description
+                  WHERE id_rol = :id_rol";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_rol', $id_rol);
+        $stmt->bindParam(':name', $name);
+        $stmt->bindParam(':description', $description);
+        $stmt->execute();
+        return ['success' => true];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function deleteRole($id_rol) {
+    global $db;
+    try {
+        $query = "DELETE FROM roles WHERE id_rol = :id_rol";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_rol', $id_rol, PDO::PARAM_INT);
+        $stmt->execute();
+        return ['success' => true];
     } catch (PDOException $e) {
         return ['error' => $e->getMessage()];
     }
@@ -973,6 +1127,4 @@ function getAllRolesPermissions() {
     }
 }
 ?>
-
-
 
