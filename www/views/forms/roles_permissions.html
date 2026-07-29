@@ -9,33 +9,35 @@
     </div>
 
     <form id="itemForm" class="p-6 space-y-5">
-      <div>
-        <label class="block text-sm font-medium text-gray-600 mb-1">Role</label>
-        <select id="id_role" name="id_role" class="border border-gray-300 rounded-md px-3 py-2 w-full bg-white">
-          <option value="">Select role</option>
-        </select>
-      </div>
+      <!-- Mantenemos id_role para cargar los roles -->
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">Role</label>
+          <select id="id_role" name="id_role" class="border border-gray-300 rounded-md px-3 py-2 w-full bg-white">
+            <option value="">Select role</option>
+          </select>
+        </div>
 
-      <div>
-        <label class="block text-sm font-medium text-gray-600 mb-1">Action</label>
-        <select id="id_action" name="id_action" class="border border-gray-300 rounded-md px-3 py-2 w-full bg-white">
-          <option value="">Select action</option>
-        </select>
-      </div>
+      <!-- Mantenemos id_action para cargar las acciones/permisos -->
+              <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">Action</label>
+            <select id="id_action" name="id_action" class="border border-gray-300 rounded-md px-3 py-2 w-full bg-white">
+              <option value="">Select action</option>
+            </select>
+          </div>
 
-      <div>
-        <label class="block text-sm font-medium text-gray-600 mb-1">Status</label>
-        <select id="status" name="status" class="border border-gray-300 rounded-md px-3 py-2 w-full bg-white">
-          <option value="Active">Active</option>
-          <option value="Inactive">Inactive</option>
-        </select>
-      </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">Status</label>
+            <select id="status" name="status" class="border border-gray-300 rounded-md px-3 py-2 w-full bg-white">
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </div>
 
-      <div class="flex items-center gap-3">
-        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
-          Save
-        </button>
-      </div>
-    </form>
+          <div class="flex items-center gap-3">
+            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+              Save
+            </button>
+          </div>
+        </form>
   </div>
 </div>

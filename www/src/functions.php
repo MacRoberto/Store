@@ -748,141 +748,250 @@ function deleteActions($id) {
     }
 }
 
-function getAllRolesPermissions($requestData = []) {
-    global $db;
+/* Funciones para el modulo de roles_permissions */
 
+function getAllRolesPermissions($requestData) {
+    global $db;
     try {
-        $query = "SELECT
+        // Configuración de paginación y ordenamiento
+        $page = max(1, (int) ($requestData["page"] ?? 1));
+        $limit = max(1, (int) ($requestData["limit"] ?? 50));
+
+        $orderBy = getRolePermissionOrderField(
+            $requestData["orderBy"] ?? "id_permission"
+        );
+
+        $orderDirection = getOrderDirection(
+            $requestData["orderDirection"] ?? "DESC"
+        );
+
+        $searchField = getRolePermissionSearchField(
+            $requestData["searchField"] ?? "all"
+        );
+
+        $search = trim($requestData["search"] ?? "");
+
+        $offset = ($page - 1) * $limit;
+
+        // Total de registros para paginación
+        $total = getTotalRolesPermissions($searchField, $search);
+
+        $where = "WHERE 1=1";
+        if ($search !== "") {
+            if ($searchField === "all") {
+                $where .= " AND (
+                    rp.id_permission LIKE :search
+                    OR r.name LIKE :search
+                    OR m.name LIKE :search
+                    OR a.name LIKE :search
+                    OR rp.status LIKE :search
+                )";
+            } else {
+                $where .= " AND $searchField LIKE :search";
+            }
+        }
+
+        // Consulta con JOINs para obtener nombres de Rol, Módulo y Acción
+        $query = "SELECT 
                     rp.id_permission,
                     rp.id_role,
                     rp.id_action,
                     rp.status,
                     r.name AS role_name,
-                    a.name AS action_name,
-                    m.name AS module_name
+                    m.id_module,
+                    m.name AS module_name,
+                    a.name AS action_name
                   FROM role_permissions rp
                   LEFT JOIN roles r ON rp.id_role = r.id_rol
                   LEFT JOIN actions a ON rp.id_action = a.id_action
                   LEFT JOIN modules m ON a.id_module = m.id_module
-                  ORDER BY rp.id_permission ASC";
+                  $where 
+                  ORDER BY $orderBy $orderDirection 
+                  LIMIT :limit OFFSET :offset";
 
         $stmt = $db->prepare($query);
+        $stmt->bindValue(":limit", $limit, PDO::PARAM_INT);
+        $stmt->bindValue(":offset", $offset, PDO::PARAM_INT);
+        if ($search !== "") {
+            $stmt->bindValue(":search", "%$search%");
+        }
         $stmt->execute();
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return [
+            "records" => $records,
+            "total" => $total,
+            "page" => $page,
+            "limit" => $limit,
+            "totalPages" => (int) ceil($total / $limit)
+        ];
     } catch (PDOException $e) {
-        return ["error" => $e->getMessage()];
+        return ['error' => $e->getMessage()];
     }
+}
+
+function getTotalRolesPermissions($searchField = "", $search = "") {
+    global $db;
+    
+    $where = "WHERE 1=1";
+
+    if ($search !== "") {
+        if ($searchField === "all") {
+            $where .= " AND (
+                rp.id_permission LIKE :search
+                OR r.name LIKE :search
+                OR m.name LIKE :search
+                OR a.name LIKE :search
+                OR rp.status LIKE :search
+            )";
+        } else {
+            $where .= " AND $searchField LIKE :search";
+        }
+    }
+
+    $query = "SELECT count(*) 
+              FROM role_permissions rp
+              LEFT JOIN roles r ON rp.id_role = r.id_rol
+              LEFT JOIN actions a ON rp.id_action = a.id_action
+              LEFT JOIN modules m ON a.id_module = m.id_module
+              $where";
+
+    $stmt = $db->prepare($query);
+
+    if ($search !== "") {
+        $stmt->bindValue(":search", "%$search%");
+    }
+
+    $stmt->execute();
+
+    return (int) $stmt->fetchColumn();
 }
 
 function saveRolePermission($id_role, $id_action, $status) {
     global $db;
-
     try {
-        $query = "INSERT INTO role_permissions (id_role, id_action, status)
+        $query = "INSERT INTO role_permissions (id_role, id_action, status) 
                   VALUES (:id_role, :id_action, :status)";
         $stmt = $db->prepare($query);
-        $stmt->bindParam(":id_role", $id_role);
-        $stmt->bindParam(":id_action", $id_action);
-        $stmt->bindParam(":status", $status);
+        $stmt->bindParam(':id_role', $id_role);
+        $stmt->bindParam(':id_action', $id_action);
+        $stmt->bindParam(':status', $status);
         $stmt->execute();
 
-        return ["success" => true];
+        return ['success' => true];
     } catch (PDOException $e) {
-        return ["error" => $e->getMessage()];
+        return ['error' => $e->getMessage()];
     }
 }
 
-function updateRolePermission($id, $id_role, $id_action, $status) {
+function updateRolePermission($id_permission, $id_role, $id_action, $status) {
     global $db;
-
     try {
-        $query = "UPDATE role_permissions
-                  SET id_role = :id_role,
-                      id_action = :id_action,
-                      status = :status
-                  WHERE id_permission = :id";
+        $query = "UPDATE role_permissions 
+                  SET id_role = :id_role, id_action = :id_action, status = :status 
+                  WHERE id_permission = :id_permission";
         $stmt = $db->prepare($query);
-        $stmt->bindParam(":id", $id);
-        $stmt->bindParam(":id_role", $id_role);
-        $stmt->bindParam(":id_action", $id_action);
-        $stmt->bindParam(":status", $status);
+        $stmt->bindParam(':id_role', $id_role);
+        $stmt->bindParam(':id_action', $id_action);
+        $stmt->bindParam(':status', $status);
+        $stmt->bindParam(':id_permission', $id_permission);
         $stmt->execute();
 
-        return ["success" => true];
+        return ['success' => true];
     } catch (PDOException $e) {
-        return ["error" => $e->getMessage()];
+        return ['error' => $e->getMessage()];
     }
 }
 
-function deleteRolePermission($id) {
+function deleteRolePermission($id_permission) {
     global $db;
-
     try {
-        $query = "DELETE FROM role_permissions WHERE id_permission = :id";
+        $query = "DELETE FROM role_permissions WHERE id_permission = :id_permission";
         $stmt = $db->prepare($query);
-        $stmt->bindParam(":id", $id);
+        $stmt->bindParam(':id_permission', $id_permission, PDO::PARAM_INT);
         $stmt->execute();
 
-        return ["success" => true];
+        return ['success' => true];
     } catch (PDOException $e) {
-        return ["error" => $e->getMessage()];
+        return ['error' => $e->getMessage()];
     }
 }
 
-function getRolePermissionById($id) {
+function getRolePermissionById($id_permission) {
     global $db;
-
     try {
-        $query = "SELECT
-                    id_permission,
-                    id_role,
-                    id_action,
-                    status
-                  FROM role_permissions
-                  WHERE id_permission = :id
-                  LIMIT 1";
+        $query = "SELECT rp.id_permission AS id, rp.id_role, rp.id_action, rp.status 
+                  FROM role_permissions rp 
+                  WHERE rp.id_permission = :id_permission";
         $stmt = $db->prepare($query);
-        $stmt->bindParam(":id", $id);
+        $stmt->bindParam(':id_permission', $id_permission);
         $stmt->execute();
 
         return $stmt->fetch(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
-        return ["error" => $e->getMessage()];
+        return ['error' => $e->getMessage()];
     }
+}
+
+function getRolePermissionOrderField($field) {
+    $fields = [
+        "id_permission" => "rp.id_permission",
+        "role_name"     => "r.name",
+        "module_name"   => "m.name",
+        "action_name"   => "a.name",
+        "status"        => "rp.status"
+    ];
+
+    return $fields[$field] ?? "rp.id_permission";
+}
+
+function getRolePermissionSearchField($field) {
+    $fields = [
+        "id_permission" => "rp.id_permission",
+        "role_name"     => "r.name",
+        "module_name"   => "m.name",
+        "action_name"   => "a.name",
+        "status"        => "rp.status"
+    ];
+
+    return $fields[$field] ?? "all";
+}
+
+/* Opciones para llenar los <select> de formularios */
+function getRoleOptions() {
+    global $db;
+    try {
+        // Renombramos 'id_rol' como 'id' en el SQL para que Api.js lo lea sin cambios
+        $query = "SELECT r.id_rol AS id, r.name 
+                  FROM roles r
+                  ORDER BY r.name ASC";
+                  
+        $stmt = $db->prepare($query);
+        $stmt->execute();
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function getActionOptions() {
+    global $db;
+    $stmt = $db->query("SELECT id_action AS id, name FROM actions");
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 function getRolePermissionOptions() {
     global $db;
-
     try {
-        $query = "SELECT id_rol AS id, name FROM roles ORDER BY name ASC";
-        $stmt = $db->prepare($query);
-        $stmt->execute();
-
+        $query = "SELECT id_permission AS id, CONCAT('Permission #', id_permission) AS name FROM role_permissions WHERE status = 'Active'";
+        $stmt = $db->query($query);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
-        return ["error" => $e->getMessage()];
+        return ['error' => $e->getMessage()];
     }
 }
-
-// Devuelve solo las opciones para llenar el select de roles.
-function getRoleOptions() {
-    global $db;
-
-    try {
-        $query = "SELECT id_rol AS id, name
-                  FROM roles
-                  ORDER BY name ASC";
-
-        $stmt = $db->prepare($query);
-        $stmt->execute();
-
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-        return ["error" => $e->getMessage()];
-    }
-}
-
+/** Fin de funciones para el modulo de roles_permissions */
 
 ?>
