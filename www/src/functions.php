@@ -148,7 +148,6 @@ function getAllCategories($requestData) {
     }
 }
 
-//funcion para guardar un producto
 function saveCategories( $name, $description) {
     global $db;
     try {
@@ -478,24 +477,132 @@ function getProductSearchField($field) {
 /*Fin de funciones para el modulo de productos*/
 
 //Inicio de funciones para promociones
-function getAllPromotions() {
+function getAllPromotions($requestData) {
     global $db;
     try {
-        // Hacemos un LEFT JOIN para jalar el nombre del producto vinculado a la promoción
-        $query = "SELECT pr.id_promotion, pr.name AS promotion_name, pr.description, 
+        $page = max(1, (int) ($requestData["page"] ?? 1));
+        $limit = max(1, (int) ($requestData["limit"] ?? 50));
+
+        $orderBy = getPromotionOrderField(
+            $requestData["orderBy"] ?? "id_promotion"
+        );
+
+        $orderDirection = getOrderDirection(
+            $requestData["orderDirection"] ?? "DESC"
+        );
+
+        $searchField = getPromotionSearchField(
+            $requestData["searchField"] ?? "all"
+        );
+
+        $search = trim($requestData["search"] ?? "");
+        $offset = ($page - 1) * $limit;
+        $total = getTotalPromotions($searchField, $search);
+
+        $where = "WHERE 1=1";
+        if ($search !== "") {
+            if ($searchField === "all") {
+                $where .= " AND (
+                    pr.name LIKE :search
+                    OR pr.description LIKE :search
+                    OR p.name LIKE :search
+                    OR pr.status LIKE :search
+                )";
+            } else {
+                $where .= " AND $searchField LIKE :search";
+            }
+        }
+
+        $query = "SELECT pr.id_promotion, pr.name AS promotion_name, pr.description,
                          pr.date_start, pr.date_end, pr.percent_off, pr.status,
-                         p.name AS product_name 
+                         p.name AS product_name
                   FROM promotions pr
                   LEFT JOIN products p ON pr.id_product = p.id_product
-                  ORDER BY pr.date_start DESC";
-                  
+                  $where
+                  ORDER BY $orderBy $orderDirection
+                  LIMIT :limit OFFSET :offset";
+
         $stmt = $db->prepare($query);
+        $stmt->bindValue(":limit", $limit, PDO::PARAM_INT);
+        $stmt->bindValue(":offset", $offset, PDO::PARAM_INT);
+
+        if ($search !== "") {
+            $stmt->bindValue(":search", "%$search%");
+        }
+
         $stmt->execute();
-        
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return [
+            "records" => $records,
+            "total" => $total,
+            "page" => $page,
+            "limit" => $limit,
+            "totalPages" => (int) ceil($total / $limit)
+        ];
     } catch (PDOException $e) {
         return ['error' => $e->getMessage()];
     }
+}
+
+function getTotalPromotions($searchField = "", $search = "") {
+    global $db;
+
+    $where = "WHERE 1=1";
+
+    if ($search !== "") {
+        if ($searchField === "all") {
+            $where .= " AND (
+                pr.name LIKE :search
+                OR pr.description LIKE :search
+                OR p.name LIKE :search
+                OR pr.status LIKE :search
+            )";
+        } else {
+            $where .= " AND $searchField LIKE :search";
+        }
+    }
+
+    $query = "SELECT count(*)
+              FROM promotions pr
+              LEFT JOIN products p ON pr.id_product = p.id_product
+              $where";
+
+    $stmt = $db->prepare($query);
+
+    if ($search !== "") {
+        $stmt->bindValue(":search", "%$search%");
+    }
+
+    $stmt->execute();
+
+    return (int) $stmt->fetchColumn();
+}
+
+function getPromotionOrderField($field) {
+    $fields = [
+        "id_promotion" => "pr.id_promotion",
+        "promotion_name" => "pr.name",
+        "description" => "pr.description",
+        "date_start" => "pr.date_start",
+        "date_end" => "pr.date_end",
+        "percent_off" => "pr.percent_off",
+        "product_name" => "p.name",
+        "status" => "pr.status"
+    ];
+
+    return $fields[$field] ?? "pr.id_promotion";
+}
+
+function getPromotionSearchField($field) {
+    $fields = [
+        "promotion_name" => "pr.name",
+        "description" => "pr.description",
+        "product_name" => "p.name",
+        "status" => "pr.status"
+    ];
+
+    return $fields[$field] ?? "all";
 }
 
 //Crear funcion para guardar un registro de Promotions
@@ -620,25 +727,130 @@ function getAllInventoryItems() {
     }
 }
 
-function getAllSales() {
+function getAllSales($requestData) {
     global $db;
     try {
-        // Consultamos el registro de ventas asociando el email del usuario correspondiente
-        // Nota: Si tu columna identificadora de correo se llama distinto (ej: 'user_email'), cámbiala abajo
-        $query = "SELECT s.id_sale, s.user_id, s.transaction_date, 
+        $page = max(1, (int) ($requestData["page"] ?? 1));
+        $limit = max(1, (int) ($requestData["limit"] ?? 50));
+        $offset = ($page - 1) * $limit;
+
+        $orderBy = getSaleOrderField(
+            $requestData["orderBy"] ?? "id_sale"
+        );
+
+        $orderDirection = getOrderDirection(
+            $requestData["orderDirection"] ?? "DESC"
+        );
+
+        $searchField = getSaleSearchField(
+            $requestData["searchField"] ?? "all"
+        );
+
+        $search = trim($requestData["search"] ?? "");
+        $total = getTotalSales($searchField, $search);
+
+        $where = "WHERE 1=1";
+        if ($search !== "") {
+            if ($searchField === "all") {
+                $where .= " AND (
+                    s.id_sale LIKE :search
+                    OR u.username LIKE :search
+                    OR s.payment_method LIKE :search
+                    OR s.status LIKE :search
+                )";
+            } else {
+                $where .= " AND $searchField LIKE :search";
+            }
+        }
+
+        $query = "SELECT s.id_sale, s.user_id, s.transaction_date,
                          s.total_amount, s.payment_method, s.status,
-                         u.email AS username
+                         u.username AS username
                   FROM sales s
                   LEFT JOIN users u ON s.user_id = u.id_user
-                  ORDER BY s.transaction_date DESC";
-                  
+                  $where
+                  ORDER BY $orderBy $orderDirection
+                  LIMIT :limit OFFSET :offset";
+
         $stmt = $db->prepare($query);
+        $stmt->bindValue(":limit", $limit, PDO::PARAM_INT);
+        $stmt->bindValue(":offset", $offset, PDO::PARAM_INT);
+
+        if ($search !== "") {
+            $stmt->bindValue(":search", "%$search%");
+        }
+
         $stmt->execute();
-        
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return [
+            "records" => $records,
+            "total" => $total,
+            "page" => $page,
+            "limit" => $limit,
+            "totalPages" => (int) ceil($total / $limit)
+        ];
     } catch (PDOException $e) {
         return ['error' => $e->getMessage()];
     }
+}
+
+function getTotalSales($searchField = "", $search = "") {
+    global $db;
+
+    $where = "WHERE 1=1";
+
+    if ($search !== "") {
+        if ($searchField === "all") {
+            $where .= " AND (
+                s.id_sale LIKE :search
+                OR u.username LIKE :search
+                OR s.payment_method LIKE :search
+                OR s.status LIKE :search
+            )";
+        } else {
+            $where .= " AND $searchField LIKE :search";
+        }
+    }
+
+    $query = "SELECT COUNT(DISTINCT s.id_sale)
+              FROM sales s
+              LEFT JOIN users u ON s.user_id = u.id_user
+              $where";
+
+    $stmt = $db->prepare($query);
+
+    if ($search !== "") {
+        $stmt->bindValue(":search", "%$search%");
+    }
+
+    $stmt->execute();
+
+    return (int) $stmt->fetchColumn();
+}
+
+function getSaleOrderField($field) {
+    $fields = [
+        "id_sale" => "s.id_sale",
+        "transaction_date" => "s.transaction_date",
+        "username" => "u.username",
+        "payment_method" => "s.payment_method",
+        "total_amount" => "s.total_amount",
+        "status" => "s.status"
+    ];
+
+    return $fields[$field] ?? "s.id_sale";
+}
+
+function getSaleSearchField($field) {
+    $fields = [
+        "id_sale" => "s.id_sale",
+        "username" => "u.username",
+        "payment_method" => "s.payment_method",
+        "status" => "s.status"
+    ];
+
+    return $fields[$field] ?? "all";
 }
 
 function getAllInventories() {
@@ -660,38 +872,309 @@ function getAllInventories() {
     }
 }
 
-function getAllUsers() {
+function getAllUsers($requestData) {
     global $db;
     try {
-        // Obtenemos los usuarios y su rol descriptivo. 
-        // IMPORTANTE: Excluimos password_hash por completo por razones de seguridad.
+        $page = max(1, (int) ($requestData["page"] ?? 1));
+        $limit = max(1, (int) ($requestData["limit"] ?? 50));
+
+        $orderBy = getUserOrderField(
+            $requestData["orderBy"] ?? "id_user"
+        );
+
+        $orderDirection = getOrderDirection(
+            $requestData["orderDirection"] ?? "DESC"
+        );
+
+        $searchField = getUserSearchField(
+            $requestData["searchField"] ?? "all"
+        );
+
+        $search = trim($requestData["search"] ?? "");
+        $offset = ($page - 1) * $limit;
+
+        $total = getTotalUsers($searchField, $search);
+
+        $where = "WHERE 1=1";
+        if ($search !== "") {
+            if ($searchField === "all") {
+                $where .= " AND (
+                    u.username LIKE :search
+                    OR r.name LIKE :search
+                    OR u.status LIKE :search
+                )";
+            } else {
+                $where .= " AND $searchField LIKE :search";
+            }
+        }
+
         $query = "SELECT u.id_user, u.username, u.id_rol, u.status,
-                         r.name AS role_name 
+                         r.name AS role_name
                   FROM users u
                   LEFT JOIN roles r ON u.id_rol = r.id_rol
-                  ORDER BY u.id_user ASC";
-                  
+                  $where
+                  ORDER BY $orderBy $orderDirection
+                  LIMIT :limit OFFSET :offset";
+
+        $stmt = $db->prepare($query);
+        if ($search !== "") {
+            $stmt->bindValue(":search", "%$search%");
+        }
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return [
+            "records" => $records,
+            "total" => $total,
+            "page" => $page,
+            "limit" => $limit,
+            "totalPages" => (int) ceil($total / $limit)
+        ];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function getTotalUsers($searchField = "all", $search = "") {
+    global $db;
+
+    $where = "WHERE 1=1";
+    if ($search !== "") {
+        if ($searchField === "all") {
+            $where .= " AND (
+                u.username LIKE :search
+                OR r.name LIKE :search
+                OR u.status LIKE :search
+            )";
+        } else {
+            $where .= " AND $searchField LIKE :search";
+        }
+    }
+
+    $query = "SELECT count(*)
+              FROM users u
+              LEFT JOIN roles r ON u.id_rol = r.id_rol
+              $where";
+
+    $stmt = $db->prepare($query);
+    if ($search !== "") {
+        $stmt->bindValue(":search", "%$search%");
+    }
+    $stmt->execute();
+
+    return (int) $stmt->fetchColumn();
+}
+
+function getUserOrderField($field) {
+    $fields = [
+        "id_user" => "u.id_user",
+        "username" => "u.username",
+        "role" => "r.name",
+        "status" => "u.status"
+    ];
+
+    return $fields[$field] ?? "u.id_user";
+}
+
+function getUserSearchField($field) {
+    $fields = [
+        "username" => "u.username",
+        "role" => "r.name",
+        "status" => "u.status"
+    ];
+
+    return $fields[$field] ?? "all";
+}
+
+function getUserById($id) {
+    global $db;
+    try {
+        $query = "SELECT id_user AS id, username, id_rol, status
+                  FROM users
+                  WHERE id_user = :id_user";
+
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_user', $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function getRoleOptions() {
+    global $db;
+    try {
+        $query = "SELECT id_rol AS id, name
+                  FROM roles
+                  ORDER BY name ASC";
         $stmt = $db->prepare($query);
         $stmt->execute();
-        
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
         return ['error' => $e->getMessage()];
     }
 }
 
-function getAllSalesDetails() {
+function saveUsers($username, $id_rol, $status, $password_hash) {
     global $db;
     try {
-        $query = "SELECT sd.id_sale_item, sd.sale_id, sd.quantity, 
-                         sd.unit_price, sd.discount_applied, sd.subtotal
-                  FROM sales_details sd
-                  ORDER BY sd.sale_id DESC, sd.id_sale_item ASC";
-                  
+        $hashedPassword = password_hash($password_hash, PASSWORD_DEFAULT);
+
+        $query = "INSERT INTO users (username, id_rol, status, password_hash)
+                  VALUES (:username, :id_rol, :status, :password_hash)";
+
         $stmt = $db->prepare($query);
+        $stmt->bindParam(':username', $username);
+        $stmt->bindParam(':id_rol', $id_rol, PDO::PARAM_INT);
+        $stmt->bindParam(':status', $status);
+        $stmt->bindParam(':password_hash', $hashedPassword);
+
         $stmt->execute();
-        
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return ['success' => true];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function updateUsers($id, $username, $id_rol, $status, $password_hash = null) {
+    global $db;
+    try {
+        if ($password_hash !== null && $password_hash !== "") {
+            $hashedPassword = password_hash($password_hash, PASSWORD_DEFAULT);
+
+            $query = "UPDATE users
+                      SET username = :username,
+                          id_rol = :id_rol,
+                          status = :status,
+                          password_hash = :password_hash
+                      WHERE id_user = :id_user";
+        } else {
+            $query = "UPDATE users
+                      SET username = :username,
+                          id_rol = :id_rol,
+                          status = :status
+                      WHERE id_user = :id_user";
+        }
+
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_user', $id, PDO::PARAM_INT);
+        $stmt->bindParam(':username', $username);
+        $stmt->bindParam(':id_rol', $id_rol, PDO::PARAM_INT);
+        $stmt->bindParam(':status', $status);
+
+        if ($password_hash !== null && $password_hash !== "") {
+            $stmt->bindParam(':password_hash', $hashedPassword);
+        }
+
+        $stmt->execute();
+        return ['success' => true];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function deleteUsers($id) {
+    global $db;
+    try {
+        $query = "DELETE FROM users WHERE id_user = :id_user";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_user', $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return ['success' => true];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+
+
+function getAllSalesDetails($requestData) {
+    global $db;
+    try {
+        $saleId = (int) ($requestData["saleId"] ?? 0);
+        $page = max(1, (int) ($requestData["page"] ?? 1));
+        $limit = max(1, (int) ($requestData["limit"] ?? 50));
+        $offset = ($page - 1) * $limit;
+
+        if ($saleId <= 0) {
+            return [
+                "records" => [],
+                "total" => 0,
+                "page" => $page,
+                "limit" => $limit,
+                "totalPages" => 0,
+                "saleId" => $saleId,
+                "error" => "A valid saleId is required."
+            ];
+        }
+
+        $orderBy = getSaleDetailOrderField(
+            $requestData["orderBy"] ?? "id_sale_item"
+        );
+
+        $orderDirection = getOrderDirection(
+            $requestData["orderDirection"] ?? "DESC"
+        );
+
+        $searchField = getSaleDetailSearchField(
+            $requestData["searchField"] ?? "all"
+        );
+
+        $search = trim($requestData["search"] ?? "");
+        $total = getTotalSalesDetails($saleId, $searchField, $search);
+
+        $where = "WHERE sd.sale_id = :saleId";
+        if ($search !== "") {
+            if ($searchField === "all") {
+                $where .= " AND (
+                    sd.id_sale_item LIKE :search
+                    OR p.name LIKE :search
+                    OR sd.quantity LIKE :search
+                    OR sd.unit_price LIKE :search
+                    OR sd.discount_applied LIKE :search
+                    OR sd.subtotal LIKE :search
+                )";
+            } else {
+                $where .= " AND $searchField LIKE :search";
+            }
+        }
+
+        $query = "SELECT sd.id_sale_item, sd.sale_id, sd.quantity,
+                         sd.unit_price, sd.discount_applied, sd.subtotal,
+                         p.name AS product_name
+                  FROM sales_details sd
+                  LEFT JOIN inventory_items ii ON sd.id_inventory_item = ii.id_inventory_item
+                  LEFT JOIN products p ON ii.product_id = p.id_product
+                  $where
+                  ORDER BY $orderBy $orderDirection
+                  LIMIT :limit OFFSET :offset";
+
+        $stmt = $db->prepare($query);
+        $stmt->bindValue(":saleId", $saleId, PDO::PARAM_INT);
+        $stmt->bindValue(":limit", $limit, PDO::PARAM_INT);
+        $stmt->bindValue(":offset", $offset, PDO::PARAM_INT);
+
+        if ($search !== "") {
+            $stmt->bindValue(":search", "%$search%");
+        }
+
+        $stmt->execute();
+
+        $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return [
+            "records" => $records,
+            "total" => $total,
+            "page" => $page,
+            "limit" => $limit,
+            "totalPages" => (int) ceil($total / $limit),
+            "saleId" => $saleId
+        ];
     } catch (PDOException $e) {
         return [
             'status' => 'error',
@@ -700,35 +1183,423 @@ function getAllSalesDetails() {
     }
 }
 
-function getAllRoles() {
+function getTotalSalesDetails($saleId, $searchField = "", $search = "") {
+    global $db;
+
+    $where = "WHERE sd.sale_id = :saleId";
+
+    if ($search !== "") {
+        if ($searchField === "all") {
+            $where .= " AND (
+                sd.id_sale_item LIKE :search
+                OR p.name LIKE :search
+                OR sd.quantity LIKE :search
+                OR sd.unit_price LIKE :search
+                OR sd.discount_applied LIKE :search
+                OR sd.subtotal LIKE :search
+            )";
+        } else {
+            $where .= " AND $searchField LIKE :search";
+        }
+    }
+
+    $query = "SELECT COUNT(DISTINCT sd.id_sale_item)
+              FROM sales_details sd
+              LEFT JOIN inventory_items ii ON sd.id_inventory_item = ii.id_inventory_item
+                  LEFT JOIN products p ON ii.product_id = p.id_product
+              $where";
+
+    $stmt = $db->prepare($query);
+    $stmt->bindValue(":saleId", $saleId, PDO::PARAM_INT);
+
+    if ($search !== "") {
+        $stmt->bindValue(":search", "%$search%");
+    }
+
+    $stmt->execute();
+
+    return (int) $stmt->fetchColumn();
+}
+
+function getSaleDetailOrderField($field) {
+    $fields = [
+        "id_sale_item" => "sd.id_sale_item",
+        "product_name" => "p.name",
+        "quantity" => "sd.quantity",
+        "unit_price" => "sd.unit_price",
+        "discount_applied" => "sd.discount_applied",
+        "subtotal" => "sd.subtotal"
+    ];
+
+    return $fields[$field] ?? "sd.id_sale_item";
+}
+
+function getSaleDetailSearchField($field) {
+    $fields = [
+        "id_sale_item" => "sd.id_sale_item",
+        "product_name" => "p.name",
+        "quantity" => "sd.quantity",
+        "unit_price" => "sd.unit_price",
+        "discount_applied" => "sd.discount_applied",
+        "subtotal" => "sd.subtotal"
+    ];
+
+    return $fields[$field] ?? "all";
+}
+
+function getAllRoles($requestData) {
     global $db;
     try {
-        // Obtenemos los roles registrados ordenados por su ID correlativo
-        $query = "SELECT r.id_rol, r.name, r.description 
+        $page = max(1, (int) ($requestData["page"] ?? 1));
+        $limit = max(1, (int) ($requestData["limit"] ?? 50));
+
+        $orderBy = getRoleOrderField(
+            $requestData["orderBy"] ?? "id_rol"
+        );
+
+        $orderDirection = getOrderDirection(
+            $requestData["orderDirection"] ?? "DESC"
+        );
+
+        $searchField = getRoleSearchField(
+            $requestData["searchField"] ?? "all"
+        );
+
+        $search = trim($requestData["search"] ?? "");
+        $offset = ($page - 1) * $limit;
+
+        $total = getTotalRoles($searchField, $search);
+
+        $where = "WHERE 1=1";
+        if ($search !== "") {
+            if ($searchField === "all") {
+                $where .= " AND (
+                    r.name LIKE :search
+                    OR r.description LIKE :search
+                )";
+            } else {
+                $where .= " AND $searchField LIKE :search";
+            }
+        }
+
+        $query = "SELECT
+                    r.id_rol,
+                    r.name,
+                    r.description
                   FROM roles r
-                  ORDER BY r.id_rol ASC";
-                  
+                  $where
+                  ORDER BY $orderBy $orderDirection
+                  LIMIT :limit OFFSET :offset";
+
         $stmt = $db->prepare($query);
+        if ($search !== "") {
+            $stmt->bindValue(":search", "%$search%");
+        }
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
         $stmt->execute();
-        
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return [
+            "records" => $records,
+            "total" => $total,
+            "page" => $page,
+            "limit" => $limit,
+            "totalPages" => (int) ceil($total / $limit)
+        ];
     } catch (PDOException $e) {
         return ['error' => $e->getMessage()];
     }
 }
 
-function getAllModules() {
+function getTotalRoles($searchField = "all", $search = "") {
+    global $db;
+
+    $where = "WHERE 1=1";
+    if ($search !== "") {
+        if ($searchField === "all") {
+            $where .= " AND (
+                r.name LIKE :search
+                OR r.description LIKE :search
+            )";
+        } else {
+            $where .= " AND $searchField LIKE :search";
+        }
+    }
+
+    $query = "SELECT count(*)
+              FROM roles r
+              $where";
+
+    $stmt = $db->prepare($query);
+    if ($search !== "") {
+        $stmt->bindValue(":search", "%$search%");
+    }
+    $stmt->execute();
+
+    return (int) $stmt->fetchColumn();
+}
+
+function getRoleOrderField($field) {
+    $fields = [
+        "id_rol" => "r.id_rol",
+        "name" => "r.name",
+        "description" => "r.description"
+    ];
+
+    return $fields[$field] ?? "r.id_rol";
+}
+
+function getRoleSearchField($field) {
+    $fields = [
+        "name" => "r.name",
+        "description" => "r.description"
+    ];
+
+    return $fields[$field] ?? "all";
+}
+
+function getRoleById($id_rol) {
     global $db;
     try {
-        // Consultamos el registro de módulos ordenados alfabéticamente por su nombre descriptivo
-        $query = "SELECT m.id_module, m.name, m.description, m.img, m.url  
-                  FROM modules m
-                  ORDER BY m.name ASC";
-                  
+        $query = "SELECT id_rol AS id, name, description FROM roles WHERE id_rol = :id_rol";
         $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_rol', $id_rol);
         $stmt->execute();
-        
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function saveRole($name, $description) {
+    global $db;
+    try {
+        $query = "INSERT INTO roles (name, description)
+                  VALUES (:name, :description)";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':name', $name);
+        $stmt->bindParam(':description', $description);
+        $stmt->execute();
+        return ['success' => true];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function updateRole($id_rol, $name, $description) {
+    global $db;
+    try {
+        $query = "UPDATE roles
+                  SET name = :name, description = :description
+                  WHERE id_rol = :id_rol";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_rol', $id_rol);
+        $stmt->bindParam(':name', $name);
+        $stmt->bindParam(':description', $description);
+        $stmt->execute();
+        return ['success' => true];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function deleteRole($id_rol) {
+    global $db;
+    try {
+        $query = "DELETE FROM roles WHERE id_rol = :id_rol";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_rol', $id_rol, PDO::PARAM_INT);
+        $stmt->execute();
+        return ['success' => true];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function getAllModules($requestData) {
+    global $db;
+    try {
+        $page = max(1, (int) ($requestData["page"] ?? 1));
+        $limit = max(1, (int) ($requestData["limit"] ?? 50));
+
+        $orderBy = getModuleOrderField(
+            $requestData["orderBy"] ?? "id_module"
+        );
+
+        $orderDirection = getOrderDirection(
+            $requestData["orderDirection"] ?? "DESC"
+        );
+
+        $searchField = getModuleSearchField(
+            $requestData["searchField"] ?? "all"
+        );
+
+        $search = trim($requestData["search"] ?? "");
+        $offset = ($page - 1) * $limit;
+
+        $total = getTotalModules($searchField, $search);
+
+        $where = "WHERE 1=1";
+        if ($search !== "") {
+            if ($searchField === "all") {
+                $where .= " AND (
+                    m.name LIKE :search
+                    OR m.description LIKE :search
+                    OR m.img LIKE :search
+                    OR m.url LIKE :search
+                )";
+            } else {
+                $where .= " AND $searchField LIKE :search";
+            }
+        }
+
+        $query = "SELECT
+                    m.id_module,
+                    m.name,
+                    m.description,
+                    m.img,
+                    m.url
+                  FROM modules m
+                  $where
+                  ORDER BY $orderBy $orderDirection
+                  LIMIT :limit OFFSET :offset";
+        $stmt = $db->prepare($query);
+        if ($search !== "") {
+            $stmt->bindValue(':search', "%$search%");
+        }
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+        $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return [
+            "records" => $records,
+            "total" => $total,
+            "page" => $page,
+            "limit" => $limit,
+            "totalPages" => (int) ceil($total / $limit)
+        ];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function getTotalModules($searchField = "all", $search = "") {
+    global $db;
+
+    $where = "WHERE 1=1";
+    if ($search !== "") {
+        if ($searchField === "all") {
+            $where .= " AND (
+                m.name LIKE :search
+                OR m.description LIKE :search
+                OR m.img LIKE :search
+                OR m.url LIKE :search
+            )";
+        } else {
+            $where .= " AND $searchField LIKE :search";
+        }
+    }
+
+    $query = "SELECT count(*)
+              FROM modules m
+              $where";
+
+    $stmt = $db->prepare($query);
+    if ($search !== "") {
+        $stmt->bindValue(':search', "%$search%");
+    }
+    $stmt->execute();
+
+    return (int) $stmt->fetchColumn();
+}
+
+function getModuleOrderField($field) {
+    $fields = [
+        "id_module" => "m.id_module",
+        "name" => "m.name",
+        "description" => "m.description",
+        "img" => "m.img",
+        "url" => "m.url"
+    ];
+
+    return $fields[$field] ?? "m.id_module";
+}
+
+function getModuleSearchField($field) {
+    $fields = [
+        "name" => "m.name",
+        "description" => "m.description",
+        "img" => "m.img",
+        "url" => "m.url"
+    ];
+
+    return $fields[$field] ?? "all";
+}
+
+function getModuleById($id_module) {
+    global $db;
+    try {
+        $query = "SELECT id_module AS id, name, description, img, url
+                  FROM modules
+                  WHERE id_module = :id_module";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_module', $id_module, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function saveModule($name, $description, $img, $url) {
+    global $db;
+    try {
+        $query = "INSERT INTO modules (name, description, img, url)
+                  VALUES (:name, :description, :img, :url)";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':name', $name);
+        $stmt->bindParam(':description', $description);
+        $stmt->bindParam(':img', $img);
+        $stmt->bindParam(':url', $url);
+        $stmt->execute();
+        return ['success' => true];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function updateModule($id_module, $name, $description, $img, $url) {
+    global $db;
+    try {
+        $query = "UPDATE modules
+                  SET name = :name,
+                      description = :description,
+                      img = :img,
+                      url = :url
+                  WHERE id_module = :id_module";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_module', $id_module, PDO::PARAM_INT);
+        $stmt->bindParam(':name', $name);
+        $stmt->bindParam(':description', $description);
+        $stmt->bindParam(':img', $img);
+        $stmt->bindParam(':url', $url);
+        $stmt->execute();
+        return ['success' => true];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function deleteModule($id_module) {
+    global $db;
+    try {
+        $query = "DELETE FROM modules WHERE id_module = :id_module";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_module', $id_module, PDO::PARAM_INT);
+        $stmt->execute();
+        return ['success' => true];
     } catch (PDOException $e) {
         return ['error' => $e->getMessage()];
     }
@@ -867,3 +1738,6 @@ function getAllRolesPermissions() {
     }
 }
 ?>
+
+
+

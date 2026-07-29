@@ -7,7 +7,7 @@ $accion = $_get['action'] ?? "";
 header("Content-Type: application/json");
 
 if ($accion == "list") {
-    $list = getAllPromotions();
+    $list = getAllPromotions($_get);
     
     echo json_encode($list);
 }else if ($accion == "save") {
@@ -26,7 +26,6 @@ if ($accion == "list") {
     echo json_encode($result);
 }else if($accion == "getInfoByID") {
     $id_promotion = $_get['id'] ?? "";
-    //llamar funcion para recuperar la informacion especifica del producto
     $result = getPromotionById($id_promotion);
     
     echo json_encode($result);
@@ -42,7 +41,6 @@ if ($accion == "list") {
     $result = updatePromotion($id_promotion, $name, $description, $date_start, $date_end, $percent_off, $id_product, $status);
     echo json_encode($result);
 }
-//agregar else if para validar cuando se crea un registro, actualizacion y eliminacion
 else {
     echo json_encode([
         'status' => 'error',

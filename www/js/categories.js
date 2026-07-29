@@ -17,12 +17,43 @@ import { initView as initViewMain } from "./enviroment.js";
 
 import { rowClick, loadView, getSelectedId } from "./function.js";
 
+let listOptions = {
+  page: 1,
+  limit: 50,
+  orderBy: "id_cat",
+  orderDirection: "DESC",
+  searchField: "all",
+  search: "",
+};
+
 export async function initView() {
   const tableBody = document.getElementById("categoriesTableBody");
   const btnRemove = document.getElementById("btnRemove");
   const btnEdit = document.getElementById("btnEdit");
   const btnAdd = document.getElementById("btnAdd");
   const btnGoBack = document.getElementById("goback");
+  const orderBy = document.getElementById("orderBy");
+  const orderDirection = document.getElementById("orderDirection");
+  const btnPrevious = document.getElementById("btnPrevious");
+  const btnNext = document.getElementById("btnNext");
+  const searchField = document.getElementById("searchField");
+  const searchInput = document.getElementById("searchInput");
+  const btnSearch = document.getElementById("btnSearch");
+
+  if (searchField) {
+    searchField.value = listOptions.searchField;
+
+    searchField.addEventListener("change", async function () {
+      listOptions.searchField = searchField.value;
+      listOptions.page = 1;
+
+      await loadCategories();
+    });
+  }
+
+  if (searchInput) {
+    searchInput.value = listOptions.search;
+  }
 
   const orderBy = document.getElementById("orderBy");
   const orderDirection = document.getElementById("orderDirection");
@@ -144,7 +175,7 @@ async function loadCategories() {
       tr.innerHTML = `
         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${category.id}</td>
         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${category.name}</td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${category.description}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${category.description || "-"}</td>
       `;
 
       tr.addEventListener("click", function (event) {
