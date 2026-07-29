@@ -80,13 +80,116 @@ function getRoleModules($idRole) {
 
 /** Funciones para el modulo de categorias */
 // Función para recuperar registros de la tabla categories
-function getAllCategories() {
+function getAllCategories($requestData) {
     global $db;
-    $stmt = $db->query("SELECT id_cat AS id, name, description FROM categories");
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    try {
+        $page = max(1, (int) ($requestData["page"] ?? 1));
+        $limit = max(1, (int) ($requestData["limit"] ?? 50));
+
+        $orderBy = getCategoryOrderField(
+            $requestData["orderBy"] ?? "id_cat"
+        );
+
+        $orderDirection = getOrderDirection(
+            $requestData["orderDirection"] ?? "DESC"
+        );
+
+        $searchField = getCategorySearchField(
+            $requestData["searchField"] ?? "all"
+        );
+
+        $search = trim($requestData["search"] ?? "");
+        $offset = ($page - 1) * $limit;
+
+        $total = getTotalCategories($searchField, $search);
+
+        $where = "WHERE 1=1";
+        if ($search !== "") {
+            if ($searchField === "all") {
+                $where .= " AND (
+                    c.name LIKE :search
+                    OR c.description LIKE :search
+                )";
+            } else {
+                $where .= " AND $searchField LIKE :search";
+            }
+        }
+
+        $query = "SELECT
+                    c.id_cat AS id,
+                    c.name,
+                    c.description
+                  FROM categories c
+                  $where
+                  ORDER BY $orderBy $orderDirection
+                  LIMIT :limit OFFSET :offset";
+        $stmt = $db->prepare($query);
+        if ($search !== "") {
+            $stmt->bindValue(':search', "%$search%");
+        }
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+        $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return [
+            "records" => $records,
+            "total" => $total,
+            "page" => $page,
+            "limit" => $limit,
+            "totalPages" => (int) ceil($total / $limit)
+        ];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
 }
 
-//funcion para guardar un producto
+function getTotalCategories($searchField = "all", $search = "") {
+    global $db;
+
+    $where = "WHERE 1=1";
+    if ($search !== "") {
+        if ($searchField === "all") {
+            $where .= " AND (
+                c.name LIKE :search
+                OR c.description LIKE :search
+            )";
+        } else {
+            $where .= " AND $searchField LIKE :search";
+        }
+    }
+
+    $query = "SELECT count(*)
+              FROM categories c
+              $where";
+
+    $stmt = $db->prepare($query);
+    if ($search !== "") {
+        $stmt->bindValue(':search', "%$search%");
+    }
+    $stmt->execute();
+
+    return (int) $stmt->fetchColumn();
+}
+
+function getCategoryOrderField($field) {
+    $fields = [
+        "id_cat" => "c.id_cat",
+        "name" => "c.name",
+        "description" => "c.description"
+    ];
+
+    return $fields[$field] ?? "c.id_cat";
+}
+
+function getCategorySearchField($field) {
+    $fields = [
+        "name" => "c.name",
+        "description" => "c.description"
+    ];
+
+    return $fields[$field] ?? "all";
+}
+
 function saveCategories( $name, $description) {
     global $db;
     try {
@@ -1127,4 +1230,3 @@ function getAllRolesPermissions() {
     }
 }
 ?>
-
