@@ -1,64 +1,294 @@
-document.addEventListener("DOMContentLoaded", () => {
-  fetchModules();
-});
+import {
+  updateRecord,
+  saveRecords,
+  loadRecordDataToForm,
+  fetchRecords,
+  sendRequest,
+} from "./api.js";
 
-function fetchModules() {
-  // Hace petición al archivo de php usando método POST
-  fetch("../php/modules.php", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      action: "list",
-    }),
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      const gridContainer = document.getElementById("modulesGridContainer");
-      gridContainer.innerHTML = "";
+import { initView as initViewMain } from "./enviroment.js";
 
-      if (data.error) {
-        console.error(data.error);
-        return;
+import { rowClick, loadView, getSelectedId } from "./function.js";
+
+let listOptions = {
+  page: 1,
+  limit: 50,
+  orderBy: "id_module",
+  orderDirection: "DESC",
+  searchField: "all",
+  search: "",
+};
+
+export async function initView() {
+  const btnRemove = document.getElementById("btnRemove");
+  const btnEdit = document.getElementById("btnEdit");
+  const btnAdd = document.getElementById("btnAdd");
+  const btnGoBack = document.getElementById("goback");
+  const orderBy = document.getElementById("orderBy");
+  const orderDirection = document.getElementById("orderDirection");
+  const btnPrevious = document.getElementById("btnPrevious");
+  const btnNext = document.getElementById("btnNext");
+  const searchField = document.getElementById("searchField");
+  const searchInput = document.getElementById("searchInput");
+  const btnSearch = document.getElementById("btnSearch");
+
+  if (searchField) {
+    searchField.value = listOptions.searchField;
+
+    searchField.addEventListener("change", async function () {
+      listOptions.searchField = searchField.value;
+      listOptions.page = 1;
+
+      await loadModules();
+    });
+  }
+
+  if (searchInput) {
+    searchInput.value = listOptions.search;
+  }
+
+  btnRemove.addEventListener("click", async function () {
+    const id = getSelectedId();
+
+    Swal.fire({
+      title: "¿Are you sure to delete this record?",
+      text: "You won't be able to revert this action",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete",
+      cancelButtonText: "Cancel",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await sendRequest("modules", {
+            action: "delete",
+            id: id,
+          });
+
+          Swal.fire({
+            title: "Deleted",
+            text: "Record deleted successfully",
+            icon: "success",
+          });
+
+          await loadModuleView();
+        } catch (error) {
+          Swal.fire({
+            title: "Error",
+            text: error.message,
+            icon: "error",
+          });
+        }
       }
+    });
+  });
 
-      // Recorre los resultados para construir tarjetas (Cards) visuales
-      data.forEach((module) => {
-        const card = document.createElement("div");
-        card.className =
-          "bg-white overflow-hidden shadow rounded-lg border border-gray-200 flex flex-col justify-between transition-transform duration-200 hover:-translate-y-1 hover:shadow-lg";
+  if (btnEdit) {
+    btnEdit.addEventListener("click", async function () {
+      const id = getSelectedId();
+      await loadView("../views/forms/modules.html", "content");
+      await initModuleForm("edit", id);
+    });
+  }
 
-        // Si tu columna 'img' guarda solo un nombre de clase de icono (ej: "fa-box"),
-        // puedes renderizar un tag <i>. Si guarda rutas de archivos de imagen (ej: "img/products.png"),
-        // puedes usar el tag <img> que se muestra abajo:
-        card.innerHTML = `
-          <div>
-            <div class="h-48 w-full bg-indigo-50 flex items-center justify-center overflow-hidden border-b border-gray-100">
-              <img 
-                src="${module.img}" 
-                alt="Imagen de ${module.name}" 
-                class="object-cover h-full w-full error-fallback"
-                onerror="this.onerror=null; this.src='https://placehold.co/400x250/e0e7ff/4f46e5?text=${encodeURIComponent(module.name)}';"
-              />
-            </div>
-            <div class="px-4 py-5 sm:p-6">
-              <span class="text-xs font-semibold uppercase tracking-wider text-indigo-600">ID Módulo: #${module.id_module}</span>
-              <h3 class="mt-1 text-lg font-bold text-gray-900">${module.name}</h3>
-              <p class="mt-2 text-sm text-gray-500">${module.description}</p>
-            </div>
-          </div>
-          <div class="bg-gray-50 px-4 py-4 sm:px-6 border-t border-gray-100 text-right">
-            <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-              Acceder módulo
-            </button>
-          </div>
-        `;
+  if (btnAdd) {
+    btnAdd.addEventListener("click", async function () {
+      await loadView("../views/forms/modules.html", "content");
+      await initModuleForm("add");
+    });
+  }
 
-        gridContainer.appendChild(card);
+  if (btnGoBack) {
+    btnGoBack.addEventListener("click", async function (event) {
+      event.preventDefault();
+
+      await initViewMain();
+    });
+  }
+
+  if (orderBy) {
+    orderBy.value = listOptions.orderBy;
+
+    orderBy.addEventListener("change", async function () {
+      listOptions.orderBy = orderBy.value;
+      listOptions.page = 1;
+
+      await loadModules();
+    });
+  }
+
+  if (orderDirection) {
+    orderDirection.value = listOptions.orderDirection;
+
+    orderDirection.addEventListener("change", async function () {
+      listOptions.orderDirection = orderDirection.value;
+      listOptions.page = 1;
+
+      await loadModules();
+    });
+  }
+
+  if (btnPrevious) {
+    btnPrevious.addEventListener("click", async function () {
+      if (listOptions.page > 1) {
+        listOptions.page--;
+
+        await loadModules();
+      }
+    });
+  }
+
+  if (btnNext) {
+    btnNext.addEventListener("click", async function () {
+      if (!btnNext.disabled) {
+        listOptions.page++;
+
+        await loadModules();
+      }
+    });
+  }
+
+  if (btnSearch) {
+    btnSearch.addEventListener("click", async function () {
+      listOptions.searchField = searchField.value;
+      listOptions.search = searchInput.value.trim();
+      listOptions.page = 1;
+
+      await loadModules();
+    });
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener("keydown", async function (event) {
+      if (event.key === "Enter") {
+        listOptions.searchField = searchField.value;
+        listOptions.search = searchInput.value.trim();
+        listOptions.page = 1;
+
+        await loadModules();
+      }
+    });
+  }
+
+  await loadModules();
+}
+
+async function loadModules() {
+  const data = await fetchRecords("modules", listOptions);
+  const tableBody = document.getElementById("modulesTableBody");
+
+  if (tableBody) {
+    tableBody.innerHTML = "";
+
+    const modules = data.records;
+
+    modules.forEach((module) => {
+      const tr = document.createElement("tr");
+
+      tr.innerHTML = `
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${module.id_module}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${module.name}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${module.description || "-"}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${module.img || "-"}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${module.url || "-"}</td>
+      `;
+
+      tr.addEventListener("click", function (event) {
+        rowClick(event, module.id_module);
       });
-    })
-    .catch((error) =>
-      console.error("Error al obtener los módulos funcionales:", error),
-    );
+
+      tableBody.appendChild(tr);
+    });
+
+    updatePagination(data);
+  }
+}
+
+function updatePagination(data) {
+  const currentPage = document.getElementById("currentPage");
+  const totalPages = document.getElementById("totalPages");
+  const paginationSummary = document.getElementById("paginationSummary");
+  const btnPrevious = document.getElementById("btnPrevious");
+  const btnNext = document.getElementById("btnNext");
+
+  currentPage.textContent = data.page;
+  totalPages.textContent = data.totalPages;
+
+  btnPrevious.disabled = data.page <= 1;
+  btnNext.disabled = data.page >= data.totalPages;
+
+  const start = data.total === 0 ? 0 : (data.page - 1) * data.limit + 1;
+  const end = Math.min(data.page * data.limit, data.total);
+
+  paginationSummary.textContent = `Showing ${start} to ${end} of ${data.total} modules`;
+}
+
+async function loadModuleView() {
+  await loadView("../views/modules.html", "content");
+  await initView();
+}
+
+async function initModuleForm(mode, id = null) {
+  try {
+    const form = document.getElementById("itemForm");
+    const btnGoBack = document.getElementById("goback");
+
+    if (mode === "edit" && id) {
+      await loadRecordDataToForm("modules", id, "itemForm");
+    }
+
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      try {
+        if (mode === "edit") {
+          Swal.fire({
+            title: "¿Are you sure to update this record?",
+            text: "This will overwrite the existing information",
+            icon: "info",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, update",
+            cancelButtonText: "Cancel",
+          }).then(async (result) => {
+            if (result.isConfirmed) {
+              await updateRecord("modules", form, id);
+              await loadModuleView();
+            }
+          });
+        } else {
+          Swal.fire({
+            title: "¿Are you sure to Add record?",
+            text: "Please confirm that the data is correct",
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, save",
+            cancelButtonText: "Cancel",
+          }).then(async (result) => {
+            if (result.isConfirmed) {
+              await saveRecords("modules", form);
+              await loadModuleView();
+            }
+          });
+        }
+      } catch (error) {
+        console.error("Error al guardar el módulo:", error);
+      }
+    });
+
+    if (btnGoBack) {
+      btnGoBack.addEventListener("click", async function (event) {
+        event.preventDefault();
+
+        await loadModuleView();
+      });
+    }
+  } catch (error) {
+    console.error("Error al inicializar el formulario:", error);
+  }
 }
