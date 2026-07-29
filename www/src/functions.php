@@ -485,24 +485,132 @@ function getProductSearchField($field) {
 /*Fin de funciones para el modulo de productos*/
 
 //Inicio de funciones para promociones
-function getAllPromotions() {
+function getAllPromotions($requestData) {
     global $db;
     try {
-        // Hacemos un LEFT JOIN para jalar el nombre del producto vinculado a la promoción
-        $query = "SELECT pr.id_promotion, pr.name AS promotion_name, pr.description, 
+        $page = max(1, (int) ($requestData["page"] ?? 1));
+        $limit = max(1, (int) ($requestData["limit"] ?? 50));
+
+        $orderBy = getPromotionOrderField(
+            $requestData["orderBy"] ?? "id_promotion"
+        );
+
+        $orderDirection = getOrderDirection(
+            $requestData["orderDirection"] ?? "DESC"
+        );
+
+        $searchField = getPromotionSearchField(
+            $requestData["searchField"] ?? "all"
+        );
+
+        $search = trim($requestData["search"] ?? "");
+        $offset = ($page - 1) * $limit;
+        $total = getTotalPromotions($searchField, $search);
+
+        $where = "WHERE 1=1";
+        if ($search !== "") {
+            if ($searchField === "all") {
+                $where .= " AND (
+                    pr.name LIKE :search
+                    OR pr.description LIKE :search
+                    OR p.name LIKE :search
+                    OR pr.status LIKE :search
+                )";
+            } else {
+                $where .= " AND $searchField LIKE :search";
+            }
+        }
+
+        $query = "SELECT pr.id_promotion, pr.name AS promotion_name, pr.description,
                          pr.date_start, pr.date_end, pr.percent_off, pr.status,
-                         p.name AS product_name 
+                         p.name AS product_name
                   FROM promotions pr
                   LEFT JOIN products p ON pr.id_product = p.id_product
-                  ORDER BY pr.date_start DESC";
-                  
+                  $where
+                  ORDER BY $orderBy $orderDirection
+                  LIMIT :limit OFFSET :offset";
+
         $stmt = $db->prepare($query);
+        $stmt->bindValue(":limit", $limit, PDO::PARAM_INT);
+        $stmt->bindValue(":offset", $offset, PDO::PARAM_INT);
+
+        if ($search !== "") {
+            $stmt->bindValue(":search", "%$search%");
+        }
+
         $stmt->execute();
-        
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return [
+            "records" => $records,
+            "total" => $total,
+            "page" => $page,
+            "limit" => $limit,
+            "totalPages" => (int) ceil($total / $limit)
+        ];
     } catch (PDOException $e) {
         return ['error' => $e->getMessage()];
     }
+}
+
+function getTotalPromotions($searchField = "", $search = "") {
+    global $db;
+
+    $where = "WHERE 1=1";
+
+    if ($search !== "") {
+        if ($searchField === "all") {
+            $where .= " AND (
+                pr.name LIKE :search
+                OR pr.description LIKE :search
+                OR p.name LIKE :search
+                OR pr.status LIKE :search
+            )";
+        } else {
+            $where .= " AND $searchField LIKE :search";
+        }
+    }
+
+    $query = "SELECT count(*)
+              FROM promotions pr
+              LEFT JOIN products p ON pr.id_product = p.id_product
+              $where";
+
+    $stmt = $db->prepare($query);
+
+    if ($search !== "") {
+        $stmt->bindValue(":search", "%$search%");
+    }
+
+    $stmt->execute();
+
+    return (int) $stmt->fetchColumn();
+}
+
+function getPromotionOrderField($field) {
+    $fields = [
+        "id_promotion" => "pr.id_promotion",
+        "promotion_name" => "pr.name",
+        "description" => "pr.description",
+        "date_start" => "pr.date_start",
+        "date_end" => "pr.date_end",
+        "percent_off" => "pr.percent_off",
+        "product_name" => "p.name",
+        "status" => "pr.status"
+    ];
+
+    return $fields[$field] ?? "pr.id_promotion";
+}
+
+function getPromotionSearchField($field) {
+    $fields = [
+        "promotion_name" => "pr.name",
+        "description" => "pr.description",
+        "product_name" => "p.name",
+        "status" => "pr.status"
+    ];
+
+    return $fields[$field] ?? "all";
 }
 
 //Crear funcion para guardar un registro de Promotions
