@@ -735,25 +735,130 @@ function getAllInventoryItems() {
     }
 }
 
-function getAllSales() {
+function getAllSales($requestData) {
     global $db;
     try {
-        // Consultamos el registro de ventas asociando el email del usuario correspondiente
-        // Nota: Si tu columna identificadora de correo se llama distinto (ej: 'user_email'), cámbiala abajo
-        $query = "SELECT s.id_sale, s.user_id, s.transaction_date, 
+        $page = max(1, (int) ($requestData["page"] ?? 1));
+        $limit = max(1, (int) ($requestData["limit"] ?? 50));
+        $offset = ($page - 1) * $limit;
+
+        $orderBy = getSaleOrderField(
+            $requestData["orderBy"] ?? "id_sale"
+        );
+
+        $orderDirection = getOrderDirection(
+            $requestData["orderDirection"] ?? "DESC"
+        );
+
+        $searchField = getSaleSearchField(
+            $requestData["searchField"] ?? "all"
+        );
+
+        $search = trim($requestData["search"] ?? "");
+        $total = getTotalSales($searchField, $search);
+
+        $where = "WHERE 1=1";
+        if ($search !== "") {
+            if ($searchField === "all") {
+                $where .= " AND (
+                    s.id_sale LIKE :search
+                    OR u.username LIKE :search
+                    OR s.payment_method LIKE :search
+                    OR s.status LIKE :search
+                )";
+            } else {
+                $where .= " AND $searchField LIKE :search";
+            }
+        }
+
+        $query = "SELECT s.id_sale, s.user_id, s.transaction_date,
                          s.total_amount, s.payment_method, s.status,
-                         u.email AS username
+                         u.username AS username
                   FROM sales s
                   LEFT JOIN users u ON s.user_id = u.id_user
-                  ORDER BY s.transaction_date DESC";
-                  
+                  $where
+                  ORDER BY $orderBy $orderDirection
+                  LIMIT :limit OFFSET :offset";
+
         $stmt = $db->prepare($query);
+        $stmt->bindValue(":limit", $limit, PDO::PARAM_INT);
+        $stmt->bindValue(":offset", $offset, PDO::PARAM_INT);
+
+        if ($search !== "") {
+            $stmt->bindValue(":search", "%$search%");
+        }
+
         $stmt->execute();
-        
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return [
+            "records" => $records,
+            "total" => $total,
+            "page" => $page,
+            "limit" => $limit,
+            "totalPages" => (int) ceil($total / $limit)
+        ];
     } catch (PDOException $e) {
         return ['error' => $e->getMessage()];
     }
+}
+
+function getTotalSales($searchField = "", $search = "") {
+    global $db;
+
+    $where = "WHERE 1=1";
+
+    if ($search !== "") {
+        if ($searchField === "all") {
+            $where .= " AND (
+                s.id_sale LIKE :search
+                OR u.username LIKE :search
+                OR s.payment_method LIKE :search
+                OR s.status LIKE :search
+            )";
+        } else {
+            $where .= " AND $searchField LIKE :search";
+        }
+    }
+
+    $query = "SELECT COUNT(DISTINCT s.id_sale)
+              FROM sales s
+              LEFT JOIN users u ON s.user_id = u.id_user
+              $where";
+
+    $stmt = $db->prepare($query);
+
+    if ($search !== "") {
+        $stmt->bindValue(":search", "%$search%");
+    }
+
+    $stmt->execute();
+
+    return (int) $stmt->fetchColumn();
+}
+
+function getSaleOrderField($field) {
+    $fields = [
+        "id_sale" => "s.id_sale",
+        "transaction_date" => "s.transaction_date",
+        "username" => "u.username",
+        "payment_method" => "s.payment_method",
+        "total_amount" => "s.total_amount",
+        "status" => "s.status"
+    ];
+
+    return $fields[$field] ?? "s.id_sale";
+}
+
+function getSaleSearchField($field) {
+    $fields = [
+        "id_sale" => "s.id_sale",
+        "username" => "u.username",
+        "payment_method" => "s.payment_method",
+        "status" => "s.status"
+    ];
+
+    return $fields[$field] ?? "all";
 }
 
 function getAllInventories() {
@@ -997,24 +1102,157 @@ function deleteUsers($id) {
 
 
 
-function getAllSalesDetails() {
+function getAllSalesDetails($requestData) {
     global $db;
     try {
-        $query = "SELECT sd.id_sale_item, sd.sale_id, sd.quantity, 
-                         sd.unit_price, sd.discount_applied, sd.subtotal
+        $saleId = (int) ($requestData["saleId"] ?? 0);
+        $page = max(1, (int) ($requestData["page"] ?? 1));
+        $limit = max(1, (int) ($requestData["limit"] ?? 50));
+        $offset = ($page - 1) * $limit;
+
+        if ($saleId <= 0) {
+            return [
+                "records" => [],
+                "total" => 0,
+                "page" => $page,
+                "limit" => $limit,
+                "totalPages" => 0,
+                "saleId" => $saleId,
+                "error" => "A valid saleId is required."
+            ];
+        }
+
+        $orderBy = getSaleDetailOrderField(
+            $requestData["orderBy"] ?? "id_sale_item"
+        );
+
+        $orderDirection = getOrderDirection(
+            $requestData["orderDirection"] ?? "DESC"
+        );
+
+        $searchField = getSaleDetailSearchField(
+            $requestData["searchField"] ?? "all"
+        );
+
+        $search = trim($requestData["search"] ?? "");
+        $total = getTotalSalesDetails($saleId, $searchField, $search);
+
+        $where = "WHERE sd.sale_id = :saleId";
+        if ($search !== "") {
+            if ($searchField === "all") {
+                $where .= " AND (
+                    sd.id_sale_item LIKE :search
+                    OR p.name LIKE :search
+                    OR sd.quantity LIKE :search
+                    OR sd.unit_price LIKE :search
+                    OR sd.discount_applied LIKE :search
+                    OR sd.subtotal LIKE :search
+                )";
+            } else {
+                $where .= " AND $searchField LIKE :search";
+            }
+        }
+
+        $query = "SELECT sd.id_sale_item, sd.sale_id, sd.quantity,
+                         sd.unit_price, sd.discount_applied, sd.subtotal,
+                         p.name AS product_name
                   FROM sales_details sd
-                  ORDER BY sd.sale_id DESC, sd.id_sale_item ASC";
-                  
+                  LEFT JOIN inventory_items ii ON sd.id_inventory_item = ii.id_inventory_item
+                  LEFT JOIN products p ON ii.product_id = p.id_product
+                  $where
+                  ORDER BY $orderBy $orderDirection
+                  LIMIT :limit OFFSET :offset";
+
         $stmt = $db->prepare($query);
+        $stmt->bindValue(":saleId", $saleId, PDO::PARAM_INT);
+        $stmt->bindValue(":limit", $limit, PDO::PARAM_INT);
+        $stmt->bindValue(":offset", $offset, PDO::PARAM_INT);
+
+        if ($search !== "") {
+            $stmt->bindValue(":search", "%$search%");
+        }
+
         $stmt->execute();
-        
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return [
+            "records" => $records,
+            "total" => $total,
+            "page" => $page,
+            "limit" => $limit,
+            "totalPages" => (int) ceil($total / $limit),
+            "saleId" => $saleId
+        ];
     } catch (PDOException $e) {
         return [
             'status' => 'error',
             'msg' => $e->getMessage()
         ];
     }
+}
+
+function getTotalSalesDetails($saleId, $searchField = "", $search = "") {
+    global $db;
+
+    $where = "WHERE sd.sale_id = :saleId";
+
+    if ($search !== "") {
+        if ($searchField === "all") {
+            $where .= " AND (
+                sd.id_sale_item LIKE :search
+                OR p.name LIKE :search
+                OR sd.quantity LIKE :search
+                OR sd.unit_price LIKE :search
+                OR sd.discount_applied LIKE :search
+                OR sd.subtotal LIKE :search
+            )";
+        } else {
+            $where .= " AND $searchField LIKE :search";
+        }
+    }
+
+    $query = "SELECT COUNT(DISTINCT sd.id_sale_item)
+              FROM sales_details sd
+              LEFT JOIN inventory_items ii ON sd.id_inventory_item = ii.id_inventory_item
+                  LEFT JOIN products p ON ii.product_id = p.id_product
+              $where";
+
+    $stmt = $db->prepare($query);
+    $stmt->bindValue(":saleId", $saleId, PDO::PARAM_INT);
+
+    if ($search !== "") {
+        $stmt->bindValue(":search", "%$search%");
+    }
+
+    $stmt->execute();
+
+    return (int) $stmt->fetchColumn();
+}
+
+function getSaleDetailOrderField($field) {
+    $fields = [
+        "id_sale_item" => "sd.id_sale_item",
+        "product_name" => "p.name",
+        "quantity" => "sd.quantity",
+        "unit_price" => "sd.unit_price",
+        "discount_applied" => "sd.discount_applied",
+        "subtotal" => "sd.subtotal"
+    ];
+
+    return $fields[$field] ?? "sd.id_sale_item";
+}
+
+function getSaleDetailSearchField($field) {
+    $fields = [
+        "id_sale_item" => "sd.id_sale_item",
+        "product_name" => "p.name",
+        "quantity" => "sd.quantity",
+        "unit_price" => "sd.unit_price",
+        "discount_applied" => "sd.discount_applied",
+        "subtotal" => "sd.subtotal"
+    ];
+
+    return $fields[$field] ?? "all";
 }
 
 function getAllRoles($requestData) {
@@ -1508,3 +1746,6 @@ function getAllRolesPermissions() {
     }
 }
 ?>
+
+
+
