@@ -1080,18 +1080,188 @@ function deleteRole($id_rol) {
     }
 }
 
-function getAllModules() {
+function getAllModules($requestData) {
     global $db;
     try {
-        // Consultamos el registro de módulos ordenados alfabéticamente por su nombre descriptivo
-        $query = "SELECT m.id_module, m.name, m.description, m.img, m.url  
+        $page = max(1, (int) ($requestData["page"] ?? 1));
+        $limit = max(1, (int) ($requestData["limit"] ?? 50));
+
+        $orderBy = getModuleOrderField(
+            $requestData["orderBy"] ?? "id_module"
+        );
+
+        $orderDirection = getOrderDirection(
+            $requestData["orderDirection"] ?? "DESC"
+        );
+
+        $searchField = getModuleSearchField(
+            $requestData["searchField"] ?? "all"
+        );
+
+        $search = trim($requestData["search"] ?? "");
+        $offset = ($page - 1) * $limit;
+
+        $total = getTotalModules($searchField, $search);
+
+        $where = "WHERE 1=1";
+        if ($search !== "") {
+            if ($searchField === "all") {
+                $where .= " AND (
+                    m.name LIKE :search
+                    OR m.description LIKE :search
+                    OR m.img LIKE :search
+                    OR m.url LIKE :search
+                )";
+            } else {
+                $where .= " AND $searchField LIKE :search";
+            }
+        }
+
+        $query = "SELECT
+                    m.id_module,
+                    m.name,
+                    m.description,
+                    m.img,
+                    m.url
                   FROM modules m
-                  ORDER BY m.name ASC";
-                  
+                  $where
+                  ORDER BY $orderBy $orderDirection
+                  LIMIT :limit OFFSET :offset";
         $stmt = $db->prepare($query);
+        if ($search !== "") {
+            $stmt->bindValue(':search', "%$search%");
+        }
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
         $stmt->execute();
-        
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return [
+            "records" => $records,
+            "total" => $total,
+            "page" => $page,
+            "limit" => $limit,
+            "totalPages" => (int) ceil($total / $limit)
+        ];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function getTotalModules($searchField = "all", $search = "") {
+    global $db;
+
+    $where = "WHERE 1=1";
+    if ($search !== "") {
+        if ($searchField === "all") {
+            $where .= " AND (
+                m.name LIKE :search
+                OR m.description LIKE :search
+                OR m.img LIKE :search
+                OR m.url LIKE :search
+            )";
+        } else {
+            $where .= " AND $searchField LIKE :search";
+        }
+    }
+
+    $query = "SELECT count(*)
+              FROM modules m
+              $where";
+
+    $stmt = $db->prepare($query);
+    if ($search !== "") {
+        $stmt->bindValue(':search', "%$search%");
+    }
+    $stmt->execute();
+
+    return (int) $stmt->fetchColumn();
+}
+
+function getModuleOrderField($field) {
+    $fields = [
+        "id_module" => "m.id_module",
+        "name" => "m.name",
+        "description" => "m.description",
+        "img" => "m.img",
+        "url" => "m.url"
+    ];
+
+    return $fields[$field] ?? "m.id_module";
+}
+
+function getModuleSearchField($field) {
+    $fields = [
+        "name" => "m.name",
+        "description" => "m.description",
+        "img" => "m.img",
+        "url" => "m.url"
+    ];
+
+    return $fields[$field] ?? "all";
+}
+
+function getModuleById($id_module) {
+    global $db;
+    try {
+        $query = "SELECT id_module AS id, name, description, img, url
+                  FROM modules
+                  WHERE id_module = :id_module";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_module', $id_module, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function saveModule($name, $description, $img, $url) {
+    global $db;
+    try {
+        $query = "INSERT INTO modules (name, description, img, url)
+                  VALUES (:name, :description, :img, :url)";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':name', $name);
+        $stmt->bindParam(':description', $description);
+        $stmt->bindParam(':img', $img);
+        $stmt->bindParam(':url', $url);
+        $stmt->execute();
+        return ['success' => true];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function updateModule($id_module, $name, $description, $img, $url) {
+    global $db;
+    try {
+        $query = "UPDATE modules
+                  SET name = :name,
+                      description = :description,
+                      img = :img,
+                      url = :url
+                  WHERE id_module = :id_module";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_module', $id_module, PDO::PARAM_INT);
+        $stmt->bindParam(':name', $name);
+        $stmt->bindParam(':description', $description);
+        $stmt->bindParam(':img', $img);
+        $stmt->bindParam(':url', $url);
+        $stmt->execute();
+        return ['success' => true];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function deleteModule($id_module) {
+    global $db;
+    try {
+        $query = "DELETE FROM modules WHERE id_module = :id_module";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_module', $id_module, PDO::PARAM_INT);
+        $stmt->execute();
+        return ['success' => true];
     } catch (PDOException $e) {
         return ['error' => $e->getMessage()];
     }
