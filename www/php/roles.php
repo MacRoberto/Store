@@ -42,11 +42,4 @@ if ($accion == "list") {
         'msg' => 'Action invalid'
     ]);
 }
-
-else {
-    echo json_encode([
-        'status' => 'error',
-        'msg' => 'Action invalid'
-    ]);
-}
 ?>

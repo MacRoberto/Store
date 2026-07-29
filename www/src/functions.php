@@ -1049,11 +1049,11 @@ function saveUsers($username, $id_rol, $status, $password_hash) {
     }
 }
 
-function updateUsers($id, $username, $id_rol, $status, $password_hash = null) {
+function updateUsers($id, $username, $id_rol, $status, $password = null) {
     global $db;
     try {
-        if ($password_hash !== null && $password_hash !== "") {
-            $hashedPassword = password_hash($password_hash, PASSWORD_DEFAULT);
+        if ($password !== null && $password !== "") {
+            $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
             $query = "UPDATE users
                       SET username = :username,
@@ -1075,7 +1075,7 @@ function updateUsers($id, $username, $id_rol, $status, $password_hash = null) {
         $stmt->bindParam(':id_rol', $id_rol, PDO::PARAM_INT);
         $stmt->bindParam(':status', $status);
 
-        if ($password_hash !== null && $password_hash !== "") {
+        if ($password !== null && $password !== "") {
             $stmt->bindParam(':password_hash', $hashedPassword);
         }
 
