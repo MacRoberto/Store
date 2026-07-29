@@ -32,7 +32,18 @@ if ($accion == "list") {
     $result = deleteRole($id);
     echo json_encode($result);
 
+} else if ($accion == "selectOptions") {
+    $list = getRoleOptions();
+    echo json_encode($list);
+
 } else {
+    echo json_encode([
+        'status' => 'error',
+        'msg' => 'Action invalid'
+    ]);
+}
+
+else {
     echo json_encode([
         'status' => 'error',
         'msg' => 'Action invalid'
