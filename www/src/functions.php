@@ -748,26 +748,141 @@ function deleteActions($id) {
     }
 }
 
-function getAllRolesPermissions() {
+function getAllRolesPermissions($requestData = []) {
     global $db;
+
     try {
-        // Ejecutamos una consulta con joins compuestos hacia roles, acciones y el respectivo módulo de la acción
-        $query = "SELECT rp.id_permission, rp.id_role, rp.id_action, rp.status,
-                         r.name AS role_name,
-                         a.name AS action_name,
-                         m.name AS module_name
-                  FROM roles_permissions rp
+        $query = "SELECT
+                    rp.id_permission,
+                    rp.id_role,
+                    rp.id_action,
+                    rp.status,
+                    r.name AS role_name,
+                    a.name AS action_name,
+                    m.name AS module_name
+                  FROM role_permissions rp
                   LEFT JOIN roles r ON rp.id_role = r.id_rol
                   LEFT JOIN actions a ON rp.id_action = a.id_action
                   LEFT JOIN modules m ON a.id_module = m.id_module
-                  ORDER BY r.name ASC, m.name ASC, a.name ASC";
-                  
+                  ORDER BY rp.id_permission ASC";
+
         $stmt = $db->prepare($query);
         $stmt->execute();
-        
+
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
-        return ['error' => $e->getMessage()];
+        return ["error" => $e->getMessage()];
     }
 }
+
+function saveRolePermission($id_role, $id_action, $status) {
+    global $db;
+
+    try {
+        $query = "INSERT INTO role_permissions (id_role, id_action, status)
+                  VALUES (:id_role, :id_action, :status)";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(":id_role", $id_role);
+        $stmt->bindParam(":id_action", $id_action);
+        $stmt->bindParam(":status", $status);
+        $stmt->execute();
+
+        return ["success" => true];
+    } catch (PDOException $e) {
+        return ["error" => $e->getMessage()];
+    }
+}
+
+function updateRolePermission($id, $id_role, $id_action, $status) {
+    global $db;
+
+    try {
+        $query = "UPDATE role_permissions
+                  SET id_role = :id_role,
+                      id_action = :id_action,
+                      status = :status
+                  WHERE id_permission = :id";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(":id", $id);
+        $stmt->bindParam(":id_role", $id_role);
+        $stmt->bindParam(":id_action", $id_action);
+        $stmt->bindParam(":status", $status);
+        $stmt->execute();
+
+        return ["success" => true];
+    } catch (PDOException $e) {
+        return ["error" => $e->getMessage()];
+    }
+}
+
+function deleteRolePermission($id) {
+    global $db;
+
+    try {
+        $query = "DELETE FROM role_permissions WHERE id_permission = :id";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(":id", $id);
+        $stmt->execute();
+
+        return ["success" => true];
+    } catch (PDOException $e) {
+        return ["error" => $e->getMessage()];
+    }
+}
+
+function getRolePermissionById($id) {
+    global $db;
+
+    try {
+        $query = "SELECT
+                    id_permission,
+                    id_role,
+                    id_action,
+                    status
+                  FROM role_permissions
+                  WHERE id_permission = :id
+                  LIMIT 1";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(":id", $id);
+        $stmt->execute();
+
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ["error" => $e->getMessage()];
+    }
+}
+
+function getRolePermissionOptions() {
+    global $db;
+
+    try {
+        $query = "SELECT id_rol AS id, name FROM roles ORDER BY name ASC";
+        $stmt = $db->prepare($query);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ["error" => $e->getMessage()];
+    }
+}
+
+// Devuelve solo las opciones para llenar el select de roles.
+function getRoleOptions() {
+    global $db;
+
+    try {
+        $query = "SELECT id_rol AS id, name
+                  FROM roles
+                  ORDER BY name ASC";
+
+        $stmt = $db->prepare($query);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ["error" => $e->getMessage()];
+    }
+}
+
+
 ?>
