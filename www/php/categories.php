@@ -8,7 +8,7 @@ $accion = $_get['action'] ?? "";
 header("Content-Type: application/json");
 if($accion == "list"){
     //manda a llamar la funcion que realiza la consulta a la bd
-    $list = getAllCategories();
+    $list = getAllCategories($_get);
     //regresa la informacion solicitada
     echo json_encode($list);
 
