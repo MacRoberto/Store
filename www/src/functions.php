@@ -564,25 +564,227 @@ function getAllInventories() {
     }
 }
 
-function getAllUsers() {
+function getAllUsers($requestData) {
     global $db;
     try {
-        // Obtenemos los usuarios y su rol descriptivo. 
-        // IMPORTANTE: Excluimos password_hash por completo por razones de seguridad.
+        $page = max(1, (int) ($requestData["page"] ?? 1));
+        $limit = max(1, (int) ($requestData["limit"] ?? 50));
+
+        $orderBy = getUserOrderField(
+            $requestData["orderBy"] ?? "id_user"
+        );
+
+        $orderDirection = getOrderDirection(
+            $requestData["orderDirection"] ?? "DESC"
+        );
+
+        $searchField = getUserSearchField(
+            $requestData["searchField"] ?? "all"
+        );
+
+        $search = trim($requestData["search"] ?? "");
+        $offset = ($page - 1) * $limit;
+
+        $total = getTotalUsers($searchField, $search);
+
+        $where = "WHERE 1=1";
+        if ($search !== "") {
+            if ($searchField === "all") {
+                $where .= " AND (
+                    u.username LIKE :search
+                    OR r.name LIKE :search
+                    OR u.status LIKE :search
+                )";
+            } else {
+                $where .= " AND $searchField LIKE :search";
+            }
+        }
+
         $query = "SELECT u.id_user, u.username, u.id_rol, u.status,
-                         r.name AS role_name 
+                         r.name AS role_name
                   FROM users u
                   LEFT JOIN roles r ON u.id_rol = r.id_rol
-                  ORDER BY u.id_user ASC";
-                  
+                  $where
+                  ORDER BY $orderBy $orderDirection
+                  LIMIT :limit OFFSET :offset";
+
+        $stmt = $db->prepare($query);
+        if ($search !== "") {
+            $stmt->bindValue(":search", "%$search%");
+        }
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return [
+            "records" => $records,
+            "total" => $total,
+            "page" => $page,
+            "limit" => $limit,
+            "totalPages" => (int) ceil($total / $limit)
+        ];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function getTotalUsers($searchField = "all", $search = "") {
+    global $db;
+
+    $where = "WHERE 1=1";
+    if ($search !== "") {
+        if ($searchField === "all") {
+            $where .= " AND (
+                u.username LIKE :search
+                OR r.name LIKE :search
+                OR u.status LIKE :search
+            )";
+        } else {
+            $where .= " AND $searchField LIKE :search";
+        }
+    }
+
+    $query = "SELECT count(*)
+              FROM users u
+              LEFT JOIN roles r ON u.id_rol = r.id_rol
+              $where";
+
+    $stmt = $db->prepare($query);
+    if ($search !== "") {
+        $stmt->bindValue(":search", "%$search%");
+    }
+    $stmt->execute();
+
+    return (int) $stmt->fetchColumn();
+}
+
+function getUserOrderField($field) {
+    $fields = [
+        "id_user" => "u.id_user",
+        "username" => "u.username",
+        "role" => "r.name",
+        "status" => "u.status"
+    ];
+
+    return $fields[$field] ?? "u.id_user";
+}
+
+function getUserSearchField($field) {
+    $fields = [
+        "username" => "u.username",
+        "role" => "r.name",
+        "status" => "u.status"
+    ];
+
+    return $fields[$field] ?? "all";
+}
+
+function getUserById($id) {
+    global $db;
+    try {
+        $query = "SELECT id_user AS id, username, id_rol, status
+                  FROM users
+                  WHERE id_user = :id_user";
+
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_user', $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function getRoleOptions() {
+    global $db;
+    try {
+        $query = "SELECT id_rol AS id, name
+                  FROM roles
+                  ORDER BY name ASC";
         $stmt = $db->prepare($query);
         $stmt->execute();
-        
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
         return ['error' => $e->getMessage()];
     }
 }
+
+function saveUsers($username, $id_rol, $status, $password_hash) {
+    global $db;
+    try {
+        $hashedPassword = password_hash($password_hash, PASSWORD_DEFAULT);
+
+        $query = "INSERT INTO users (username, id_rol, status, password_hash)
+                  VALUES (:username, :id_rol, :status, :password_hash)";
+
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':username', $username);
+        $stmt->bindParam(':id_rol', $id_rol, PDO::PARAM_INT);
+        $stmt->bindParam(':status', $status);
+        $stmt->bindParam(':password_hash', $hashedPassword);
+
+        $stmt->execute();
+        return ['success' => true];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function updateUsers($id, $username, $id_rol, $status, $password_hash = null) {
+    global $db;
+    try {
+        if ($password_hash !== null && $password_hash !== "") {
+            $hashedPassword = password_hash($password_hash, PASSWORD_DEFAULT);
+
+            $query = "UPDATE users
+                      SET username = :username,
+                          id_rol = :id_rol,
+                          status = :status,
+                          password_hash = :password_hash
+                      WHERE id_user = :id_user";
+        } else {
+            $query = "UPDATE users
+                      SET username = :username,
+                          id_rol = :id_rol,
+                          status = :status
+                      WHERE id_user = :id_user";
+        }
+
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_user', $id, PDO::PARAM_INT);
+        $stmt->bindParam(':username', $username);
+        $stmt->bindParam(':id_rol', $id_rol, PDO::PARAM_INT);
+        $stmt->bindParam(':status', $status);
+
+        if ($password_hash !== null && $password_hash !== "") {
+            $stmt->bindParam(':password_hash', $hashedPassword);
+        }
+
+        $stmt->execute();
+        return ['success' => true];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function deleteUsers($id) {
+    global $db;
+    try {
+        $query = "DELETE FROM users WHERE id_user = :id_user";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_user', $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return ['success' => true];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+
 
 function getAllSalesDetails() {
     global $db;
@@ -771,3 +973,6 @@ function getAllRolesPermissions() {
     }
 }
 ?>
+
+
+
