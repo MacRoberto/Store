@@ -6,17 +6,38 @@ import {
   fetchRecords,
 } from "./api.js";
 
+let listOptions = {
+  orderBy: "id", //campo por default por el que se va a ordenar
+  orderDirection: "DESC",
+  searchField: "all",
+  search: "",
+};
+
 import { initView as initViewMain } from "./enviroment.js";
 
 import { rowClick, loadView, getSelectedId } from "./function.js";
 
 export async function initView() {
-  const categories = await fetchRecords("categories");
   const tableBody = document.getElementById("categoriesTableBody");
   const btnRemove = document.getElementById("btnRemove");
   const btnEdit = document.getElementById("btnEdit");
   const btnAdd = document.getElementById("btnAdd");
   const btnGoBack = document.getElementById("goback");
+
+  const orderBy = document.getElementById("orderBy");
+  const orderDirection = document.getElementById("orderDirection");
+
+  const searchField = document.getElementById("searchField");
+  const searchInput = document.getElementById("searchInput");
+  const btnSearch = document.getElementById("btnSearch");
+
+  if (searchField) {
+    searchField.value = listOptions.searchField;
+  }
+
+  if (searchInput) {
+    searchInput.value = listOptions.search;
+  }
 
   btnRemove.addEventListener("click", async function (event) {
     Swal.fire({
@@ -51,7 +72,72 @@ export async function initView() {
     });
   }
 
+  if (btnGoBack) {
+    btnGoBack.addEventListener("click", async function (event) {
+      event.preventDefault();
+
+      await initViewMain();
+    });
+  }
+
+  if (orderBy) {
+    orderBy.value = listOptions.orderBy;
+
+    orderBy.addEventListener("change", async function () {
+      listOptions.orderBy = orderBy.value;
+      listOptions.page = 1;
+
+      await loadCategories();
+    });
+  }
+
+  if (orderDirection) {
+    orderDirection.value = listOptions.orderDirection;
+
+    orderDirection.addEventListener("change", async function () {
+      listOptions.orderDirection = orderDirection.value;
+      listOptions.page = 1;
+
+      await loadCategories();
+    });
+
+  }
+
+  if (btnSearch) {
+    btnSearch.addEventListener("click", async function () {
+      listOptions.searchField = searchField.value;
+      listOptions.search = searchInput.value.trim();
+      listOptions.page = 1;
+
+      await loadCategories();
+    });
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener("keydown", async function (event) {
+      if (event.key === "Enter") {
+        listOptions.searchField = searchField.value;
+        listOptions.search = searchInput.value.trim();
+        listOptions.page = 1;
+
+        await loadCategories();
+      }
+    });
+  }
+
+  await loadCategories();
+}
+
+async function loadCategories() {
+  const data = await fetchRecords("categories", listOptions);
+
+  const tableBody = document.getElementById("categoriesTableBody");
+
   if (tableBody) {
+    // Limpiar la tabla antes de volver a pintar los registros.
+    tableBody.innerHTML = "";
+    const categories = data.records || [];
+
     categories.forEach((category) => {
       const tr = document.createElement("tr");
 
@@ -62,19 +148,12 @@ export async function initView() {
       `;
 
       tr.addEventListener("click", function (event) {
-        rowClick(event, category.id); 
+        rowClick(event, category.id);
       });
 
       tableBody.appendChild(tr);
     });
-  }
 
-  if (btnGoBack) {
-    btnGoBack.addEventListener("click", async function (event) {
-      event.preventDefault();
-
-      await initViewMain();
-    });
   }
 }
 
@@ -145,3 +224,4 @@ async function initCategoryForm(mode, id = null) {
     console.error("Error al inicializar el formulario:", error);
   }
 }
+

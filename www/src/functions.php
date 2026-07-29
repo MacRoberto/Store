@@ -80,10 +80,72 @@ function getRoleModules($idRole) {
 
 /** Funciones para el modulo de categorias */
 // Función para recuperar registros de la tabla categories
-function getAllCategories() {
+function getAllCategories($requestData) {
     global $db;
-    $stmt = $db->query("SELECT id_cat AS id, name, description FROM categories");
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    try {
+        $page = max(1, (int) ($requestData["page"] ?? 1));
+        $limit = max(1, (int) ($requestData["limit"] ?? 50));
+
+        $orderBy = getCategoriesOrderField(
+            $requestData["orderBy"] ?? "id"
+        );
+
+        $orderDirection = getOrderDirection(
+            $requestData["orderDirection"] ?? "DESC"
+        );
+
+        $searchField = getCategoriesSearchField(
+            $requestData["searchField"] ?? "all"
+        );
+
+        $search = trim($requestData["search"] ?? "");
+        $offset = ($page - 1) * $limit;
+
+        $where = "WHERE 1=1";
+
+        if ($search !== "") {
+            if ($searchField === "all") {
+                $where .= " AND (
+                    id_cat LIKE :search
+                    OR name LIKE :search
+                    OR description LIKE :search
+                )";
+            } else {
+                $where .= " AND $searchField LIKE :search";
+            }
+        }
+
+        $total = getTotalCategories($searchField, $search);
+
+        $query = "SELECT id_cat AS id, name, description
+                  FROM categories
+                  $where
+                  ORDER BY $orderBy $orderDirection
+                  LIMIT :limit OFFSET :offset";
+
+        $stmt = $db->prepare($query);
+        $stmt->bindValue(":limit", $limit, PDO::PARAM_INT);
+        $stmt->bindValue(":offset", $offset, PDO::PARAM_INT);
+
+        if ($search !== "") {
+            $stmt->bindValue(":search", "%$search%");
+        }
+
+        $stmt->execute();
+
+        $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return [
+            "records" => $records,
+            "total" => $total,
+            "page" => $page,
+            "limit" => $limit,
+            "totalPages" => (int) ceil($total / $limit)
+        ];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
 }
 
 //funcion para guardar un producto
@@ -155,6 +217,40 @@ function getCategoryOptions() {
     global $db;
     $stmt = $db->query("SELECT id_cat as id, name FROM categories");
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function getCategoriesOrderField($field) {
+    $fields = [
+          "id" => "id",
+        "name" => "name",
+        "description" => "description"
+    ];
+
+    return $fields[$field] ?? "id_cat";
+}
+
+function getCategoriesSearchField($field) {
+    $fields = [
+        "id" => "id_cat",
+        "name" => "name",
+        "description" => "description"
+    ];
+
+    return $fields[$field] ?? "all";
+}
+
+
+// Obtiene el total de productos activos que no han sido eliminados lógicamente.
+function getTotalCategories() {
+    global $db;
+
+    $query = "SELECT COUNT(*)
+              FROM categories";
+
+    $stmt = $db->prepare($query);
+    $stmt->execute();
+
+    return (int) $stmt->fetchColumn();
 }
 
 /** Fin de Funciones para el modulo de categorias */
