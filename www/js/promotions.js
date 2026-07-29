@@ -11,16 +11,41 @@ import { initView as initViewMain } from "./enviroment.js";
 
 import { rowClick, loadView, getSelectedId } from "./function.js";
 
+let listOptions = {
+  page: 1,
+  limit: 50,
+  orderBy: "id_promotion",
+  orderDirection: "DESC",
+  searchField: "all",
+  search: "",
+};
+
 export async function initView() {
-  const promotions = await fetchRecords("promotions");
   const tableBody = document.getElementById("promotionsTableBody");
   const btnRemove = document.getElementById("btnRemove");
   const btnEdit = document.getElementById("btnEdit");
   const btnAdd = document.getElementById("btnAdd");
   const btnGoBack = document.getElementById("goback");
-  //Detecta cuando el usuario da clic en el boton de eliminar
-  btnRemove.addEventListener("click", async function (event) {
-    //Se muestra la alerta para que confirme la eliminación del registro seleccionado
+
+  const orderBy = document.getElementById("orderBy");
+  const orderDirection = document.getElementById("orderDirection");
+
+  const btnPrevious = document.getElementById("btnPrevious");
+  const btnNext = document.getElementById("btnNext");
+
+  const searchField = document.getElementById("searchField");
+  const searchInput = document.getElementById("searchInput");
+  const btnSearch = document.getElementById("btnSearch");
+
+  if (searchField) {
+    searchField.value = listOptions.searchField;
+  }
+
+  if (searchInput) {
+    searchInput.value = listOptions.search;
+  }
+
+  btnRemove.addEventListener("click", async function () {
     Swal.fire({
       title: "¿Are you sure to delete this record?",
       text: "You won't be able to revert this action",
@@ -32,9 +57,7 @@ export async function initView() {
       cancelButtonText: "Cancel",
     }).then(async (result) => {
       if (result.isConfirmed) {
-        //Hacer peticion para eliminar el registro
         await deleteRecords("promotions", getSelectedId());
-        // Volver a cargar el listado para reflejar la eliminación.
         await loadPromotionsView();
       }
     });
@@ -55,7 +78,90 @@ export async function initView() {
     });
   }
 
+  if (btnGoBack) {
+    btnGoBack.addEventListener("click", async function (event) {
+      event.preventDefault();
+
+      await initViewMain();
+    });
+  }
+
+  if (orderBy) {
+    orderBy.value = listOptions.orderBy;
+
+    orderBy.addEventListener("change", async function () {
+      listOptions.orderBy = orderBy.value;
+      listOptions.page = 1;
+
+      await loadPromotions();
+    });
+  }
+
+  if (orderDirection) {
+    orderDirection.value = listOptions.orderDirection;
+
+    orderDirection.addEventListener("change", async function () {
+      listOptions.orderDirection = orderDirection.value;
+      listOptions.page = 1;
+
+      await loadPromotions();
+    });
+  }
+
+  if (btnPrevious) {
+    btnPrevious.addEventListener("click", async function () {
+      if (listOptions.page > 1) {
+        listOptions.page--;
+
+        await loadPromotions();
+      }
+    });
+  }
+
+  if (btnNext) {
+    btnNext.addEventListener("click", async function () {
+      if (!btnNext.disabled) {
+        listOptions.page++;
+
+        await loadPromotions();
+      }
+    });
+  }
+
+  if (btnSearch) {
+    btnSearch.addEventListener("click", async function () {
+      listOptions.searchField = searchField.value;
+      listOptions.search = searchInput.value.trim();
+      listOptions.page = 1;
+
+      await loadPromotions();
+    });
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener("keydown", async function (event) {
+      if (event.key === "Enter") {
+        listOptions.searchField = searchField.value;
+        listOptions.search = searchInput.value.trim();
+        listOptions.page = 1;
+
+        await loadPromotions();
+      }
+    });
+  }
+
+  await loadPromotions();
+}
+
+async function loadPromotions() {
+  const data = await fetchRecords("promotions", listOptions);
+  const tableBody = document.getElementById("promotionsTableBody");
+
   if (tableBody) {
+    tableBody.innerHTML = "";
+
+    const promotions = data.records;
+
     promotions.forEach((promotion) => {
       const tr = document.createElement("tr");
 
@@ -72,28 +178,40 @@ export async function initView() {
         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${promotion.percent_off ? promotion.percent_off + "%" : "-"}</td>
         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${promotion.product_name || promotion.id_product || "Sin Producto"}</td>
         <td class="px-6 py-4 whitespace-nowrap text-sm">
-        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusBadgeColor}">
-      ${promotion.status}
-    </span>
-  </td>
+          <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusBadgeColor}">
+            ${promotion.status}
+          </span>
+        </td>
       `;
 
-      //Se agrega evento a cada fila
       tr.addEventListener("click", function (event) {
-        rowClick(event, promotion.id_promotion); //Se manda a llamar el evento on click y se le pasa el objeto promoción
+        rowClick(event, promotion.id_promotion);
       });
 
       tableBody.appendChild(tr);
     });
-  }
 
-  if (btnGoBack) {
-    btnGoBack.addEventListener("click", async function (event) {
-      event.preventDefault();
-
-      await initViewMain();
-    });
+    updatePagination(data);
   }
+}
+
+function updatePagination(data) {
+  const currentPage = document.getElementById("currentPage");
+  const totalPages = document.getElementById("totalPages");
+  const paginationSummary = document.getElementById("paginationSummary");
+  const btnPrevious = document.getElementById("btnPrevious");
+  const btnNext = document.getElementById("btnNext");
+
+  currentPage.textContent = data.page;
+  totalPages.textContent = data.totalPages;
+
+  btnPrevious.disabled = data.page <= 1;
+  btnNext.disabled = data.page >= data.totalPages;
+
+  const start = data.total === 0 ? 0 : (data.page - 1) * data.limit + 1;
+  const end = Math.min(data.page * data.limit, data.total);
+
+  paginationSummary.textContent = `Showing ${start} to ${end} of ${data.total} promotions`;
 }
 
 async function loadPromotionsView() {
@@ -106,10 +224,8 @@ async function initPromotionForm(mode, id = null) {
     const form = document.getElementById("itemForm");
     const btnGoBack = document.getElementById("goback");
 
-    // Cargar los productos al select.
     await loadSelectOptions("products", "id_product");
 
-    // Si se está editando, cargar los datos de la promocion.
     if (mode === "edit" && id) {
       await loadRecordDataToForm("promotions", id, "itemForm");
     }
@@ -131,7 +247,6 @@ async function initPromotionForm(mode, id = null) {
           }).then(async (result) => {
             if (result.isConfirmed) {
               await updateRecord("promotions", form, id);
-              // Después de guardar, regresar al listado.
               await loadPromotionsView();
             }
           });
@@ -148,7 +263,6 @@ async function initPromotionForm(mode, id = null) {
           }).then(async (result) => {
             if (result.isConfirmed) {
               await saveRecords("promotions", form);
-              // Después de guardar, regresar al listado.
               await loadPromotionsView();
             }
           });
