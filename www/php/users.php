@@ -9,7 +9,7 @@ $accion = $requestData['action'] ?? "";
 header("Content-Type: application/json");
 if ($accion == "list") {
     // Manda a llamar la función que realiza la consulta a la bd
-    $list = getAllUsers();
+    $list = getAllUsers($requestData);
     
     // Regresa la información solicitada
     echo json_encode($list);
@@ -73,6 +73,32 @@ if ($accion == "list") {
             'message' => 'Error en el servidor: ' . $e->getMessage()
         ]);
     }
+
+} else if ($accion == "getInfoByID") {
+    $id = $requestData['id'] ?? "";
+    echo json_encode(getUserById($id));
+
+} else if ($accion == "save") {
+    $username = $requestData['username'] ?? "";
+    $id_rol = $requestData['id_rol'] ?? "";
+    $status = $requestData['status'] ?? "";
+    $password_hash = $requestData['password_hash'] ?? "";
+
+    echo json_encode(saveUsers($username, $id_rol, $status, $password_hash));
+
+} else if ($accion == "update") {
+    $id = $requestData['id'] ?? "";
+    $username = $requestData['username'] ?? "";
+    $id_rol = $requestData['id_rol'] ?? "";
+    $status = $requestData['status'] ?? "";
+    $password_hash = $requestData['password_hash'] ?? "";
+
+    echo json_encode(updateUsers($id, $username, $id_rol, $status, $password_hash));
+    
+} else if ($accion == "delete") {
+    $id = $requestData['id'] ?? "";
+    echo json_encode(deleteUsers($id));
+ 
 
 }elseif ($accion == "session") {
 
