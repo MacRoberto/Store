@@ -1723,26 +1723,136 @@ function deleteActions($id) {
     }
 }
 
-function getAllRolesPermissions() {
+//Funcion para recuperar listado de modulos, acciones correspondientes y los permisos que un rol tiene
+function getAllRolesPermissions($idRole) {
     global $db;
     try {
-        // Ejecutamos una consulta con joins compuestos hacia roles, acciones y el respectivo módulo de la acción
-        $query = "SELECT rp.id_permission, rp.id_role, rp.id_action, rp.status,
-                         r.name AS role_name,
-                         a.name AS action_name,
-                         m.name AS module_name
-                  FROM roles_permissions rp
-                  LEFT JOIN roles r ON rp.id_role = r.id_rol
-                  LEFT JOIN actions a ON rp.id_action = a.id_action
-                  LEFT JOIN modules m ON a.id_module = m.id_module
-                  ORDER BY r.name ASC, m.name ASC, a.name ASC";
-                  
+        $query = "SELECT m.id_module,
+                        m.name AS module_name,
+                        m.description AS module_description,
+                        m.img,
+                        m.url,
+                        a.id_action,
+                        a.name AS action_name,
+                        a.description AS action_description,
+                        CASE WHEN rp.id_permission IS NOT NULL THEN 1 ELSE 0 END AS enabled
+                FROM modules m
+                LEFT JOIN actions a ON a.id_module = m.id_module
+                LEFT JOIN role_permissions rp
+                    ON rp.id_action = a.id_action
+                    AND rp.id_role = :id_role
+                    AND rp.status = 'Active'
+                ORDER BY m.name ASC, a.name ASC";
+
         $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_role', $idRole, PDO::PARAM_INT);
         $stmt->execute();
-        
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $modules = [];
+        foreach ($rows as $row) {
+            $moduleId = (int) $row['id_module'];
+
+            if (!isset($modules[$moduleId])) {
+                $modules[$moduleId] = [
+                    'id' => $moduleId,
+                    'name' => $row['module_name'],
+                    'description' => $row['module_description'],
+                    'img' => $row['img'],
+                    'url' => $row['url'],
+                    'actions' => []
+                ];
+            }
+
+            if ($row['id_action'] !== null) {
+                $modules[$moduleId]['actions'][] = [
+                    'id' => (int) $row['id_action'],
+                    'name' => $row['action_name'],
+                    'description' => $row['action_description'],
+                    'enabled' => (bool) $row['enabled']
+                ];
+            }
+        }
+
+        return array_values($modules);
     } catch (PDOException $e) {
         return ['error' => $e->getMessage()];
+    }
+}
+
+function saveRolePermissions($roleData)
+{
+    global $db;
+
+    $permissions = $roleData['permissions'] ?? [];
+
+    try {
+        $db->beginTransaction();
+
+        /*
+         * Eliminar todos los permisos anteriores del rol.
+         */
+        $deleteStatement = $db->prepare("
+            DELETE FROM role_permissions
+            WHERE id_role = :id_role
+        ");
+
+        $deleteStatement->execute([
+            ':id_role' => $roleData['idRol']
+        ]);
+
+        /*
+         * Preparar una sola vez la consulta de inserción.
+         */
+        $insertStatement = $db->prepare("
+            INSERT INTO role_permissions (
+                id_role,
+                id_action,
+                status
+            ) VALUES (
+                :id_role,
+                :id_action,
+                'Active'
+            )
+        ");
+
+        $processedActions = [];
+
+        foreach ($permissions as $permission) {
+
+            $idAction = isset($permission['id_action'])
+                ? (int) $permission['id_action']
+                : 0;
+
+            /*
+             * Evitar insertar dos veces la misma acción si el frontend
+             * accidentalmente la envía duplicada.
+             */
+            if (isset($processedActions[$idAction])) {
+                continue;
+            }
+
+            $insertStatement->execute([
+                ':id_role'   => $roleData['idRol'],
+                ':id_action' => $idAction
+            ]);
+
+            $processedActions[$idAction] = true;
+        }
+
+        $db->commit();
+
+        return [
+            'success' => "Permisos guardados correctamente"
+        ];
+    } catch (Throwable $error) {
+        if ($db->inTransaction()) {
+            $db->rollBack();
+        }
+
+        return [
+            'error' => "No fue posible guardar los permisos del rol."
+        ];
     }
 }
 ?>
