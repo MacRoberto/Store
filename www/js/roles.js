@@ -279,6 +279,9 @@ async function initRoleForm(mode, id = null) {
 }
 
 async function initAssignPermissionsView() {
+  const rolesPermissionModule = await import("./roles_permissions.js");
+  const roleId = getSelectedId();
+  await rolesPermissionModule.initView(roleId);
   const btnBackToRoles = document.getElementById("btnBackToRoles");
 
   if (btnBackToRoles) {

@@ -183,10 +183,6 @@ export function sendRequest(file, payload) {
   })
     .then((response) => response.json())
     .then((data) => {
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
       return data;
     });
 }
