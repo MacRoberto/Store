@@ -25,6 +25,11 @@ export async function initView() {
   await loadView(`../views/${defaultView}.html`, "content");
   if (defaultView === "menu") {
     await loadModules();
+  } else if (defaultView === "dashboard") {
+    //Cargar js
+    const dashboardController = await import(`./dashboard.js`);
+    //Llamar funcion principal
+    dashboardController.initView();
   }
 
   const btnMenu = document.getElementById("btnMenu");
@@ -47,7 +52,12 @@ export async function initView() {
         "font-semibold",
       );
       btnMenu.classList.add("text-gray-600", "font-medium");
+      //Carga la vista
       await loadView("../views/dashboard.html", "content");
+      //Cargar js
+      const dashboardController = await import(`./dashboard.js`);
+      //Llamar funcion principal
+      dashboardController.initView();
     });
   }
 
