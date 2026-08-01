@@ -10,6 +10,8 @@ import {
 import { initView as initViewMain } from "./enviroment.js";
 
 import { rowClick, loadView, getSelectedId } from "./function.js";
+import { validateForm } from "./validators/validate-form.js";
+import { productsRules } from "./validators/products-rules.js";
 
 let listOptions = {
   page: 1,
@@ -247,6 +249,19 @@ async function initProductForm(mode, id = null) {
 
     form.addEventListener("submit", async function (event) {
       event.preventDefault();
+
+      //se manda a llamar la funcion, se le pasa el formulario y las reglas definidas
+      const validation = validateForm(form, productsRules);
+      //Si no es valido se muestra mensaje y ya no ejecuta el resto del proceso
+      if (!validation.valid) {
+        await Swal.fire({
+          icon: "warning",
+          title: "Validation error",
+          text: validation.error.message,
+        });
+
+        return; // Evitar que se ejecute el guardado o la actualización.
+      }
 
       try {
         if (mode === "edit") {
