@@ -1855,6 +1855,273 @@ function saveRolePermissions($roleData)
         ];
     }
 }
+
+//Inicio de funciones para el dashboard
+
+/**
+ * Fetches summary counts and sales totals for today.
+ */
+function getDashboardSummary() {
+    global $db;
+
+    // Today's total sales sum
+    $stmtSales = $db->prepare("
+        SELECT COALESCE(SUM(total_amount), 0) AS todays_sales
+        FROM sales
+        WHERE DATE(transaction_date) = DATE(
+            CONVERT_TZ(NOW(), '+00:00', '-05:00')
+        );
+    ");
+    $stmtSales->execute();
+    $todaysSales = $stmtSales->fetch(PDO::FETCH_ASSOC)['todays_sales'] ?? 0;
+
+    // consulta de cantidad de ventas realizadas hoy
+    $stmtQtySales = $db->prepare("
+        SELECT COUNT(*) AS quantity_sales
+        FROM sales
+        WHERE DATE(transaction_date) = DATE(
+            CONVERT_TZ(NOW(), '+00:00', '-05:00')
+        );
+    ");
+    $stmtQtySales->execute();
+    $qtySales = $stmtQtySales->fetch(PDO::FETCH_ASSOC)['quantity_sales'] ?? 0;
+
+    // Out of stock items count
+    // consulta para contar la cantidad de productos que están fuera de stock
+    $stmtOutOfStock = $db->prepare("
+        SELECT COUNT(*) AS out_of_stock
+        FROM (
+            SELECT
+                p.id_product,
+                COALESCE(SUM(ii.quantity_available), 0) AS available_quantity
+            FROM products AS p
+            LEFT JOIN inventory_items AS ii
+                ON ii.product_id = p.id_product
+            GROUP BY p.id_product
+            HAVING available_quantity <= 0
+        ) AS stock;
+    ");
+    $stmtOutOfStock->execute();
+    $outOfStock = $stmtOutOfStock->fetch(PDO::FETCH_ASSOC)['out_of_stock'] ?? 0;
+
+    // Active promotions count
+    //consulta para contar la cantidad de promociones activas
+    $stmtPromotions = $db->prepare("
+        SELECT COUNT(*) AS active_promotions
+        FROM promotions
+        WHERE status = 'Active'
+        AND DATE(CONVERT_TZ(NOW(), '+00:00', '-05:00'))
+            BETWEEN date_start AND date_end;
+    ");
+    $stmtPromotions->execute();
+    $activePromotions = $stmtPromotions->fetch(PDO::FETCH_ASSOC)['active_promotions'] ?? 0;
+
+    return [
+        'todaySales'      => (float)$todaysSales,
+        'qtySales'         => (int)$qtySales, //qty = quantity
+        'outOfStockItems'  => (int)$outOfStock,
+        'activePromotions' => (int)$activePromotions
+    ];
+}
+
+/**
+ * Fetches sales trend aggregated by timeframe ($period = 'week', 'month', 'year').
+ * Fetchs o informacion de ventas agregadas por periodo de tiempo ($period = 'week', 'month', 'year').
+ */
+function getSalesTrendData(string $period = 'week'): array {
+    global $db;
+    $tz = new DateTimeZone('-05:00'); // Consistent target timezone
+    $now = new DateTime('now', $tz);
+
+    switch ($period) {
+        case 'month':
+            // Current month bounds
+            $startDate = (new DateTime('first day of this month 00:00:00', $tz));
+            $endDate   = (new DateTime('last day of this month 23:59:59', $tz));
+
+            $query = "
+                SELECT 
+                    DATE(CONVERT_TZ(transaction_date, '+00:00', '-05:00')) AS date_key,
+                    DATE_FORMAT(CONVERT_TZ(transaction_date, '+00:00', '-05:00'), '%Y-%m-%d') AS label,
+                    COALESCE(SUM(total_amount), 0) AS total
+                FROM sales
+                WHERE transaction_date >= :startUTC AND transaction_date <= :endUTC
+                GROUP BY date_key, label
+                ORDER BY date_key ASC
+            ";
+            break;
+
+        case 'year':
+            // Current year bounds
+            $startDate = (new DateTime('first day of January this year 00:00:00', $tz));
+            $endDate   = (new DateTime('last day of December this year 23:59:59', $tz));
+
+            $query = "
+                SELECT 
+                    MONTH(CONVERT_TZ(transaction_date, '+00:00', '-05:00')) AS month_num,
+                    DATE_FORMAT(CONVERT_TZ(transaction_date, '+00:00', '-05:00'), '%b') AS label,
+                    COALESCE(SUM(total_amount), 0) AS total
+                FROM sales
+                WHERE transaction_date >= :startUTC AND transaction_date <= :endUTC
+                GROUP BY month_num, label
+                ORDER BY month_num ASC
+            ";
+            break;
+
+        case 'week':
+        default:
+            // Last 7 days
+            $startDate = (new DateTime('-6 days 00:00:00', $tz));
+            $endDate   = (new DateTime('today 23:59:59', $tz));
+
+            $query = "
+                SELECT 
+                    DATE(CONVERT_TZ(transaction_date, '+00:00', '-05:00')) AS date_key,
+                    DATE_FORMAT(CONVERT_TZ(transaction_date, '+00:00', '-05:00'), '%a') AS label,
+                    COALESCE(SUM(total_amount), 0) AS total
+                FROM sales
+                WHERE transaction_date >= :startUTC AND transaction_date <= :endUTC
+                GROUP BY date_key, label
+                ORDER BY date_key ASC
+            ";
+            break;
+    }
+
+    // Convert boundaries to UTC strings for DB query filtering
+    $utcTz = new DateTimeZone('UTC');
+    $startUTC = (clone $startDate)->setTimezone($utcTz)->format('Y-m-d H:i:s');
+    $endUTC   = (clone $endDate)->setTimezone($utcTz)->format('Y-m-d H:i:s');
+
+    $stmt = $db->prepare($query);
+    $stmt->execute([
+        ':startUTC' => $startUTC,
+        ':endUTC'   => $endUTC
+    ]);
+    
+    $rawResults = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Map DB results for quick lookup
+    $dbData = [];
+    foreach ($rawResults as $row) {
+        $dbData[$row['label']] = (float)$row['total'];
+    }
+
+    // Fill missing time slots with 0 values to maintain unbroken chart series
+    return buildContinuousDataset($period, $startDate, $endDate, $dbData, $tz);
+}
+
+/**
+ * Ensures all periods (days/months) have values in the final dataset.
+ */
+function buildContinuousDataset(string $period, DateTime $startDate, DateTime $endDate, array $dbData, DateTimeZone $tz): array {
+    $dataset = [];
+    $current = clone $startDate;
+
+    if ($period === 'year') {
+        while ($current <= $endDate) {
+            $label = $current->format('M');
+            $dataset[] = [
+                'label' => $label,
+                'total' => $dbData[$label] ?? 0.0,
+                'date'  => $current->format('Y-m-d')
+            ];
+            $current->modify('+1 month');
+        }
+    } else {
+        $labelFormat = ($period === 'month') ? 'Y-m-d' : 'D';
+        while ($current <= $endDate) {
+            $label = $current->format($labelFormat);
+            $dataset[] = [
+                'label' => $label,
+                'total' => $dbData[$label] ?? 0.0,
+                'date'  => $current->format('Y-m-d')
+            ];
+            $current->modify('+1 day');
+        }
+    }
+
+    return $dataset;
+}
+
+/**
+ * Fetches top 4 selling products for the current month.
+ */
+function getTopSellingProducts() {
+    global $db;
+
+    $stmt = $db->prepare("
+        SELECT products.id_product, products.`name` as product_name, SUM(sales_details.quantity) AS units_sold FROM products 
+        INNER JOIN inventory_items ON products.id_product = inventory_items.product_id
+        INNER JOIN sales_details ON sales_details.id_inventory_item = inventory_items.id_inventory_item
+        INNER JOIN sales ON sales.id_sale = sales_details.sale_id
+        WHERE MONTH(sales.transaction_date) = MONTH(CURDATE()) 
+          AND YEAR(sales.transaction_date) = YEAR(CURDATE())
+        GROUP BY products.id_product, products.name
+        ORDER BY units_sold DESC
+        LIMIT 5
+    ");
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+/**
+ * Fetches recent sales transactions.
+ */
+function getRecentTransactions() {
+    global $db;
+
+    $stmt = $db->prepare("
+       SELECT sum(sales_details.quantity) AS qty, 
+         DATE_FORMAT(transaction_date, '%Y-%m-%d %H:%i:%s') AS time, 
+               total_amount 
+        FROM sales 
+        JOIN sales_details ON sales.id_sale = sales_details.sale_id
+        GROUP BY time, total_amount 
+        ORDER BY time DESC
+        LIMIT 5
+    ");
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+//Inicio de funciones para alertas del sistema
+function getSystemAlerts() {
+    global $db;
+
+    $alerts = [];
+
+    // Check for low inventory stock items
+    $stmt = $db->prepare("
+        SELECT
+            p.name AS product_name,
+            COALESCE(SUM(ii.quantity_available), 0) AS quantity
+        FROM products AS p
+        LEFT JOIN inventory_items AS ii
+            ON ii.product_id = p.id_product
+        GROUP BY
+            p.id_product,
+            p.name
+        HAVING quantity <= 5
+        ORDER BY quantity ASC
+        LIMIT 3;
+    ");
+    $stmt->execute();
+    $lowStockItems = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    foreach ($lowStockItems as $item) {
+        $alerts[] = [
+            'type'    => 'inventory_low',
+            'title'   => 'Inventory Low',
+            'message' => "{$item['product_name']} has reached minimum stock ({$item['quantity']} remaining)."
+        ];
+    }
+
+    return $alerts;
+}
+//Fin de funciones para alertas del sistema
+
+//Fin de funciones para el dashboard
+
 ?>
 
 
