@@ -1,4 +1,5 @@
 <?php
+@session_start();
 require_once __DIR__ . "/lib/db.php";
 require_once __DIR__ ."/helpers.php";
 
@@ -250,6 +251,39 @@ function getCategoryById($id_cat){
         return ['error' => $e->getMessage()];
     }
 }
+
+function findProductBybarcode($barcode){
+    global $db;
+
+    $sql = "
+        SELECT
+        p.id_product AS id,
+        p.name AS name,
+        p.barcode AS barcode,
+        ii.id_inventory_item AS inventory_item_id,
+        COALESCE(ii.sale_price, 0) AS price,
+        categories.name as category_name
+    FROM products AS p
+    INNER JOIN categories on p.category_id = categories.id_cat 
+    LEFT JOIN inventory_items AS ii
+        ON ii.id_inventory_item = (
+            SELECT ii2.id_inventory_item
+            FROM inventory_items AS ii2
+            WHERE ii2.product_id = p.id_product
+            ORDER BY ii2.id_inventory_item DESC
+            LIMIT 1
+        )
+    WHERE p.barcode = :barcode
+    LIMIT 1;
+    ";
+
+    $stmt = $db->prepare($sql);
+    $stmt->bindValue(':barcode', $barcode);
+    $stmt->execute();
+
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
 /*Fin de funciones para el modulo de productos*/
 
 //Funcion para recuperar id y nombre de gategorias, el cual sirve para llenar el select en productos
@@ -866,15 +900,22 @@ function getAllInventories() {
     try {
         // Consultamos la tabla de inventarios vinculando los datos de la cuenta de usuario encargada
         $query = "SELECT i.id_inventory, i.user_id, i.arrival_date,
-                         u.email AS username
+                         u.username AS username
                   FROM inventories i
                   LEFT JOIN users u ON i.user_id = u.id_user
-                  ORDER BY i.arrival_date DESC";
+                  ORDER BY i.arrival_date DESC limit 50";
                   
         $stmt = $db->prepare($query);
         $stmt->execute();
         
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return [
+            "records" => $records,
+            "total" => 2,
+            "page" => 1,
+            "limit" => 50,
+            "totalPages" => 1
+        ];
     } catch (PDOException $e) {
         return ['error' => $e->getMessage()];
     }
@@ -2121,6 +2162,127 @@ function getSystemAlerts() {
 //Fin de funciones para alertas del sistema
 
 //Fin de funciones para el dashboard
+
+//Inicio de funciones para inventarios
+
+/**
+ * Saves a new inventory transaction, inventory item, and stock movement.
+ *
+ * @param array $datas
+ * @return array
+ */
+function saveInventory($datas)
+{
+    global $db;
+    $userId = $_SESSION['user']['id_user'] ?? 0;
+
+    try {
+        $db->beginTransaction();
+
+        /*
+         * 1. Insert into inventory (Header / Main table)
+         */
+        $insertInventoryStatement = $db->prepare("
+            INSERT INTO inventories (
+                user_id,
+                arrival_date
+            ) VALUES (
+                :id_user,
+                NOW()
+            )
+        ");
+
+        $insertInventoryStatement->execute([
+            ':id_user' => $userId ?? 1
+        ]);
+
+        $idInventory = $db->lastInsertId();
+
+        /*
+         * 3. Insert into inventory_movements (Audit / History table)
+         */
+        foreach ($datas as $item) {
+            /*
+            * 2. Insert into inventory_items (Detail table)
+            */
+            $insertItemStatement = $db->prepare("
+                INSERT INTO inventory_items (
+                    id_inventory,
+                    product_id,
+                    quantity_received,
+                    quantity_available,
+                    cost_price,
+                    sale_price,
+                    status
+                ) VALUES (
+                    :id_inventory,
+                    :product_id,
+                    :quantity_received,
+                    :quantity_available,
+                    :cost_price,
+                    :sale_price,
+                    'Active'
+                )
+            ");
+
+            $insertItemStatement->execute([
+                ':id_inventory'    => $idInventory,
+                ':product_id'      => $item['id'] ?? 0,
+                ':quantity_available' => $item['quantity'] ?? 0,
+                ':quantity_received' => $item['quantity'] ?? 0,
+                ':cost_price'      => $item['cost_price'] ?? 0.00,
+                ':sale_price'   => $item['selling_price'] ?? 0.00
+            ]);
+
+            $idInventoryItem = $db->lastInsertId();
+            
+            $insertMovementStatement = $db->prepare("
+                INSERT INTO inventory_movements (
+                    id_inventory_item,
+                    movement_type,
+                    user_id,
+                    quantity,
+                    movement_date,
+                    notes
+                ) VALUES (
+                    :id_inventory_item,
+                    'Entry',
+                    :user_id,
+                    :quantity,
+                    NOW(),
+                    :notes
+                )
+            ");
+
+            $insertMovementStatement->execute([
+                ':id_inventory_item' => $idInventoryItem,
+                ':user_id'           => $userId,
+                ':quantity'          => $item['quantity'] ?? 0,
+                ':notes'             => $item['notes'] ?? 'Initial stock registration'
+            ]);
+        }
+
+        $db->commit();
+
+        return [
+            'success'          => true,
+            'message'          => 'Inventory saved successfully across all tables.',
+            'id_inventory'      => $idInventory
+        ];
+
+    } catch (Throwable $error) {
+        if ($db->inTransaction()) {
+            $db->rollBack();
+        }
+
+        return [
+            'error'   => 'Could not save inventory transaction.',
+            'details' => $error->getMessage()
+        ];
+    }
+}
+
+///Fin de funciones para inventarios
 
 ?>
 
