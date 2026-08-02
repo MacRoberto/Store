@@ -1,42 +1,273 @@
-document.addEventListener("DOMContentLoaded", () => {
-  fetchInventories();
-});
+import {
+  deleteRecords,
+  updateRecord,
+  saveRecords,
+  loadRecordDataToForm,
+  fetchRecords,
+} from "./api.js";
 
-function fetchInventories() {
-  // Hace petición al archivo de php usando método POST
-  fetch("../php/inventories.php", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      action: "list",
-    }),
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      const tableBody = document.getElementById("inventoriesTableBody");
-      tableBody.innerHTML = "";
+import { initView as initViewMain } from "./enviroment.js";
 
-      if (data.error) {
-        console.error(data.error);
-        return;
+import { rowClick, loadView, getSelectedId } from "./function.js";
+
+let listOptions = {
+  page: 1,
+  limit: 50,
+  orderBy: "id_inventory",
+  orderDirection: "DESC",
+  searchField: "all",
+  search: "",
+};
+
+export async function initView() {
+  const btnRemove = document.getElementById("btnRemove");
+  const btnEdit = document.getElementById("btnEdit");
+  const btnAdd = document.getElementById("btnAdd");
+  const btnGoBack = document.getElementById("goback");
+  const orderBy = document.getElementById("orderBy");
+  const orderDirection = document.getElementById("orderDirection");
+  const btnPrevious = document.getElementById("btnPrevious");
+  const btnNext = document.getElementById("btnNext");
+  const searchField = document.getElementById("searchField");
+  const searchInput = document.getElementById("searchInput");
+  const btnSearch = document.getElementById("btnSearch");
+
+  if (searchField) {
+    searchField.value = listOptions.searchField;
+
+    searchField.addEventListener("change", async function () {
+      listOptions.searchField = searchField.value;
+      listOptions.page = 1;
+
+      await loadInventories();
+    });
+  }
+
+  if (searchInput) {
+    searchInput.value = listOptions.search;
+  }
+
+  btnRemove.addEventListener("click", async function () {
+    Swal.fire({
+      title: "¿Are you sure to delete this record?",
+      text: "You won't be able to revert this action",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete",
+      cancelButtonText: "Cancel",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        await deleteRecords("Inventory", getSelectedId());
+        await loadInventoryView();
       }
+    });
+  });
 
-      // Recorre los resultados para dibujar la tabla de lotes/inventarios
-      data.forEach((inventory) => {
-        const tr = document.createElement("tr");
+  if (btnEdit) {
+    btnEdit.addEventListener("click", async function () {
+      const id = getSelectedId();
+      await loadView("../views/forms/inventory.html", "content");
+      await initInventoryForm("edit", id);
+    });
+  }
 
-        tr.innerHTML = `
-          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Almacén / Lote #${inventory.id_inventory}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 font-medium">${inventory.arrival_date}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${inventory.username || "Usuario #" + inventory.user_id}</td>
-        `;
+  if (btnAdd) {
+    btnAdd.addEventListener("click", async function () {
+      await loadView("../views/forms/inventory.html", "content");
+      const inventoryModule = await import("./inventory.js");
+      await inventoryModule.initView();
+    });
+  }
 
-        tableBody.appendChild(tr);
+  if (btnGoBack) {
+    btnGoBack.addEventListener("click", async function (event) {
+      event.preventDefault();
+
+      await initViewMain();
+    });
+  }
+
+  if (orderBy) {
+    orderBy.value = listOptions.orderBy;
+
+    orderBy.addEventListener("change", async function () {
+      listOptions.orderBy = orderBy.value;
+      listOptions.page = 1;
+
+      await loadInventory();
+    });
+  }
+
+  if (orderDirection) {
+    orderDirection.value = listOptions.orderDirection;
+
+    orderDirection.addEventListener("change", async function () {
+      listOptions.orderDirection = orderDirection.value;
+      listOptions.page = 1;
+
+      await loadInventory();
+    });
+  }
+
+  if (btnPrevious) {
+    btnPrevious.addEventListener("click", async function () {
+      if (listOptions.page > 1) {
+        listOptions.page--;
+
+        await loadInventory();
+      }
+    });
+  }
+
+  if (btnNext) {
+    btnNext.addEventListener("click", async function () {
+      if (!btnNext.disabled) {
+        listOptions.page++;
+
+        await loadInventory();
+      }
+    });
+  }
+
+  if (btnSearch) {
+    btnSearch.addEventListener("click", async function () {
+      listOptions.searchField = searchField.value;
+      listOptions.search = searchInput.value.trim();
+      listOptions.page = 1;
+
+      await loadInventory();
+    });
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener("keydown", async function (event) {
+      if (event.key === "Enter") {
+        listOptions.searchField = searchField.value;
+        listOptions.search = searchInput.value.trim();
+        listOptions.page = 1;
+
+        await loadInventory();
+      }
+    });
+  }
+
+  await loadInventory();
+}
+
+async function loadInventory() {
+  const data = await fetchRecords("inventories", listOptions);
+  const tableBody = document.getElementById("inventoriesTableBody");
+
+  if (tableBody) {
+    tableBody.innerHTML = "";
+
+    const Inventory = data.records;
+
+    Inventory.forEach((Inventory) => {
+      const tr = document.createElement("tr");
+
+      tr.innerHTML = `
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${Inventory.id_inventory}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${Inventory.arrival_date}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${Inventory.username}</td>
+      `;
+
+      tr.addEventListener("click", function (event) {
+        rowClick(event, Inventory.id);
       });
-    })
-    .catch((error) =>
-      console.error("Error al obtener los registros de inventario:", error),
-    );
+
+      tableBody.appendChild(tr);
+    });
+
+    updatePagination(data);
+  }
+}
+
+function updatePagination(data) {
+  const currentPage = document.getElementById("currentPage");
+  const totalPages = document.getElementById("totalPages");
+  const paginationSummary = document.getElementById("paginationSummary");
+  const btnPrevious = document.getElementById("btnPrevious");
+  const btnNext = document.getElementById("btnNext");
+
+  currentPage.textContent = data.page;
+  totalPages.textContent = data.totalPages;
+
+  btnPrevious.disabled = data.page <= 1;
+  btnNext.disabled = data.page >= data.totalPages;
+
+  const start = data.total === 0 ? 0 : (data.page - 1) * data.limit + 1;
+  const end = Math.min(data.page * data.limit, data.total);
+
+  paginationSummary.textContent = `Showing ${start} to ${end} of ${data.total} Inventory`;
+}
+
+async function loadInventoryView() {
+  await loadView("../views/forms/Inventory.html", "content");
+  await initView();
+}
+
+async function initInventoryForm(mode, id = null) {
+  try {
+    const form = document.getElementById("itemForm");
+    const btnGoBack = document.getElementById("goback");
+
+    if (mode === "edit" && id) {
+      await loadRecordDataToForm("Inventory", id, "itemForm");
+    }
+
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      try {
+        if (mode === "edit") {
+          Swal.fire({
+            title: "¿Are you sure to update this record?",
+            text: "This will overwrite the existing information",
+            icon: "info",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, update",
+            cancelButtonText: "Cancel",
+          }).then(async (result) => {
+            if (result.isConfirmed) {
+              await updateRecord("Inventory", form, id);
+              await loadInventoryView();
+            }
+          });
+        } else {
+          Swal.fire({
+            title: "¿Are you sure to Add record?",
+            text: "Please confirm that the data is correct",
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, save",
+            cancelButtonText: "Cancel",
+          }).then(async (result) => {
+            if (result.isConfirmed) {
+              await saveRecords("Inventory", form);
+              await loadInventoryView();
+            }
+          });
+        }
+      } catch (error) {
+        console.error("Error al guardar la categoria:", error);
+      }
+    });
+
+    if (btnGoBack) {
+      btnGoBack.addEventListener("click", async function (event) {
+        event.preventDefault();
+
+        await loadInventoryView();
+      });
+    }
+  } catch (error) {
+    console.error("Error al inicializar el formulario:", error);
+  }
 }

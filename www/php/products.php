@@ -59,6 +59,27 @@ if ($accion == "list") {
     $list = getProductOptions();
     //regresa la informacion solicitada
     echo json_encode($list);
+}else if($accion == "find"){
+    $barcode = $requestData['search']; 
+    $product = findProductBybarcode($barcode);
+    if ($product) {
+        echo json_encode([
+            'status' => 'success',
+            'product' => [
+                'id' => (int)$product['id'],
+                'name' => $product['name'],
+                'barcode' => $product['barcode'],
+                'inventory_item_id' => (int)$product['inventory_item_id'],
+                'price' => (float)$product['price'],
+                'category_name' => $product['category_name']
+            ]
+        ]);
+    } else {
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Producto no encontrado'
+        ]);
+    }
 }
 else {
     echo json_encode([
