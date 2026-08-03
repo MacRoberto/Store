@@ -10,6 +10,9 @@ import { initView as initViewMain } from "./enviroment.js";
 
 import { rowClick, loadView, getSelectedId } from "./function.js";
 
+import { validateForm } from "./validators/validate-form.js";
+import { rolesRules } from "./validators/roles-rules.js";
+
 let listOptions = {
   page: 1,
   limit: 50,
@@ -227,6 +230,19 @@ async function initRoleForm(mode, id = null) {
     form.addEventListener("submit", async function (event) {
       event.preventDefault();
 
+      // Se valida el formulario utilizando las reglas del módulo Roles.
+      const validation = validateForm(form, rolesRules);
+
+      if (!validation.valid) {
+        await Swal.fire({
+          icon: "warning",
+          title: "Validation error",
+          text: validation.error.message,
+        });
+
+        return;
+      }
+
       try {
         if (mode === "edit") {
           Swal.fire({
@@ -269,7 +285,6 @@ async function initRoleForm(mode, id = null) {
     if (btnGoBack) {
       btnGoBack.addEventListener("click", async function (event) {
         event.preventDefault();
-
         await loadRoleView();
       });
     }
@@ -282,6 +297,7 @@ async function initAssignPermissionsView() {
   const rolesPermissionModule = await import("./roles_permissions.js");
   const roleId = getSelectedId();
   await rolesPermissionModule.initView(roleId);
+
   const btnBackToRoles = document.getElementById("btnBackToRoles");
 
   if (btnBackToRoles) {

@@ -8,24 +8,26 @@
       id="itemForm"
       method="POST"
       action="roles"
-      class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+      class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4"
     >
       <div>
         <label
           class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1"
         >
-          Name
+          Role Name
         </label>
         <input
           type="text"
           name="name"
+          placeholder="e.g. Administrator"
           required
-          placeholder="e.g. Cashier"
-          class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm font-medium"
+          minlength="2"
+          maxlength="100"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
         />
       </div>
 
-      <div class="md:col-span-2">
+      <div>
         <label
           class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1"
         >
@@ -34,14 +36,15 @@
         <input
           type="text"
           name="description"
-          placeholder="e.g. Access to cashier operations"
+          placeholder="e.g. Full access role"
+          required
+          minlength="2"
+          maxlength="255"
           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
         />
       </div>
 
-      <div
-        class="lg:col-span-4 flex justify-end gap-3 pt-2 border-t border-gray-100 mt-2"
-      >
+      <div class="md:col-span-2 flex justify-end gap-3 pt-2 border-t border-gray-100 mt-2">
         <button
           type="button"
           id="goback"
@@ -49,12 +52,14 @@
         >
           Go Back
         </button>
+
         <button
           type="reset"
           class="px-4 py-2 border border-gray-300 text-gray-700 font-medium text-sm rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
         >
           Clear Form
         </button>
+
         <button
           type="submit"
           class="px-5 py-2 bg-indigo-600 text-white font-medium text-sm rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
