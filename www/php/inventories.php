@@ -2,14 +2,14 @@
 require_once "../src/functions.php";
 
 // Se reciben los parámetros raw del JSON payload
-$requestData = json_decode(file_get_contents("php://input"), true);
+$requestData = json_decode(file_get_contents("php://input"), true) ?? [];
 $accion = $requestData['action'] ?? "";
 
 header("Content-Type: application/json");
 
 if ($accion == "list") {
     // Manda a llamar la función que realiza la consulta a la bd
-    $list = getAllInventories();
+    $list = getAllInventories($requestData);
      
     // Regresa la información solicitada
     echo json_encode($list);

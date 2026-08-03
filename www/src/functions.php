@@ -895,29 +895,133 @@ function getSaleSearchField($field) {
     return $fields[$field] ?? "all";
 }
 
-function getAllInventories() {
+/**
+ * Obtiene el listado paginado, filtrado y ordenado de inventarios.
+ */
+function getAllInventories($requestData) {
     global $db;
     try {
+        $page = max(1, (int) ($requestData["page"] ?? 1));
+        $limit = max(1, (int) ($requestData["limit"] ?? 50));
+        $offset = ($page - 1) * $limit;
+
+        $orderBy = getInventoryOrderField(
+            $requestData["orderBy"] ?? "id_inv"
+        );
+
+        $orderDirection = getOrderDirection(
+            $requestData["orderDirection"] ?? "DESC"
+        );
+
+        $searchField = getInventorySearchField(
+            $requestData["searchField"] ?? "all"
+        );
+
+        $search = trim($requestData["search"] ?? "");
+        $total = getTotalInventories($searchField, $search);
+
+        $where = "WHERE 1=1";
+        if ($search !== "") {
+            if ($searchField === "all") {
+                $where .= " AND (
+                    i.id_inventory LIKE :search
+                    OR u.username LIKE :search
+                    OR i.arrival_date LIKE :search
+                )";
+            } else {
+                $where .= " AND $searchField LIKE :search";
+            }
+        }
+
         // Consultamos la tabla de inventarios vinculando los datos de la cuenta de usuario encargada
         $query = "SELECT i.id_inventory, i.user_id, i.arrival_date,
                          u.username AS username
                   FROM inventories i
                   LEFT JOIN users u ON i.user_id = u.id_user
-                  ORDER BY i.arrival_date DESC limit 50";
-                  
+                  $where
+                  ORDER BY $orderBy $orderDirection
+                  LIMIT :limit OFFSET :offset";
+
         $stmt = $db->prepare($query);
+        $stmt->bindValue(":limit", $limit, PDO::PARAM_INT);
+        $stmt->bindValue(":offset", $offset, PDO::PARAM_INT);
+
+        if ($search !== "") {
+            $stmt->bindValue(":search", "%$search%");
+        }
+
         $stmt->execute();
-        
+
         $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return [
             "records" => $records,
-            "total" => 2,
-            "page" => 1,
-            "limit" => 50,
-            "totalPages" => 1
+            "total" => $total,
+            "page" => $page,
+            "limit" => $limit,
+            "totalPages" => (int) ceil($total / $limit)
         ];
     } catch (PDOException $e) {
         return ['error' => $e->getMessage()];
+    }
+}
+/**
+ * Valida y asigna el campo por el cual se va a ordenar la tabla de inventarios.
+ */
+function getInventoryOrderField($field) {
+    $allowedFields = [
+        'id_inv' => 'i.id_inventory',
+        'arrival_date' => 'i.arrival_date',
+        'username'     => 'u.username'
+    ];
+    return $allowedFields[$field] ?? 'i.id_inventory';
+}
+
+/**
+ * Valida y asigna el campo por el cual se filtrará la búsqueda.
+ */
+function getInventorySearchField($field) {
+    $allowedFields = [
+        'id_inv' => 'i.id_inventory',
+        'username'     => 'u.username',
+        'arrival_date' => 'i.arrival_date'
+    ];
+    return $allowedFields[$field] ?? 'all';
+}
+
+/**
+ * Obtiene el total de registros en la tabla inventarios aplicando el filtro de búsqueda.
+ */
+function getTotalInventories($searchField, $search) {
+    global $db;
+    try {
+        $where = "WHERE 1=1";
+        if ($search !== "") {
+            if ($searchField === "all") {
+                $where .= " AND (
+                    i.id_inventory LIKE :search
+                    OR u.username LIKE :search
+                    OR i.arrival_date LIKE :search
+                )";
+            } else {
+                $where .= " AND $searchField LIKE :search";
+            }
+        }
+
+        $query = "SELECT COUNT(*) as total 
+                  FROM inventories i
+                  LEFT JOIN users u ON i.user_id = u.id_user
+                  $where";
+
+        $stmt = $db->prepare($query);
+        if ($search !== "") {
+            $stmt->bindValue(":search", "%$search%");
+        }
+
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return (int) ($result['total'] ?? 0);
+    } catch (PDOException $e) {
+        return 0;
     }
 }
 

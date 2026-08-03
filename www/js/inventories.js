@@ -13,17 +13,14 @@ import { rowClick, loadView, getSelectedId } from "./function.js";
 let listOptions = {
   page: 1,
   limit: 50,
-  orderBy: "id_inventory",
+  orderBy: "id_inv",
   orderDirection: "DESC",
   searchField: "all",
   search: "",
 };
 
 export async function initView() {
-  const btnRemove = document.getElementById("btnRemove");
-  const btnEdit = document.getElementById("btnEdit");
   const btnAdd = document.getElementById("btnAdd");
-  const btnGoBack = document.getElementById("goback");
   const orderBy = document.getElementById("orderBy");
   const orderDirection = document.getElementById("orderDirection");
   const btnPrevious = document.getElementById("btnPrevious");
@@ -47,45 +44,11 @@ export async function initView() {
     searchInput.value = listOptions.search;
   }
 
-  btnRemove.addEventListener("click", async function () {
-    Swal.fire({
-      title: "¿Are you sure to delete this record?",
-      text: "You won't be able to revert this action",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Yes, delete",
-      cancelButtonText: "Cancel",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        await deleteRecords("Inventory", getSelectedId());
-        await loadInventoryView();
-      }
-    });
-  });
-
-  if (btnEdit) {
-    btnEdit.addEventListener("click", async function () {
-      const id = getSelectedId();
-      await loadView("../views/forms/inventory.html", "content");
-      await initInventoryForm("edit", id);
-    });
-  }
-
   if (btnAdd) {
     btnAdd.addEventListener("click", async function () {
       await loadView("../views/forms/inventory.html", "content");
       const inventoryModule = await import("./inventory.js");
       await inventoryModule.initView();
-    });
-  }
-
-  if (btnGoBack) {
-    btnGoBack.addEventListener("click", async function (event) {
-      event.preventDefault();
-
-      await initViewMain();
     });
   }
 
@@ -202,72 +165,4 @@ function updatePagination(data) {
   const end = Math.min(data.page * data.limit, data.total);
 
   paginationSummary.textContent = `Showing ${start} to ${end} of ${data.total} Inventory`;
-}
-
-async function loadInventoryView() {
-  await loadView("../views/forms/Inventory.html", "content");
-  await initView();
-}
-
-async function initInventoryForm(mode, id = null) {
-  try {
-    const form = document.getElementById("itemForm");
-    const btnGoBack = document.getElementById("goback");
-
-    if (mode === "edit" && id) {
-      await loadRecordDataToForm("Inventory", id, "itemForm");
-    }
-
-    form.addEventListener("submit", async function (event) {
-      event.preventDefault();
-
-      try {
-        if (mode === "edit") {
-          Swal.fire({
-            title: "¿Are you sure to update this record?",
-            text: "This will overwrite the existing information",
-            icon: "info",
-            showCancelButton: true,
-            confirmButtonColor: "#3085d6",
-            cancelButtonColor: "#d33",
-            confirmButtonText: "Yes, update",
-            cancelButtonText: "Cancel",
-          }).then(async (result) => {
-            if (result.isConfirmed) {
-              await updateRecord("Inventory", form, id);
-              await loadInventoryView();
-            }
-          });
-        } else {
-          Swal.fire({
-            title: "¿Are you sure to Add record?",
-            text: "Please confirm that the data is correct",
-            icon: "question",
-            showCancelButton: true,
-            confirmButtonColor: "#3085d6",
-            cancelButtonColor: "#d33",
-            confirmButtonText: "Yes, save",
-            cancelButtonText: "Cancel",
-          }).then(async (result) => {
-            if (result.isConfirmed) {
-              await saveRecords("Inventory", form);
-              await loadInventoryView();
-            }
-          });
-        }
-      } catch (error) {
-        console.error("Error al guardar la categoria:", error);
-      }
-    });
-
-    if (btnGoBack) {
-      btnGoBack.addEventListener("click", async function (event) {
-        event.preventDefault();
-
-        await loadInventoryView();
-      });
-    }
-  } catch (error) {
-    console.error("Error al inicializar el formulario:", error);
-  }
 }
