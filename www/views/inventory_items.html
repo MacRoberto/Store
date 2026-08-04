@@ -1,75 +1,180 @@
-<!doctype html>
-<html lang="es" class="h-full bg-gray-50">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Inventory Items</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-  </head>
+<div class="h-full flex flex-col items-center py-10">
+  <div class="w-full max-w-7xl bg-white shadow-md rounded-lg overflow-hidden">
+    <div class="px-6 py-4 bg-indigo-600 border-b border-gray-200">
+      <h2 class="text-xl font-bold text-white">Inventory Items</h2>
 
-  //This modules is to show the items prices when they are received in the
-  inventory, and also to show the available quantity of each item in the
-  inventory and their cost to clients.
-  <body class="h-full flex flex-col items-center py-10">
-    <div class="w-full max-w-7xl bg-white shadow-md rounded-lg overflow-hidden">
-      <div class="px-6 py-4 bg-indigo-600 border-b border-gray-200">
-        <h2 class="text-xl font-bold text-white">Inventory Items</h2>
-      </div>
-
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              <th
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                ID
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Product Name
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Warehouse/Inventory
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Purchase Price
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Sale Price
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Quantity Received
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Available Quantity
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Status
-              </th>
-            </tr>
-          </thead>
-          <tbody
-            id="inventoryItemsTableBody"
-            class="bg-white divide-y divide-gray-200"
-          ></tbody>
-        </table>
+      <div class="flex items-center gap-4">
+        <button
+          id="btnGoback"
+          class="border border-white/40 text-white font-medium rounded-md px-4 py-2 hover:bg-white/10"
+        >
+          Go back to Inventory
+        </button>
       </div>
     </div>
 
-    <script src="../js/inventory_items.js"></script>
-  </body>
-</html>
+    <div
+      class="px-6 py-4 border-b border-gray-200 flex flex-wrap items-end justify-between gap-4"
+    >
+      <div class="flex flex-wrap items-end gap-3">
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">
+            Search by
+          </label>
+
+          <select
+            id="searchField"
+            class="border border-gray-300 rounded-md px-3 py-2 bg-white"
+          >
+            <option value="all">All</option>
+            <option value="id_inventoryItems">ID</option>
+            <option value="article_name">Product Name</option>
+            <option value="status">Status</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">
+            Search
+          </label>
+
+          <input
+            id="searchInput"
+            type="text"
+            placeholder="Type and press Enter..."
+            class="border border-gray-300 rounded-md px-3 py-2 w-72"
+          />
+        </div>
+
+        <button
+          id="btnSearch"
+          class="border border-indigo-500 text-indigo-600 font-medium rounded-md px-4 py-2 hover:bg-indigo-50"
+        >
+          Apply
+        </button>
+      </div>
+
+      <div class="flex items-end gap-3">
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">
+            Sort by
+          </label>
+
+          <select
+            id="orderBy"
+            class="border border-gray-300 rounded-md px-3 py-2 bg-white"
+          >
+            <option value="id_inventory_item">ID</option>
+            <option value="product_name">Product Name</option>
+            <option value="status">Status</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">
+            Direction
+          </label>
+
+          <select
+            id="orderDirection"
+            class="border border-gray-300 rounded-md px-3 py-2 bg-white"
+          >
+            <option value="DESC">Descending</option>
+            <option value="ASC">Ascending</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              ID
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Product Name
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Warehouse/Inventory
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Purchase Price
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Sale Price
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Quantity Received
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Available Quantity
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Status
+            </th>
+          </tr>
+        </thead>
+        <tbody
+          id="inventoryItemsTableBody"
+          class="bg-white divide-y divide-gray-200"
+        ></tbody>
+      </table>
+      <div
+        class="px-6 py-4 border-t border-gray-200 flex flex-wrap items-center justify-between gap-4"
+      >
+        <div id="paginationSummary" class="text-sm text-gray-600">
+          Showing 0 to 0 of 0 categories
+        </div>
+
+        <div class="flex items-center gap-4">
+          <button
+            id="btnPrevious"
+            class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Previous
+          </button>
+
+          <div class="flex items-center gap-2 text-sm text-gray-600">
+            <span>Page</span>
+
+            <span
+              id="currentPage"
+              class="px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-800"
+            >
+              1
+            </span>
+
+            <span>of</span>
+
+            <span id="totalPages">1</span>
+          </div>
+
+          <button
+            id="btnNext"
+            class="px-4 py-2 border border-indigo-500 rounded-md text-indigo-600 hover:bg-indigo-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
