@@ -31,6 +31,7 @@ export async function initView() {
   const searchField = document.getElementById("searchField");
   const searchInput = document.getElementById("searchInput");
   const btnSearch = document.getElementById("btnSearch");
+  const btnActions = document.getElementById("btnActions");
 
   if (searchField) {
     searchField.value = listOptions.searchField;
@@ -107,6 +108,13 @@ export async function initView() {
       await initViewMain();
     });
   }
+
+  btnActions.addEventListener("click", async function () {
+    await loadView("../views/actions.html", "content");
+    const actionModule = await import("./actions.js");
+    const moduleId = getSelectedId();
+    await actionModule.initView(moduleId);
+  });
 
   if (orderBy) {
     orderBy.value = listOptions.orderBy;
