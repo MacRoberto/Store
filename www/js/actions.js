@@ -6,6 +6,8 @@ import {
 } from "./api.js";
 
 import { rowClick, loadView, getSelectedId } from "./function.js";
+import { validateForm } from "./validators/validate-form.js";
+import { actionsRules } from "./validators/rules/actions-rules.js";
 
 let listOptions = {
   page: 1,
@@ -99,7 +101,20 @@ function initActionForm() {
 
   form.addEventListener("submit", async function (event) {
     event.preventDefault();
-    console.log("Form submitted");
+
+    //se manda a llamar la funcion, se le pasa el formulario y las reglas definidas
+    const validation = validateForm(form, actionsRules);
+    //Si no es valido se muestra mensaje y ya no ejecuta el resto del proceso
+    if (!validation.valid) {
+      await Swal.fire({
+        icon: "warning",
+        title: "Validation error",
+        text: validation.error.message,
+      });
+
+      return; // Evitar que se ejecute el guardado o la actualización.
+    }
+
     const idActionInput = form.querySelector('input[name="id_action"]');
     const idModuleInput = ensureModuleHiddenInput(form);
 
@@ -126,13 +141,25 @@ function initActionForm() {
       }).then(async (result) => {
         if (result.isConfirmed) {
           if (isEditMode) {
-            await updateRecord("actions", form, idActionInput.value);
+            const response = await updateRecord(
+              "actions",
+              form,
+              idActionInput.value,
+            );
+            // Después de guardar, regresar al listado.
+            if (response) {
+              // Después de guardar, regresar al listado.
+              await loadActions(activeModuleId);
+            }
           } else {
-            await saveRecords("actions", form);
+            const response = await saveRecords("actions", form);
+            if (response) {
+              // Después de guardar, regresar al listado.
+              await loadActions(activeModuleId);
+            }
           }
 
           closeActionModal();
-          await loadActions(activeModuleId);
         }
       });
     } catch (error) {

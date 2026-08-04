@@ -1,5 +1,7 @@
 <?php
 require_once "../src/functions.php";
+require_once __DIR__ . '/validators/validate-form.php';
+$actionRules = require __DIR__. '/validators/rules/actions-rules.php';
 
 // Se reciben los parámetros raw del JSON payload
 $requestData = json_decode(file_get_contents("php://input"), true) ?? [];
@@ -21,12 +23,36 @@ if ($accion == "list") {
     echo json_encode(getActionById($id));
 
 } else if ($accion == "save") {
+    /*Hacer validaciones*/
+    $validation = validateForm(
+        $requestData,
+        $actionRules
+    );
+
+    if (!$validation['valid']) {
+        //En caso de error regresar el mensaje
+        echo json_encode(["error" => $validation["error"]['message']]);
+        exit;//detener la ejecucion del script
+    }
+
     $name = $requestData['name'] ?? "";
     $description = $requestData['description'] ?? "";
     $id_module = $requestData['id_module'] ?? "";
     echo json_encode(saveActions($name, $description, $id_module));
 
 } else if ($accion == "update") {
+    /*Hacer validaciones*/
+    $validation = validateForm(
+        $requestData,
+        $actionRules
+    );
+
+    if (!$validation['valid']) {
+        //En caso de error regresar el mensaje
+        echo json_encode(["error" => $validation["error"]['message']]);
+        exit;//detener la ejecucion del script
+    }
+
     $id = $requestData['id'] ?? "";
     $name = $requestData['name'] ?? "";
     $description = $requestData['description'] ?? "";

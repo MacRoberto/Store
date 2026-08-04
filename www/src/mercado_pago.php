@@ -187,7 +187,7 @@ function mercadoPagoRequest(
     ?array $body = null,
     bool $useIdempotencyKey = false
 ): array {
-    $accessToken = "";
+    $accessToken = " ";
 
     $headers = [
         'Authorization: Bearer ' . $accessToken,

@@ -15,7 +15,7 @@ export const productsRules = {
     maxLength: 50,
   },
 
-  id_category: {
+  category: {
     label: "Category",
     required: true,
     type: "number",

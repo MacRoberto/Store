@@ -1,6 +1,8 @@
 <?php
 session_start();
 require_once "../src/functions.php";
+require_once __DIR__ . '/validators/validate-form.php';
+$userRules = require __DIR__. '/validators/rules/users-rules.php';
 
 // Se reciben los parámetros raw del JSON payload
 $requestData = json_decode(file_get_contents("php://input"), true) ?? [];
@@ -79,6 +81,18 @@ if ($accion == "list") {
     echo json_encode(getUserById($id));
 
 } else if ($accion == "save") {
+    /*Hacer validaciones*/
+    $validation = validateForm(
+        $requestData,
+        $userRules
+    );
+
+    if (!$validation['valid']) {
+        //En caso de error regresar el mensaje
+        echo json_encode(["error" => $validation["error"]['message']]);
+        exit;//detener la ejecucion del script
+    }
+
     $username = $requestData['username'] ?? "";
     $id_rol = $requestData['id_rol'] ?? "";
     $status = $requestData['status'] ?? "";
@@ -87,6 +101,18 @@ if ($accion == "list") {
     echo json_encode(saveUsers($username, $id_rol, $status, $password));
 
 } else if ($accion == "update") {
+    /*Hacer validaciones*/
+    $validation = validateForm(
+        $requestData,
+        $userRules
+    );
+
+    if (!$validation['valid']) {
+        //En caso de error regresar el mensaje
+        echo json_encode(["error" => $validation["error"]['message']]);
+        exit;//detener la ejecucion del script
+    }
+
     $id = $requestData['id'] ?? "";
     $username = $requestData['username'] ?? "";
     $id_rol = $requestData['id_rol'] ?? "";

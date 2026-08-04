@@ -1,7 +1,7 @@
 <?php
 require_once "../src/functions.php";
 require_once __DIR__ . '/validators/validate-form.php';
-$categoriesRules = require __DIR__. '/validators/rules/categories.php';
+$categoryRules = require __DIR__. '/validators/rules/categories-rules.php';
 
 //Se reciben los parametros
  $requestData = json_decode(file_get_contents("php://input"), true);
@@ -30,7 +30,7 @@ if($accion == "list"){
     /*Hacer validaciones*/
     $validation = validateForm(
         $requestData,
-        $categoriesRules
+        $categoryRules
     );
 
     if (!$validation['valid']) {
@@ -38,15 +38,15 @@ if($accion == "list"){
         echo json_encode(["error" => $validation["error"]['message']]);
         exit;//detener la ejecucion del script
     }
-    $name = $_get['name'] ?? "";
-    $description = $_get['description'] ?? "";
+    $name = $requestData['name'] ?? "";
+    $description = $requestData['description'] ?? "";
     $result = saveCategories($name, $description);
     echo json_encode($result);
 
 }else if($accion == "update"){
      $validation = validateForm(
         $requestData,
-        $categoriesRules
+        $categoryRules
     );
 
     if (!$validation['valid']) {
