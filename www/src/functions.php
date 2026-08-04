@@ -746,28 +746,114 @@ function getAllInventoryMovements() {
     }
 }
 
-function getAllInventoryItems() {
+/*inicio de Inventory Items
+
+/**
+ * Obtiene los artículos de inventario de forma paginada, ordenada y filtrada.
+ * Realiza un LEFT JOIN con la tabla de productos para obtener el nombre del producto.
+ */
+function getAllInventoryItems($data = []) {
     global $db;
-    try {
-        // Ejecutamos JOINs hacia productos e inventarios (almacenes) principales
-        // Nota: Ajusta 'inv.name' según el nombre exacto de la columna en tu tabla 'inventories'
-        $query = "SELECT ii.id_inventory_item, ii.product_id, ii.id_inventory, 
-                         ii.cost_price, ii.quantity_received, ii.quantity_available, 
-                         ii.status, ii.sale_price,
-                         p.name AS product_name
-                  FROM inventory_items ii
-                  LEFT JOIN products p ON ii.product_id = p.id_product
-                  LEFT JOIN inventories inv ON ii.id_inventory = inv.id_inventory
-                  ORDER BY ii.id_inventory_item DESC";
-                  
-        $stmt = $db->prepare($query);
-        $stmt->execute();
-        
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-        return ['error' => $e->getMessage()];
+
+    // 1. Configuración de Paginación
+    $page = isset($data['page']) ? max(1, intval($data['page'])) : 1;
+    $limit = isset($data['limit']) ? intval($data['limit']) : 50;
+    $offset = ($page - 1) * $limit;
+
+    // 2. Mapeo de Columnas para Ordenamiento
+    $allowedColumns = [
+        'id_inventory_item' => 'ii.id_inventory_item',
+        'product_name'      => 'p.name',
+        'cost_price'        => 'ii.cost_price',
+        'sale_price'        => 'ii.sale_price',
+        'quantity_received' => 'ii.quantity_received',
+        'quantity_available' => 'ii.quantity_available',
+        'status'            => 'ii.status'
+    ];
+
+    $reqOrder = $data['orderBy'] ?? 'id_inventory_item';
+    $orderBy = $allowedColumns[$reqOrder] ?? 'ii.id_inventory_item';
+    $orderDirection = (isset($data['orderDirection']) && strtoupper($data['orderDirection']) === 'ASC') ? 'ASC' : 'DESC';
+
+    // 3. Construcción de Filtros Dinámicos
+    $whereClauses = ["1=1"];
+    $params = [];
+
+    // Filtrar por ID de Inventario padre (usando la columna real id_inventory)
+    $inventoryId = intval($data['inventoryId'] ?? 0);
+    if ($inventoryId > 0) {
+        $whereClauses[] = "ii.id_inventory = :inventoryId";
+        $params[':inventoryId'] = $inventoryId;
     }
+
+    // Filtro dinámico de búsqueda
+    $search = trim($data['search'] ?? '');
+    $searchField = $data['searchField'] ?? 'all';
+
+    if (!empty($search)) {
+        if ($searchField === 'product_name') {
+            $whereClauses[] = "p.name LIKE :search";
+        } else if ($searchField === 'status') {
+            $whereClauses[] = "ii.status LIKE :search";
+        } else {
+            // Búsqueda por defecto en todos los campos clave
+            $whereClauses[] = "(p.name LIKE :search OR ii.id_inventory_item LIKE :search OR ii.status LIKE :search)";
+        }
+        $params[':search'] = "%$search%";
+    }
+
+    $whereSql = implode(" AND ", $whereClauses);
+
+    // 4. Conteo Total de Registros Coincidentes
+    $countSql = "SELECT COUNT(*) 
+                 FROM inventory_items ii 
+                 LEFT JOIN products p ON ii.product_id = p.id_product 
+                 WHERE $whereSql";
+    $countStmt = $db->prepare($countSql);
+    $countStmt->execute($params);
+    $total = intval($countStmt->fetchColumn());
+
+    // 5. Consulta Principal de Datos
+    // Mapeo directo usando las columnas reales de HeidiSQL: cost_price, id_inventory, etc.
+    $sql = "SELECT 
+                ii.id_inventory_item,
+                ii.id_inventory,
+                ii.product_id,
+                COALESCE(p.name, '') AS product_name,
+                ii.cost_price,
+                ii.sale_price,
+                ii.quantity_received,
+                ii.quantity_available,
+                ii.status
+            FROM inventory_items ii
+            LEFT JOIN products p ON ii.product_id = p.id_product
+            WHERE $whereSql
+            ORDER BY $orderBy $orderDirection
+            LIMIT :limit OFFSET :offset";
+
+    $stmt = $db->prepare($sql);
+
+    // Asignar parámetros dinámicos
+    foreach ($params as $key => $val) {
+        $stmt->bindValue($key, $val);
+    }
+    $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+
+    $stmt->execute();
+    $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // 6. Retornar respuesta estructurada para el frontend
+    return [
+        'records'    => $records,
+        'total'      => $total,
+        'page'       => $page,
+        'limit'      => $limit,
+        'totalPages' => ($total > 0) ? ceil($total / $limit) : 0
+    ];
 }
+
+//fin de inventory items
 
 function getAllSales($requestData) {
     global $db;

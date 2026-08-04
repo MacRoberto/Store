@@ -28,7 +28,7 @@ export async function initView() {
   const searchField = document.getElementById("searchField");
   const searchInput = document.getElementById("searchInput");
   const btnSearch = document.getElementById("btnSearch");
-
+  const btnDetail = document.getElementById("btnDetail");
   if (searchField) {
     searchField.value = listOptions.searchField;
 
@@ -49,6 +49,15 @@ export async function initView() {
       await loadView("../views/forms/inventory.html", "content");
       const inventoryModule = await import("./inventory.js");
       await inventoryModule.initView();
+    });
+  }
+
+  if (btnDetail) {
+    btnDetail.addEventListener("click", async function () {
+      const inventoryId = getSelectedId();
+      await loadView("../views/inventory_items.html", "content");
+      const inventoryItemsModule = await import("./inventory_items.js");
+      await inventoryItemsModule.initView(inventoryId);
     });
   }
 
@@ -138,7 +147,7 @@ async function loadInventory() {
       `;
 
       tr.addEventListener("click", function (event) {
-        rowClick(event, Inventory.id);
+        rowClick(event, Inventory.id_inventory);
       });
 
       tableBody.appendChild(tr);
