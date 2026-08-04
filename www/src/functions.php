@@ -1844,7 +1844,7 @@ function deleteModule($id_module) {
     }
 }
 
-function getAllActions() {
+function getAllActions($requestData) {
     global $db;
     try {
         // Ejecutamos un LEFT JOIN para obtener el nombre legible del módulo al que pertenece cada acción
@@ -1852,9 +1852,11 @@ function getAllActions() {
                          m.name AS module_name
                   FROM actions a
                   LEFT JOIN modules m ON a.id_module = m.id_module
+                  WHERE a.id_module = :id_module
                   ORDER BY m.name ASC, a.id_action ASC";
                   
         $stmt = $db->prepare($query);
+        $stmt->bindParam(':id_module', $requestData['idModule'], PDO::PARAM_INT);
         $stmt->execute();
         
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -2475,6 +2477,5 @@ function saveInventory($datas)
 ///Fin de funciones para inventarios
 
 ?>
-
 
 

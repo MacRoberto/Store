@@ -2,24 +2,32 @@ import {
   deleteRecords,
   updateRecord,
   saveRecords,
-  loadSelectOptions,
-  loadRecordDataToForm,
   fetchRecords,
 } from "./api.js";
 
-import { initView as initViewMain } from "./enviroment.js";
-
 import { rowClick, loadView, getSelectedId } from "./function.js";
 
-export async function initView() {
-  const actions = await fetchRecords("actions");
-  const tableBody = document.getElementById("actionsTableBody");
+let listOptions = {
+  page: 1,
+  limit: 50,
+  orderBy: "id_action",
+  orderDirection: "DESC",
+  searchField: "all",
+  search: "",
+};
+
+let activeModuleId = null;
+let currentActionMode = "add";
+let selectedActionData = null;
+
+export async function initView(idModule) {
+  activeModuleId = idModule ?? activeModuleId;
   const btnRemove = document.getElementById("btnRemove");
   const btnEdit = document.getElementById("btnEdit");
   const btnAdd = document.getElementById("btnAdd");
-  const btnGoBack = document.getElementById("goback");
+  const btnGoBack = document.getElementById("btnBackToModules");
 
-  btnRemove.addEventListener("click", async function (event) {
+  btnRemove.addEventListener("click", async function () {
     Swal.fire({
       title: "¿Are you sure to delete this record?",
       text: "You won't be able to revert this action",
@@ -39,21 +47,216 @@ export async function initView() {
 
   if (btnEdit) {
     btnEdit.addEventListener("click", async function () {
-      const id = getSelectedId();
-      await loadView("../views/forms/actions.html", "content");
-      await initActionForm("edit", id);
+      if (!selectedActionData) {
+        Swal.fire({
+          title: "Select a record",
+          text: "Choose an action row before editing.",
+          icon: "info",
+        });
+        return;
+      }
+
+      openActionModal("edit", selectedActionData);
     });
   }
 
   if (btnAdd) {
     btnAdd.addEventListener("click", async function () {
-      await loadView("../views/forms/actions.html", "content");
-      await initActionForm("add");
+      openActionModal("add");
     });
   }
 
+  if (btnGoBack) {
+    btnGoBack.addEventListener("click", async function () {
+      await loadView("../views/modules.html", "content");
+      const modulesModule = await import("./modules.js");
+      await modulesModule.initView();
+    });
+  }
+
+  initActionForm();
+  await loadActions(activeModuleId);
+}
+
+async function loadActionView() {
+  await loadView("../views/actions.html", "content");
+  await initView(activeModuleId);
+}
+
+function initActionForm() {
+  const form = document.getElementById("itemForm");
+  const modal = document.getElementById("actionModal");
+  const modalTitle = document.getElementById("actionModalTitle");
+  const submitButton = document.getElementById("actionSubmitBtn");
+  const closeButton = document.getElementById("actionModalClose");
+  const cancelButton = document.getElementById("actionModalCancel");
+
+  if (!form || !modal) {
+    return;
+  }
+
+  ensureModuleHiddenInput(form);
+
+  form.addEventListener("submit", async function (event) {
+    event.preventDefault();
+    console.log("Form submitted");
+    const idActionInput = form.querySelector('input[name="id_action"]');
+    const idModuleInput = ensureModuleHiddenInput(form);
+
+    if (idModuleInput) {
+      idModuleInput.value = activeModuleId ?? "";
+    }
+
+    try {
+      const isEditMode = currentActionMode === "edit" && idActionInput?.value;
+
+      Swal.fire({
+        title: isEditMode
+          ? "¿Are you sure to update this record?"
+          : "¿Are you sure to Add record?",
+        text: isEditMode
+          ? "This will overwrite the existing information"
+          : "Please confirm that the data is correct",
+        icon: isEditMode ? "info" : "question",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: isEditMode ? "Yes, update" : "Yes, save",
+        cancelButtonText: "Cancel",
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          if (isEditMode) {
+            await updateRecord("actions", form, idActionInput.value);
+          } else {
+            await saveRecords("actions", form);
+          }
+
+          closeActionModal();
+          await loadActions(activeModuleId);
+        }
+      });
+    } catch (error) {
+      console.error("Error al guardar la accion:", error);
+    }
+  });
+
+  if (closeButton) {
+    closeButton.addEventListener("click", closeActionModal);
+  }
+
+  if (cancelButton) {
+    cancelButton.addEventListener("click", closeActionModal);
+  }
+
+  if (modal) {
+    modal.addEventListener("click", function (event) {
+      if (event.target === modal) {
+        closeActionModal();
+      }
+    });
+  }
+
+  if (modalTitle && submitButton) {
+    modalTitle.textContent = "Add Action";
+    submitButton.textContent = "Save Action";
+  }
+}
+
+function openActionModal(mode, actionData = null) {
+  const modal = document.getElementById("actionModal");
+  const modalTitle = document.getElementById("actionModalTitle");
+  const submitButton = document.getElementById("actionSubmitBtn");
+  const form = document.getElementById("itemForm");
+
+  if (!modal || !form) {
+    return;
+  }
+
+  currentActionMode = mode;
+
+  if (mode === "edit" && actionData) {
+    selectedActionData = actionData;
+    const idActionInput = form.querySelector('input[name="id_action"]');
+    const idModuleInput = ensureModuleHiddenInput(form);
+    const nameInput = form.querySelector('input[name="name"]');
+    const descriptionInput = form.querySelector('input[name="description"]');
+
+    if (idActionInput) idActionInput.value = actionData.id_action ?? "";
+    if (idModuleInput) idModuleInput.value = activeModuleId ?? "";
+    if (nameInput)
+      nameInput.value = actionData.name ?? actionData.action_name ?? "";
+    if (descriptionInput) descriptionInput.value = actionData.description ?? "";
+
+    if (modalTitle) modalTitle.textContent = "Edit Action";
+    if (submitButton) submitButton.textContent = "Update Action";
+  } else {
+    clearActionForm(form);
+    if (modalTitle) modalTitle.textContent = "Add Action";
+    if (submitButton) submitButton.textContent = "Save Action";
+  }
+
+  modal.classList.remove("hidden");
+}
+
+function closeActionModal() {
+  const modal = document.getElementById("actionModal");
+  const form = document.getElementById("itemForm");
+  const modalTitle = document.getElementById("actionModalTitle");
+  const submitButton = document.getElementById("actionSubmitBtn");
+
+  if (modal) {
+    modal.classList.add("hidden");
+  }
+
+  if (form) {
+    clearActionForm(form);
+  }
+
+  if (modalTitle) modalTitle.textContent = "Add Action";
+  if (submitButton) submitButton.textContent = "Save Action";
+
+  currentActionMode = "add";
+  selectedActionData = null;
+}
+
+function ensureModuleHiddenInput(form) {
+  let idModuleInput = form.querySelector('input[name="id_module"]');
+
+  if (!idModuleInput) {
+    idModuleInput = document.createElement("input");
+    idModuleInput.type = "hidden";
+    idModuleInput.name = "id_module";
+    form.appendChild(idModuleInput);
+  }
+
+  return idModuleInput;
+}
+
+function clearActionForm(form) {
+  if (!form) {
+    return;
+  }
+
+  form.reset();
+
+  const idActionInput = form.querySelector('input[name="id_action"]');
+  const idModuleInput = ensureModuleHiddenInput(form);
+
+  if (idActionInput) idActionInput.value = "";
+  if (idModuleInput) idModuleInput.value = activeModuleId ?? "";
+
+  form.querySelectorAll("input, textarea, select").forEach((element) => {
+    element.classList.remove("border-red-500");
+  });
+}
+
+async function loadActions(idModule) {
+  const data = await fetchRecords("actions", { ...listOptions, idModule });
+  const tableBody = document.getElementById("actionsTableBody");
+
   if (tableBody) {
-    actions.forEach((action) => {
+    tableBody.innerHTML = "";
+    data.forEach((action) => {
       const tr = document.createElement("tr");
 
       tr.innerHTML = `
@@ -64,88 +267,15 @@ export async function initView() {
       `;
 
       tr.addEventListener("click", function (event) {
-        rowClick(event, action.id_action); 
+        rowClick(event, action.id_action);
+        selectedActionData = {
+          id_action: action.id_action,
+          name: action.action_name,
+          description: action.description,
+        };
       });
 
       tableBody.appendChild(tr);
     });
-  }
-
-  if (btnGoBack) {
-    btnGoBack.addEventListener("click", async function (event) {
-      event.preventDefault();
-
-      await initViewMain();
-    });
-  }
-}
-
-async function loadActionView() {
-  await loadView("../views/actions.html", "content");
-  await initView();
-}
-
-async function initActionForm(mode, id = null) {
-  try {
-    const form = document.getElementById("itemForm");
-    const btnGoBack = document.getElementById("goback");
-
-    await loadSelectOptions("modules", "module")
-
-    if (mode === "edit" && id) {
-      await loadRecordDataToForm("actions", id, "itemForm");
-    }
-
-    form.addEventListener("submit", async function (event) {
-      event.preventDefault();
-
-      try {
-        if (mode === "edit") {
-          Swal.fire({
-            title: "¿Are you sure to update this record?",
-            text: "This will overwrite the existing information",
-            icon: "info",
-            showCancelButton: true,
-            confirmButtonColor: "#3085d6",
-            cancelButtonColor: "#d33",
-            confirmButtonText: "Yes, update",
-            cancelButtonText: "Cancel",
-          }).then(async (result) => {
-            if (result.isConfirmed) {
-              await updateRecord("actions", form, id);
-              await loadActionView();
-            }
-          });
-        } else {
-          Swal.fire({
-            title: "¿Are you sure to Add record?",
-            text: "Please confirm that the data is correct",
-            icon: "question",
-            showCancelButton: true,
-            confirmButtonColor: "#3085d6",
-            cancelButtonColor: "#d33",
-            confirmButtonText: "Yes, save",
-            cancelButtonText: "Cancel",
-          }).then(async (result) => {
-            if (result.isConfirmed) {
-              await saveRecords("actions", form);
-              await loadActionView();
-            }
-          });
-        }
-      } catch (error) {
-        console.error("Error al guardar la accion:", error);
-      }
-    });
-
-    if (btnGoBack) {
-      btnGoBack.addEventListener("click", async function (event) {
-        event.preventDefault();
-
-        await loadActionView();
-      });
-    }
-  } catch (error) {
-    console.error("Error al inicializar el formulario:", error);
   }
 }
