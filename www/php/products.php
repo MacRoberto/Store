@@ -1,5 +1,7 @@
 <?php
 require_once "../src/functions.php";
+require_once __DIR__ . '/validators/validate-form.php';
+$productRules = require __DIR__. '/validators/rules/products-rules.php';
 
 $requestData = json_decode(file_get_contents("php://input"), true) ?? [];
 $accion = $requestData['action'] ?? "";
@@ -16,6 +18,18 @@ if ($accion == "list") {
     $result = softDeleteProduct($id_producto);
     echo json_encode($result);
 }else if($accion == "save") {
+    /*Hacer validaciones*/
+    $validation = validateForm(
+        $requestData,
+        $productRules
+    );
+
+    if (!$validation['valid']) {
+        //En caso de error regresar el mensaje
+        echo json_encode(["error" => $validation["error"]['message']]);
+        exit;//detener la ejecucion del script
+    }
+
     $barcode = $requestData['barcode'] ?? "";
     $name = $requestData['name'] ?? "";
     $category_id = $requestData['category'] ?? 0;
@@ -35,6 +49,18 @@ if ($accion == "list") {
     
     echo json_encode($result);
 }else if($accion == "update") {
+    /*Hacer validaciones*/
+    $validation = validateForm(
+        $requestData,
+        $productRules
+    );
+
+    if (!$validation['valid']) {
+        //En caso de error regresar el mensaje
+        echo json_encode(["error" => $validation["error"]['message']]);
+        exit;//detener la ejecucion del script
+    }
+
     $id_producto = $requestData['id'] ?? 0;
     $barcode = $requestData['barcode'] ?? "";
     $name = $requestData['name'] ?? "";
@@ -44,10 +70,6 @@ if ($accion == "list") {
     $status = $requestData['status'] ?? "";
     $units = $requestData['units'] ?? "";
     
-    if (empty($id_producto) || empty($barcode) || empty($name) || empty($category_id) || empty($status)) {
-        echo json_encode(["error" => "Required fields cannot be empty."]);
-        exit;
-    }
     //llamar funcion para actualizar producto
     $result = updateProduct($id_producto, $barcode, $name, $category_id, $description, $reorder_level, $status, $units);
 
