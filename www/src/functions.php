@@ -284,6 +284,36 @@ function findProductBybarcode($barcode){
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
+//consulta para obtener promociones activas de un producto en especifico
+function getPromotionsByProductId($productId) {
+    global $db;
+
+    $sql = "
+        SELECT
+        id_promotion,
+        name,
+        description,
+        date_start,
+        date_end,
+        percent_off,
+        id_product,
+        status
+    FROM promotions
+    WHERE id_product = :id_product
+        AND status = 'Active'
+        AND DATE(CONVERT_TZ(NOW(), '+00:00', '-05:00'))
+        BETWEEN date_start AND date_end
+    ORDER BY percent_off DESC
+    LIMIT 1
+    ";
+
+    $stmt = $db->prepare($sql);
+    $stmt->bindValue(':id_product', $productId, PDO::PARAM_INT);
+    $stmt->execute();
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
 /*Fin de funciones para el modulo de productos*/
 
 //Funcion para recuperar id y nombre de gategorias, el cual sirve para llenar el select en productos
@@ -2475,6 +2505,97 @@ function saveInventory($datas)
 }
 
 ///Fin de funciones para inventarios
+
+//Inicio de funciones para ventas
+function saveSale($data)
+{
+    global $db;
+    $products = $data['products'] ?? [];
+    $paymentMethod = str_replace('_',' ',$data['payment_method'] ?? 'cash');
+    try {
+        $db->beginTransaction();
+
+        /*
+         * Registrar encabezado de la venta
+         */
+        $saleStatement = $db->prepare("
+            INSERT INTO sales (
+                user_id,
+                transaction_date,
+                total_amount,
+                payment_method,
+                status
+            ) VALUES (
+                :user_id,
+                NOW(),
+                :total_amount,
+                :payment_method,
+                'Completed'
+            )
+        ");
+
+        $saleStatement->execute([
+            ':user_id' => $data['user_id'] ?? 0,
+            ':total_amount' => $data['total_amount'] ?? 0,
+            ':payment_method' => $paymentMethod,
+        ]);
+
+        $saleId = (int) $db->lastInsertId();
+
+        /*
+         * Preparar una sola vez el INSERT de los detalles
+         */
+        $detailStatement = $db->prepare("
+            INSERT INTO sales_details (
+                sale_id,
+                quantity,
+                unit_price,
+                discount_applied,
+                subtotal,
+                id_inventory_item,
+                id_promotion
+            ) VALUES (
+                :sale_id,
+                :quantity,
+                :unit_price,
+                :discount_applied,
+                :subtotal,
+                :id_inventory_item,
+                :id_promotion
+            )
+        ");
+
+        foreach ($products as $product) {
+
+            $detailStatement->execute([
+                ':sale_id' => $saleId,
+                ':quantity' => $product['quantity'] ?? 0,
+                ':unit_price' => $product['unit_price'] ?? 0.00,
+                ':discount_applied' => $product['discount_applied'] ?? 0.00,
+                ':subtotal' => $product['subtotal'] ?? 0.00,
+                ':id_inventory_item' => $product['inventory_item_id'] ?? 0,
+                ':id_promotion' => $product['id_promotion'] ?? null
+            ]);
+        }
+
+        $db->commit();
+
+        return array(
+            'success' => true,
+            'message' => 'Sale saved successfully.',
+            'sale_id' => $saleId
+        );
+    } catch (Throwable $error) {
+        if ($db->inTransaction()) {
+            $db->rollBack();
+        }
+        return [
+            'error' => 'Could not save sale transaction.',
+            'details' => $error->getMessage()
+        ];
+    }
+}
+//Fin de funciones para ventas
 
 ?>
 

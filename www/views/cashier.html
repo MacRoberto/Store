@@ -1,114 +1,281 @@
-<!doctype html>
-<html lang="es" class="h-full bg-gray-100">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Punto de Venta</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-  </head>
-  <body class="h-full">
-    <div class="min-h-screen p-4">
-      <div class="mx-auto grid max-w-7xl grid-cols-1 gap-4 lg:grid-cols-[1fr_360px]">
-        <section class="rounded-2xl bg-white shadow-md overflow-hidden">
-          <div class="bg-indigo-600 px-6 py-4">
-            <h1 class="text-xl font-bold text-white">Punto de Venta</h1>
+<div class="h-full">
+  <div class="min-h-screen p-4">
+    <div
+      class="mx-auto grid max-w-7xl grid-cols-1 gap-4 lg:grid-cols-[1fr_360px]"
+    >
+      <!-- Sección de productos -->
+      <section class="overflow-hidden rounded-2xl bg-white shadow-md">
+        <div class="bg-indigo-600 px-6 py-4">
+          <h1 class="text-xl font-bold text-white">Point of Sale</h1>
+        </div>
+
+        <div class="p-6">
+          <!-- Buscador -->
+          <div class="mb-4 flex gap-3">
+            <input
+              id="searchInput"
+              type="text"
+              placeholder="Product code"
+              autocomplete="off"
+              class="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-indigo-500"
+            />
+
+            <button
+              id="btnSearch"
+              type="button"
+              class="rounded-lg bg-indigo-600 px-5 py-3 font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+            >
+              Add
+            </button>
           </div>
 
-          <div class="p-6">
-            <div class="mb-4 flex gap-3">
+          <!-- Tabla del carrito -->
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th
+                    class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500"
+                  >
+                    ID
+                  </th>
+
+                  <th
+                    class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500"
+                  >
+                    Product
+                  </th>
+
+                  <th
+                    class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500"
+                  >
+                    Price
+                  </th>
+
+                  <th
+                    class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500"
+                  >
+                    Qty.
+                  </th>
+
+                  <th
+                    class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500"
+                  >
+                    Subtotal
+                  </th>
+
+                  <th
+                    class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500"
+                  >
+                    Discount (%)
+                  </th>
+
+                  <th
+                    class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500"
+                  >
+                    Final Total
+                  </th>
+
+                  <th
+                    class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500"
+                  >
+                    Action
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody
+                id="cartTableBody"
+                class="divide-y divide-gray-100 bg-white"
+              ></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sección de cobro -->
+      <aside
+        class="h-fit overflow-hidden rounded-2xl bg-white shadow-md lg:sticky lg:top-4"
+      >
+        <div class="bg-red-700 px-6 py-4">
+          <h2 class="text-lg font-bold text-white">Checkout</h2>
+        </div>
+
+        <div class="space-y-4 p-5">
+          <!-- Total -->
+          <div class="rounded-xl bg-gray-50 p-4">
+            <p class="text-sm font-medium text-gray-500">Total</p>
+
+            <p
+              id="totalLabel"
+              class="mt-1 text-3xl font-extrabold text-gray-900"
+            >
+              $0.00
+            </p>
+          </div>
+
+          <!-- Método de pago -->
+          <div class="rounded-xl bg-gray-50 p-4">
+            <label
+              for="paymentMethod"
+              class="mb-2 block text-sm font-medium text-gray-700"
+            >
+              Payment method
+            </label>
+
+            <select
+              id="paymentMethod"
+              class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 outline-none focus:border-indigo-500 disabled:cursor-not-allowed disabled:bg-gray-200"
+            >
+              <option value="">Select a method</option>
+
+              <option value="cash">Cash</option>
+
+              <option value="card">Card</option>
+            </select>
+          </div>
+
+          <!-- Pago en efectivo -->
+          <div id="cashPaymentSection" class="hidden space-y-4">
+            <div class="rounded-xl bg-gray-50 p-4">
+              <label
+                for="paidInput"
+                class="mb-2 block text-sm font-medium text-gray-700"
+              >
+                Amount received
+              </label>
+
               <input
-                id="searchInput"
+                id="paidInput"
                 type="text"
-                placeholder="Código o nombre del producto"
+                inputmode="decimal"
+                autocomplete="off"
+                placeholder="0.00"
                 class="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-indigo-500"
               />
-              <button
-                id="btnSearch"
-                type="button"
-                class="rounded-lg bg-indigo-600 px-5 py-3 font-semibold text-white hover:bg-indigo-700"
-              >
-                Agregar
-              </button>
             </div>
 
-            <div class="overflow-x-auto">
-              <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                  <tr>
-                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">ID</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">Producto</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">Precio</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">Cant.</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">Subtotal</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">Acción</th>
-                  </tr>
-                </thead>
-                <tbody id="cartTableBody" class="divide-y divide-gray-100 bg-white"></tbody>
-              </table>
+            <div class="rounded-xl bg-gray-50 p-4">
+              <p class="text-sm font-medium text-gray-500">Change</p>
+
+              <p
+                id="changeLabel"
+                class="mt-1 text-3xl font-extrabold text-green-600"
+              >
+                $0.00
+              </p>
             </div>
           </div>
-        </section>
 
-        <aside class="lg:sticky lg:top-4 h-fit rounded-2xl bg-white shadow-md overflow-hidden">
-  <div class="bg-red-700 px-6 py-4">
-    <h2 class="text-lg font-bold text-white">Cobro</h2>
+          <!-- Pago con terminal -->
+          <div id="cardPaymentSection" class="hidden space-y-4">
+            <div class="rounded-xl border border-blue-200 bg-blue-50 p-4">
+              <div class="flex items-start gap-3">
+                <!-- Icono de tarjeta -->
+                <div
+                  class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    class="h-5 w-5"
+                  >
+                    <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+
+                    <path d="M2 10h20"></path>
+                  </svg>
+                </div>
+
+                <div>
+                  <p class="font-semibold text-blue-900">Card payment</p>
+
+                  <p class="mt-1 text-sm text-blue-700">
+                    Process the payment using the card terminal.
+                  </p>
+                </div>
+              </div>
+
+              <div class="mt-4 rounded-lg border border-blue-200 bg-white p-3">
+                <p class="text-sm text-gray-600">
+                  When the terminal is ready, press
+                  <strong>Process with terminal</strong>.
+                </p>
+
+                <p class="mt-2 text-xs text-gray-500">
+                  Do not enter card numbers, security codes, or banking
+                  information into this system.
+                </p>
+              </div>
+            </div>
+
+            <!-- Estado de la terminal -->
+            <div
+              id="terminalStatus"
+              class="hidden rounded-xl bg-blue-50 p-4 text-center text-sm font-semibold text-blue-700"
+            >
+              Waiting for terminal response...
+            </div>
+          </div>
+
+          <!-- Botones auxiliares -->
+          <div class="grid grid-cols-2 gap-3 pt-2">
+            <button
+              id="btnClearCart"
+              type="button"
+              class="rounded-xl bg-gray-200 px-4 py-3 font-semibold text-gray-700 hover:bg-gray-300 disabled:cursor-not-allowed disabled:bg-gray-100"
+            >
+              Clear cart
+            </button>
+
+            <a
+              href="#"
+              class="flex items-center justify-center rounded-xl bg-yellow-400 px-4 py-3 font-semibold text-gray-900 hover:bg-yellow-500"
+            >
+              More...
+            </a>
+
+            <button
+              type="button"
+              class="rounded-xl bg-yellow-400 px-4 py-3 font-semibold text-gray-900 hover:bg-yellow-500"
+            >
+              Food
+            </button>
+
+            <button
+              type="button"
+              class="rounded-xl bg-yellow-400 px-4 py-3 font-semibold text-gray-900 hover:bg-yellow-500"
+            >
+              Services
+            </button>
+
+            <button
+              type="button"
+              class="rounded-xl bg-yellow-400 px-4 py-3 font-semibold text-gray-900 hover:bg-yellow-500"
+            >
+              Financial
+            </button>
+
+            <button
+              type="button"
+              class="rounded-xl bg-yellow-400 px-4 py-3 font-semibold text-gray-900 hover:bg-yellow-500"
+            >
+              Mobile Top-Up
+            </button>
+          </div>
+
+          <!-- Botón principal -->
+          <button
+            id="btnPay"
+            type="button"
+            class="hidden w-full rounded-xl bg-green-600 px-4 py-4 text-lg font-bold text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+          >
+            CHARGE
+          </button>
+        </div>
+      </aside>
+    </div>
   </div>
-
-  <div class="p-5 space-y-4">
-    <div class="rounded-xl bg-gray-50 p-4">
-      <p class="text-sm font-medium text-gray-500">Total</p>
-      <p id="totalLabel" class="mt-1 text-3xl font-extrabold text-gray-900">$0.00</p>
-    </div>
-
-    <div class="rounded-xl bg-gray-50 p-4">
-      <label class="mb-2 block text-sm font-medium text-gray-700">Con cuánto paga</label>
-      <input
-        id="paidInput"
-        type="text"
-        inputmode="decimal"
-        autocomplete="off"
-        placeholder="0.00"
-        class="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-indigo-500"
-      />
-    </div>
-
-    <div class="rounded-xl bg-gray-50 p-4">
-      <p class="text-sm font-medium text-gray-500">Cambio</p>
-      <p id="changeLabel" class="mt-1 text-3xl font-extrabold text-green-600">$0.00</p>
-    </div>
-
-    <div class="grid grid-cols-2 gap-3 pt-2">
-      <button class="rounded-xl bg-gray-200 px-4 py-3 font-semibold text-gray-700 hover:bg-gray-300" type="button">
-        Eliminar
-      </button> 
-     <a
-  href="view.html"
-  class="flex items-center justify-center rounded-xl bg-yellow-400 px-4 py-3 font-semibold text-gray-900 hover:bg-yellow-500"
-      >
-      Más...
-      </a>
-      <button class="rounded-xl bg-yellow-400 px-4 py-3 font-semibold text-gray-900 hover:bg-yellow-500" type="button">
-        Alimentos
-      </button>
-      <button class="rounded-xl bg-yellow-400 px-4 py-3 font-semibold text-gray-900 hover:bg-yellow-500" type="button">
-        Servicios
-      </button>
-      <button class="rounded-xl bg-yellow-400 px-4 py-3 font-semibold text-gray-900 hover:bg-yellow-500" type="button">
-        Financieros
-      </button>
-      <button class="rounded-xl bg-yellow-400 px-4 py-3 font-semibold text-gray-900 hover:bg-yellow-500" type="button">
-        Tiempo Aire
-      </button>
-    </div>
-
-    <button class="w-full rounded-xl bg-green-600 px-4 py-4 text-lg font-bold text-white hover:bg-green-700" type="button">
-      COBRAR
-    </button>
-  </div>
-</aside>
-      </div>
-    </div>
-
-    <script src="../js/cashier.js"></script>
-  </body>
-</html>
+</div>
