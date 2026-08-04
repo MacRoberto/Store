@@ -9,6 +9,8 @@ import {
 import { initView as initViewMain } from "./enviroment.js";
 
 import { rowClick, loadView, getSelectedId } from "./function.js";
+import { validateForm } from "./validators/validate-form.js";
+import { modulesRules } from "./validators/rules/modules-rules.js";
 
 let listOptions = {
   page: 1,
@@ -249,6 +251,18 @@ async function initModuleForm(mode, id = null) {
 
     form.addEventListener("submit", async function (event) {
       event.preventDefault();
+      //se manda a llamar la funcion, se le pasa el formulario y las reglas definidas
+      const validation = validateForm(form, modulesRules);
+      //Si no es valido se muestra mensaje y ya no ejecuta el resto del proceso
+      if (!validation.valid) {
+        await Swal.fire({
+          icon: "warning",
+          title: "Validation error",
+          text: validation.error.message,
+        });
+
+        return; // Evitar que se ejecute el guardado o la actualización.
+      }
 
       try {
         if (mode === "edit") {
@@ -263,8 +277,11 @@ async function initModuleForm(mode, id = null) {
             cancelButtonText: "Cancel",
           }).then(async (result) => {
             if (result.isConfirmed) {
-              await updateRecord("modules", form, id);
-              await loadModuleView();
+              const response = await updateRecord("modules", form, id);
+              if (response) {
+                // Después de guardar, regresar al listado.
+                await loadModuleView();
+              }
             }
           });
         } else {
@@ -279,8 +296,12 @@ async function initModuleForm(mode, id = null) {
             cancelButtonText: "Cancel",
           }).then(async (result) => {
             if (result.isConfirmed) {
-              await saveRecords("modules", form);
-              await loadModuleView();
+              const response = await saveRecords("modules", form);
+
+              if (response) {
+                // Después de guardar, regresar al listado.
+                await loadModuleView();
+              }
             }
           });
         }

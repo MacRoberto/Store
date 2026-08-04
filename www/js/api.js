@@ -28,7 +28,7 @@ export async function saveRecords(file, form) {
   const formData = new FormData(form);
   const dataObject = Object.fromEntries(formData.entries());
 
-  await fetch("../php/" + file + ".php", {
+  return await fetch("../php/" + file + ".php", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -40,11 +40,21 @@ export async function saveRecords(file, form) {
   })
     .then((response) => response.json())
     .then((data) => {
-      Swal.fire({
-        title: "Saved",
-        text: "Record saved successfully",
-        icon: "success",
-      });
+      if (data.success) {
+        Swal.fire({
+          title: "Saved",
+          text: "Record saved successfully",
+          icon: "success",
+        });
+        return true;
+      } else {
+        Swal.fire({
+          icon: "warning",
+          title: "Error saving record",
+          text: data.error,
+        });
+        return false;
+      }
     })
     .catch((error) => console.error("Error saving record:", error));
 }
@@ -119,7 +129,7 @@ export async function updateRecord(file, itemForm, id) {
   const formData = new FormData(itemForm);
   const dataObject = Object.fromEntries(formData.entries());
 
-  fetch("../php/" + file + ".php", {
+  return await fetch("../php/" + file + ".php", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -132,14 +142,26 @@ export async function updateRecord(file, itemForm, id) {
   })
     .then((response) => response.json())
     .then((data) => {
-      console.log(data);
-      Swal.fire({
-        title: "Updated",
-        text: "Record updated successfully",
-        icon: "success",
-      });
+      if (data.success) {
+        Swal.fire({
+          title: "Updated",
+          text: "Record updated successfully",
+          icon: "success",
+        });
+        return true;
+      } else {
+        Swal.fire({
+          icon: "warning",
+          title: "Error saving record",
+          text: data.error,
+        });
+        return false;
+      }
     })
-    .catch((error) => console.error("Error updating record:", error));
+    .catch((error) => {
+      console.error("Error updating record:", error);
+      return false;
+    });
 }
 
 //Función para recuperar los registros

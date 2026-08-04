@@ -11,7 +11,7 @@ import { initView as initViewMain } from "./enviroment.js";
 
 import { rowClick, loadView, getSelectedId } from "./function.js";
 import { validateForm } from "./validators/validate-form.js";
-import { productsRules } from "./validators/products-rules.js";
+import { productsRules } from "./validators/rules/products-rules.js";
 
 let listOptions = {
   page: 1,
@@ -276,9 +276,12 @@ async function initProductForm(mode, id = null) {
             cancelButtonText: "Cancel",
           }).then(async (result) => {
             if (result.isConfirmed) {
-              await updateRecord("products", form, id);
+              const response = await updateRecord("products", form, id);
               // Después de guardar, regresar al listado.
-              await loadProductsView();
+              if (response) {
+                // Después de guardar, regresar al listado.
+                await loadProductsView();
+              }
             }
           });
         } else {
@@ -293,9 +296,11 @@ async function initProductForm(mode, id = null) {
             cancelButtonText: "Cancel",
           }).then(async (result) => {
             if (result.isConfirmed) {
-              await saveRecords("products", form);
-              // Después de guardar, regresar al listado.
-              await loadProductsView();
+              const response = await saveRecords("products", form);
+              if (response) {
+                // Después de guardar, regresar al listado.
+                await loadProductsView();
+              }
             }
           });
         }

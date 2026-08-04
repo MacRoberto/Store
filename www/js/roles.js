@@ -11,7 +11,7 @@ import { initView as initViewMain } from "./enviroment.js";
 import { rowClick, loadView, getSelectedId } from "./function.js";
 
 import { validateForm } from "./validators/validate-form.js";
-import { rolesRules } from "./validators/roles-rules.js";
+import { rolesRules } from "./validators/rules/roles-rules.js";
 
 let listOptions = {
   page: 1,
@@ -256,8 +256,11 @@ async function initRoleForm(mode, id = null) {
             cancelButtonText: "Cancel",
           }).then(async (result) => {
             if (result.isConfirmed) {
-              await updateRecord("roles", form, id);
-              await loadRoleView();
+              const response = await updateRecord("roles", form, id);
+              if (response) {
+                // Después de guardar, regresar al listado.
+                await loadRoleView();
+              }
             }
           });
         } else {
@@ -272,8 +275,11 @@ async function initRoleForm(mode, id = null) {
             cancelButtonText: "Cancel",
           }).then(async (result) => {
             if (result.isConfirmed) {
-              await saveRecords("roles", form);
-              await loadRoleView();
+              const response = await saveRecords("roles", form);
+              if (response) {
+                // Después de guardar, regresar al listado.
+                await loadRoleView();
+              }
             }
           });
         }

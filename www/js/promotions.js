@@ -10,6 +10,8 @@ import {
 import { initView as initViewMain } from "./enviroment.js";
 
 import { rowClick, loadView, getSelectedId } from "./function.js";
+import { validateForm } from "./validators/validate-form.js";
+import { promotionsRules } from "./validators/rules/promotions-rules.js";
 
 let listOptions = {
   page: 1,
@@ -232,6 +234,18 @@ async function initPromotionForm(mode, id = null) {
 
     form.addEventListener("submit", async function (event) {
       event.preventDefault();
+      //se manda a llamar la funcion, se le pasa el formulario y las reglas definidas
+      const validation = validateForm(form, promotionsRules);
+      //Si no es valido se muestra mensaje y ya no ejecuta el resto del proceso
+      if (!validation.valid) {
+        await Swal.fire({
+          icon: "warning",
+          title: "Validation error",
+          text: validation.error.message,
+        });
+
+        return; // Evitar que se ejecute el guardado o la actualización.
+      }
 
       try {
         if (mode === "edit") {
@@ -246,8 +260,11 @@ async function initPromotionForm(mode, id = null) {
             cancelButtonText: "Cancel",
           }).then(async (result) => {
             if (result.isConfirmed) {
-              await updateRecord("promotions", form, id);
-              await loadPromotionsView();
+              const response = await updateRecord("promotions", form, id);
+              if (response) {
+                // Después de guardar, regresar al listado.
+                await loadPromotionsView();
+              }
             }
           });
         } else {
@@ -262,8 +279,11 @@ async function initPromotionForm(mode, id = null) {
             cancelButtonText: "Cancel",
           }).then(async (result) => {
             if (result.isConfirmed) {
-              await saveRecords("promotions", form);
-              await loadPromotionsView();
+              const response = await saveRecords("promotions", form);
+              if (response) {
+                // Después de guardar, regresar al listado.
+                await loadPromotionsView();
+              }
             }
           });
         }

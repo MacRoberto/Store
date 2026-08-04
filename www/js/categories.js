@@ -9,6 +9,8 @@ import {
 import { initView as initViewMain } from "./enviroment.js";
 
 import { rowClick, loadView, getSelectedId } from "./function.js";
+import { validateForm } from "./validators/validate-form.js";
+import { categoriesRules } from "./validators/rules/categories-rules.js";
 
 let listOptions = {
   page: 1,
@@ -219,6 +221,18 @@ async function initCategoryForm(mode, id = null) {
 
     form.addEventListener("submit", async function (event) {
       event.preventDefault();
+      //se manda a llamar la funcion, se le pasa el formulario y las reglas definidas
+      const validation = validateForm(form, categoriesRules);
+      //Si no es valido se muestra mensaje y ya no ejecuta el resto del proceso
+      if (!validation.valid) {
+        await Swal.fire({
+          icon: "warning",
+          title: "Validation error",
+          text: validation.error.message,
+        });
+
+        return; // Evitar que se ejecute el guardado o la actualización.
+      }
 
       try {
         if (mode === "edit") {
@@ -233,8 +247,11 @@ async function initCategoryForm(mode, id = null) {
             cancelButtonText: "Cancel",
           }).then(async (result) => {
             if (result.isConfirmed) {
-              await updateRecord("categories", form, id);
-              await loadCategoryView();
+              const response = await updateRecord("categories", form, id);
+              if (response) {
+                // Después de guardar, regresar al listado.
+                await loadCategoryView();
+              }
             }
           });
         } else {
@@ -249,8 +266,11 @@ async function initCategoryForm(mode, id = null) {
             cancelButtonText: "Cancel",
           }).then(async (result) => {
             if (result.isConfirmed) {
-              await saveRecords("categories", form);
-              await loadCategoryView();
+              const response = await saveRecords("categories", form);
+              if (response) {
+                // Después de guardar, regresar al listado.
+                await loadCategoryView();
+              }
             }
           });
         }
