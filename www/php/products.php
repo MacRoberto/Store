@@ -84,6 +84,7 @@ if ($accion == "list") {
 }else if($accion == "find"){
     $barcode = $requestData['search']; 
     $product = findProductBybarcode($barcode);
+    $promotions = getPromotionsByProductId($product['id']);
     if ($product) {
         echo json_encode([
             'status' => 'success',
@@ -93,7 +94,8 @@ if ($accion == "list") {
                 'barcode' => $product['barcode'],
                 'inventory_item_id' => (int)$product['inventory_item_id'],
                 'price' => (float)$product['price'],
-                'category_name' => $product['category_name']
+                'category_name' => $product['category_name'],
+                'promotions' => $promotions,
             ]
         ]);
     } else {
