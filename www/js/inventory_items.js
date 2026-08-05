@@ -1,5 +1,5 @@
 import { fetchRecords } from "./api.js";
-import { loadView } from "./function.js";
+import { loadView, setCurrentModuleKey } from "./function.js";
 
 let listOptions = {
   inventoryId: 0,
@@ -107,6 +107,7 @@ export async function initView(inventoryId) {
     btnBackToInventory.addEventListener("click", async function () {
       await loadView("../views/inventories.html", "content");
       const inventoriesModule = await import("./inventories.js");
+      setCurrentModuleKey("inventories");
       await inventoriesModule.initView();
     });
   }

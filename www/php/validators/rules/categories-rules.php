@@ -25,19 +25,5 @@ return [
             'type' => 'Description must be a valid text string.',
             'maxLength' => 'Description must not exceed 255 characters.'
         ]
-    ],
-
-    'status' => [
-        'label' => 'status',
-        'required' => true,
-        'allowedValues' => [
-            'Active',
-            'Inactive'
-        ],
-
-        'messages' => [
-            'required' => 'Status is required.',
-            'allowedValues' => 'Status must be Active or Inactive.'
-        ]
     ]
 ];

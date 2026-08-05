@@ -208,3 +208,13 @@ export function sendRequest(file, payload) {
       return data;
     });
 }
+
+let sessionData = null;
+export async function getSessionData() {
+  if (!sessionData) {
+    sessionData = await sendRequest("users", {
+      action: "session",
+    });
+  }
+  return sessionData;
+}

@@ -1,5 +1,5 @@
 import { fetchRecords } from "./api.js";
-import { loadView } from "./function.js";
+import { loadView, setCurrentModuleKey } from "./function.js";
 
 let listOptions = {
   saleId: 0,
@@ -107,6 +107,7 @@ export async function initView(saleId) {
     btnBackToSales.addEventListener("click", async function () {
       await loadView("../views/sales.html", "content");
       const salesModule = await import("./sales.js");
+      setCurrentModuleKey("sales");
       await salesModule.initView();
     });
   }

@@ -8,7 +8,13 @@ import {
 
 import { initView as initViewMain } from "./enviroment.js";
 
-import { rowClick, loadView, getSelectedId } from "./function.js";
+import {
+  rowClick,
+  loadView,
+  getSelectedId,
+  configureModulePermissions,
+  setCurrentModuleKey,
+} from "./function.js";
 
 import { validateForm } from "./validators/validate-form.js";
 import { rolesRules } from "./validators/rules/roles-rules.js";
@@ -23,6 +29,12 @@ let listOptions = {
 };
 
 export async function initView() {
+  await configureModulePermissions({
+    create: "roles.create",
+    edit: "roles.edit",
+    delete: "roles.delete",
+    permissions: "roles.assign_permissions",
+  });
   const btnRemove = document.getElementById("btnRemove");
   const btnEdit = document.getElementById("btnEdit");
   const btnAdd = document.getElementById("btnAdd");
@@ -50,23 +62,25 @@ export async function initView() {
     searchInput.value = listOptions.search;
   }
 
-  btnRemove.addEventListener("click", async function () {
-    Swal.fire({
-      title: "¿Are you sure to delete this record?",
-      text: "You won't be able to revert this action",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Yes, delete",
-      cancelButtonText: "Cancel",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        await deleteRecords("roles", getSelectedId());
-        await loadRoleView();
-      }
+  if (btnRemove) {
+    btnRemove.addEventListener("click", async function () {
+      Swal.fire({
+        title: "¿Are you sure to delete this record?",
+        text: "You won't be able to revert this action",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Yes, delete",
+        cancelButtonText: "Cancel",
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          await deleteRecords("roles", getSelectedId());
+          await loadRoleView();
+        }
+      });
     });
-  });
+  }
 
   if (btnEdit) {
     btnEdit.addEventListener("click", async function () {
@@ -215,6 +229,7 @@ function updatePagination(data) {
 
 async function loadRoleView() {
   await loadView("../views/roles.html", "content");
+  setCurrentModuleKey("roles");
   await initView();
 }
 

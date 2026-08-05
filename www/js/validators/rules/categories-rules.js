@@ -15,10 +15,4 @@ export const categoriesRules = {
     type: "string",
     maxLength: 255,
   },
-
-  status: {
-    label: "Status",
-    required: true,
-    allowedValues: ["Active", "Inactive"],
-  },
 };

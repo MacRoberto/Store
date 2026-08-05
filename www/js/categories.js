@@ -8,7 +8,13 @@ import {
 
 import { initView as initViewMain } from "./enviroment.js";
 
-import { rowClick, loadView, getSelectedId } from "./function.js";
+import {
+  rowClick,
+  loadView,
+  getSelectedId,
+  configureModulePermissions,
+  setCurrentModuleKey,
+} from "./function.js";
 import { validateForm } from "./validators/validate-form.js";
 import { categoriesRules } from "./validators/rules/categories-rules.js";
 
@@ -22,6 +28,11 @@ let listOptions = {
 };
 
 export async function initView() {
+  await configureModulePermissions({
+    create: "categories.create",
+    edit: "categories.edit",
+    delete: "categories.delete",
+  });
   const btnRemove = document.getElementById("btnRemove");
   const btnEdit = document.getElementById("btnEdit");
   const btnAdd = document.getElementById("btnAdd");
@@ -207,6 +218,7 @@ function updatePagination(data) {
 
 async function loadCategoryView() {
   await loadView("../views/categories.html", "content");
+  setCurrentModuleKey("categories");
   await initView();
 }
 

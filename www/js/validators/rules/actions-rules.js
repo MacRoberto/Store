@@ -22,11 +22,4 @@ export const actionsRules = {
     type: "number",
     min: 1,
   },
-
-  permission_key: {
-    label: "Permission key",
-    required: false,
-    type: "string",
-    maxLength: 150,
-  },
 };

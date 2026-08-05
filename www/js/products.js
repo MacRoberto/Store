@@ -9,7 +9,13 @@ import {
 
 import { initView as initViewMain } from "./enviroment.js";
 
-import { rowClick, loadView, getSelectedId } from "./function.js";
+import {
+  rowClick,
+  loadView,
+  getSelectedId,
+  configureModulePermissions,
+  setCurrentModuleKey,
+} from "./function.js";
 import { validateForm } from "./validators/validate-form.js";
 import { productsRules } from "./validators/rules/products-rules.js";
 
@@ -23,6 +29,11 @@ let listOptions = {
 };
 
 export async function initView() {
+  await configureModulePermissions({
+    create: "products.create",
+    delete: "products.delete",
+    edit: "products.edit",
+  });
   const tableBody = document.getElementById("productsTableBody");
   const btnRemove = document.getElementById("btnRemove");
   const btnEdit = document.getElementById("btnEdit");
@@ -231,6 +242,7 @@ function updatePagination(data) {
 
 async function loadProductsView() {
   await loadView("../views/products.html", "content");
+  setCurrentModuleKey("products");
   await initView();
 }
 

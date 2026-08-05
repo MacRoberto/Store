@@ -8,7 +8,13 @@ import {
 
 import { initView as initViewMain } from "./enviroment.js";
 
-import { rowClick, loadView, getSelectedId } from "./function.js";
+import {
+  rowClick,
+  loadView,
+  getSelectedId,
+  configureModulePermissions,
+  setCurrentModuleKey,
+} from "./function.js";
 import { validateForm } from "./validators/validate-form.js";
 import { modulesRules } from "./validators/rules/modules-rules.js";
 
@@ -22,6 +28,12 @@ let listOptions = {
 };
 
 export async function initView() {
+  await configureModulePermissions({
+    create: "modules.create",
+    delete: "modules.delete",
+    edit: "modules.edit",
+    actions: "modules.view_actions",
+  });
   const btnRemove = document.getElementById("btnRemove");
   const btnEdit = document.getElementById("btnEdit");
   const btnAdd = document.getElementById("btnAdd");
@@ -237,6 +249,7 @@ function updatePagination(data) {
 
 async function loadModuleView() {
   await loadView("../views/modules.html", "content");
+  setCurrentModuleKey("modules");
   await initView();
 }
 

@@ -5,7 +5,13 @@ import {
   fetchRecords,
 } from "./api.js";
 
-import { rowClick, loadView, getSelectedId } from "./function.js";
+import {
+  rowClick,
+  loadView,
+  getSelectedId,
+  configureModulePermissions,
+  setCurrentModuleKey,
+} from "./function.js";
 import { validateForm } from "./validators/validate-form.js";
 import { actionsRules } from "./validators/rules/actions-rules.js";
 
@@ -23,6 +29,12 @@ let currentActionMode = "add";
 let selectedActionData = null;
 
 export async function initView(idModule) {
+  setCurrentModuleKey("actions");
+  await configureModulePermissions({
+    create: "actions.create",
+    delete: "actions.delete",
+    edit: "actions.edit",
+  });
   activeModuleId = idModule ?? activeModuleId;
   const btnRemove = document.getElementById("btnRemove");
   const btnEdit = document.getElementById("btnEdit");
@@ -72,6 +84,7 @@ export async function initView(idModule) {
     btnGoBack.addEventListener("click", async function () {
       await loadView("../views/modules.html", "content");
       const modulesModule = await import("./modules.js");
+      setCurrentModuleKey("modules");
       await modulesModule.initView();
     });
   }
