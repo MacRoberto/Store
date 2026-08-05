@@ -1,4 +1,5 @@
 import { sendRequest } from "./api.js";
+import { configureModulePermissions } from "./function.js";
 const formatter = new Intl.NumberFormat("es-MX", {
   style: "currency",
   currency: "MXN",
@@ -9,6 +10,9 @@ const cart = [];
 let processingPayment = false;
 
 export async function initView() {
+  await configureModulePermissions({
+    charge: "cashier.charge",
+  });
   const searchInput = document.getElementById("searchInput");
   const btnSearch = document.getElementById("btnSearch");
   const paidInput = document.getElementById("paidInput");

@@ -19,7 +19,7 @@ let editingIndex = null;
  * Inicializa la vista de carga de inventario.
  */
 import { sendRequest } from "./api.js";
-import { loadView } from "./function.js";
+import { loadView, setCurrentModuleKey } from "./function.js";
 export function initView() {
   const btnSearchProduct = document.getElementById("btnSearchProduct");
   const searchProductInput = document.getElementById("searchProductInput");
@@ -94,6 +94,7 @@ export function initView() {
     btnGoBack.addEventListener("click", async function (event) {
       await loadView("../views/inventories.html", "content");
       const inventoriesModule = await import("./inventories.js");
+      setCurrentModuleKey("inventories");
       await inventoriesModule.initView();
     });
   }

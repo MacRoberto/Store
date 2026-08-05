@@ -1,5 +1,11 @@
 import { fetchRecords } from "./api.js";
-import { rowClick, getSelectedId, loadView } from "./function.js";
+import {
+  rowClick,
+  getSelectedId,
+  loadView,
+  configureModulePermissions,
+  setCurrentModuleKey,
+} from "./function.js";
 
 let listOptions = {
   page: 1,
@@ -11,6 +17,9 @@ let listOptions = {
 };
 
 export async function initView() {
+  await configureModulePermissions({
+    details: "sales.viewdetails",
+  });
   const orderBy = document.getElementById("orderBy");
   const orderDirection = document.getElementById("orderDirection");
   const btnPrevious = document.getElementById("btnPrevious");

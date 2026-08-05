@@ -2,7 +2,7 @@ import { sendRequest, fetchRecords } from "./api.js";
 
 import { initView as initViewMain } from "./enviroment.js";
 
-import { rowClick, loadView } from "./function.js";
+import { rowClick, loadView, setCurrentModuleKey } from "./function.js";
 
 export async function initView(roleID) {
   const btnGoBack = document.getElementById("btnBackToRoles");
@@ -11,6 +11,7 @@ export async function initView(roleID) {
     btnGoBack.addEventListener("click", async function (event) {
       await loadView("../views/roles.html", "content");
       const rolesModule = await import("./roles.js");
+      setCurrentModuleKey("roles");
       await rolesModule.initView();
     });
   }

@@ -1,10 +1,8 @@
-import { fetchRecords, sendRequest } from "./api.js";
-import { loadView } from "./function.js";
+import { fetchRecords, sendRequest, getSessionData } from "./api.js";
+import { loadView, setCurrentModuleKey } from "./function.js";
 
 export async function initView() {
-  const sessionData = await sendRequest("users", {
-    action: "session",
-  });
+  const sessionData = await getSessionData();
 
   if (sessionData.status !== "success") {
     window.location.href = "../index.html";
@@ -135,10 +133,10 @@ async function loadModules() {
 
     card.addEventListener("click", async () => {
       await loadView(`${module.url}.html`, "content");
-
+      setCurrentModuleKey(module.url);
       const moduleController = await import(`./${module.url}.js`);
 
-      moduleController.initView();
+      await moduleController.initView();
     });
 
     gridContainer.appendChild(card);

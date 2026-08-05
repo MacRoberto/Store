@@ -44,7 +44,8 @@ function getRolePermissions($idRole) {
             rp.id_permission,
             a.id_action,
             a.name AS action,
-            a.id_module
+            a.id_module,
+            a.permission_key
         FROM role_permissions rp
         INNER JOIN actions a ON rp.id_action = a.id_action
         WHERE rp.id_role = :id_role

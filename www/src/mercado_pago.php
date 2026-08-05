@@ -1,7 +1,7 @@
 <?php
 function createMercadoPagoOrder(float $amount): array
 {
-    $terminalId = "NEWLAND_N950__SBX0000001";
+    $terminalId = "NEWLAND_N950__SBX0000001"; //Terminal donde se vaya a cobrar
 
     /*
      * Referencia única de tu sistema.
