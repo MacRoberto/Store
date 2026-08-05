@@ -11,6 +11,9 @@ import { initView as initViewMain } from "./enviroment.js";
 
 import { rowClick, loadView, getSelectedId } from "./function.js";
 
+import { validateForm } from "./validators/validate-form.js";
+import { promotionsRules } from "./validators/promotions-rules.js";
+
 let listOptions = {
   page: 1,
   limit: 50,
@@ -230,47 +233,61 @@ async function initPromotionForm(mode, id = null) {
       await loadRecordDataToForm("promotions", id, "itemForm");
     }
 
-    form.addEventListener("submit", async function (event) {
-      event.preventDefault();
+   form.addEventListener("submit", async function (event) {
+  event.preventDefault();
 
-      try {
-        if (mode === "edit") {
-          Swal.fire({
-            title: "¿Are you sure to update this record?",
-            text: "This will overwrite the existing information",
-            icon: "info",
-            showCancelButton: true,
-            confirmButtonColor: "#3085d6",
-            cancelButtonColor: "#d33",
-            confirmButtonText: "Yes, update",
-            cancelButtonText: "Cancel",
-          }).then(async (result) => {
-            if (result.isConfirmed) {
-              await updateRecord("promotions", form, id);
-              await loadPromotionsView();
-            }
-          });
-        } else {
-          Swal.fire({
-            title: "¿Are you sure to Add record?",
-            text: "Please confirm that the data is correct",
-            icon: "question",
-            showCancelButton: true,
-            confirmButtonColor: "#3085d6",
-            cancelButtonColor: "#d33",
-            confirmButtonText: "Yes, save",
-            cancelButtonText: "Cancel",
-          }).then(async (result) => {
-            if (result.isConfirmed) {
-              await saveRecords("promotions", form);
-              await loadPromotionsView();
-            }
-          });
-        }
-      } catch (error) {
-        console.error("Error to save the promotion:", error);
-      }
+  // Se valida el formulario utilizando las reglas del módulo Promotions.
+  const validation = validateForm(form, promotionsRules);
+
+  // Si existe un error, se muestra el mensaje y se detiene el proceso.
+  if (!validation.valid) {
+    await Swal.fire({
+      icon: "warning",
+      title: "Validation error",
+      text: validation.error.message,
     });
+
+    return;
+  }
+
+  try {
+    if (mode === "edit") {
+      Swal.fire({
+        title: "¿Are you sure to update this record?",
+        text: "This will overwrite the existing information",
+        icon: "info",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Yes, update",
+        cancelButtonText: "Cancel",
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          await updateRecord("promotions", form, id);
+          await loadPromotionsView();
+        }
+      });
+    } else {
+      Swal.fire({
+        title: "¿Are you sure to Add record?",
+        text: "Please confirm that the data is correct",
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Yes, save",
+        cancelButtonText: "Cancel",
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          await saveRecords("promotions", form);
+          await loadPromotionsView();
+        }
+      });
+    }
+  } catch (error) {
+    console.error("Error to save the promotion:", error);
+  }
+});
 
     if (btnGoBack) {
       btnGoBack.addEventListener("click", async function (event) {
